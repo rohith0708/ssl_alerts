@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Lookup — SSL Alerts</title>
+<meta name="description" content="DNS record lookup tool — check A, AAAA, CNAME, MX, NS, TXT, SOA, SRV, CAA and PTR records for any domain.">
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+</head>
+<body>
+
+<nav class="topnav-wrap" id="topnavWrap">
+  <div class="container">
+    <div class="topnav">
+      <a href="/" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="topnav-links">
+        <a href="/#generator" id="navCertGen">Cert Generator</a>
+        <a href="/#ssl-tools" id="navSSLTools">SSL Tools</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/tools.html">DNS Lookup</a>
+      </div>
+      <div style="display:flex; gap:10px;" id="navButtons">
+        <a href="/login.html" class="btn btn-ghost btn-sm">Log in</a>
+        <a href="/signup.html" class="btn btn-primary btn-sm">Start free</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="container section tools-hero">
+  <div class="section-head" style="margin: 0 auto 32px; text-align:center; max-width: 640px;">
+    <h1 style="font-family: var(--serif); font-size: 34px; color: var(--navy);">DNS lookup</h1>
+    <p>Check any domain's DNS records — no account needed. Built by the team behind SSL Alerts, since we're already looking at DNS all day.</p>
+  </div>
+
+  <div class="lookup-panel">
+    <form class="lookup-form" id="lookupForm">
+      <input type="text" id="domainInput" placeholder="example.com" autocomplete="off" required>
+      <button type="submit" class="btn btn-accent">Look up</button>
+    </form>
+
+    <div class="lookup-types" id="lookupTypes">
+      <button type="button" class="type-pill active" data-type="ALL">ALL</button>
+      <button type="button" class="type-pill" data-type="A">A</button>
+      <button type="button" class="type-pill" data-type="AAAA">AAAA</button>
+      <button type="button" class="type-pill" data-type="CNAME">CNAME</button>
+      <button type="button" class="type-pill" data-type="CAA">CAA</button>
+      <button type="button" class="type-pill" data-type="MX">MX</button>
+      <button type="button" class="type-pill" data-type="NS">NS</button>
+      <button type="button" class="type-pill" data-type="PTR">PTR</button>
+      <button type="button" class="type-pill" data-type="SOA">SOA</button>
+      <button type="button" class="type-pill" data-type="SRV">SRV</button>
+      <button type="button" class="type-pill" data-type="TXT">TXT</button>
+    </div>
+
+    <div id="lookupResults" class="lookup-results"></div>
+  </div>
+</section>
+
+<section class="container section tools-cta">
+  <div class="tools-cta-card">
+    <div>
+      <h2>DNS is only half the story</h2>
+      <p>A domain can resolve perfectly and still be about to break — because its SSL certificate quietly expired. SSL Alerts checks the certificate itself, daily, and emails you before it does.</p>
+    </div>
+    <a href="/signup.html" class="btn btn-accent">Start monitoring free</a>
+  </div>
+</section>
+
+<footer class="site-footer-new">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <p>Certificate monitoring that emails you before things break — not after.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/ssl_alerts" target="_blank" rel="noopener" aria-label="Instagram" class="social-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+        </a>
+        <span class="social-icon disabled" title="Coming soon" aria-label="LinkedIn (coming soon)">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.6c0-1.34-.02-3.06-1.87-3.06-1.87 0-2.16 1.46-2.16 2.97V21h-4V9z"/></svg>
+        </span>
+        <span class="social-icon disabled" title="Coming soon" aria-label="Facebook (coming soon)">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>
+        </span>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Product</div>
+      <a href="/#pricing">Pricing</a>
+      <a href="/docs.html">Documentation</a>
+      <a href="/tools.html">DNS Lookup</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Account</div>
+      <a href="/login.html">Log in</a>
+      <a href="/signup.html">Sign up</a>
+      <a href="mailto:support@sslalerts.info">Support</a>
+    </div>
+  </div>
+  <div class="footer-bottom container">
+    <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+  </div>
+</footer>
+
+<script>
+const yr = document.getElementById('year');
+if (yr) yr.textContent = new Date().getFullYear();
+fetch('/api/auth/me').then(res => {
+  if (res.ok) {
+    document.getElementById('navButtons').innerHTML =
+      '<a href="/dashboard.html" class="btn btn-primary btn-sm">Go to dashboard</a>';
+  }
+}).catch(() => {});
+
+const topnavWrap = document.getElementById('topnavWrap');
+window.addEventListener('scroll', () => {
+  topnavWrap.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+let activeType = 'ALL';
+
+document.getElementById('lookupTypes').addEventListener('click', (e) => {
+  const btn = e.target.closest('.type-pill');
+  if (!btn) return;
+  document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  activeType = btn.dataset.type;
+  const domain = document.getElementById('domainInput').value.trim();
+  if (domain) runLookup(domain, activeType);
+});
+
+document.getElementById('lookupForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const domain = document.getElementById('domainInput').value.trim();
+  if (domain) runLookup(domain, activeType);
+});
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function runLookup(domain, type) {
+  const results = document.getElementById('lookupResults');
+  results.innerHTML = `<div class="lookup-status">Looking up ${escapeHtml(domain)}…</div>`;
+
+  try {
+    const res = await fetch(`/api/tools/dns-lookup?domain=${encodeURIComponent(domain)}&type=${encodeURIComponent(type)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      results.innerHTML = `<div class="lookup-status lookup-error">${escapeHtml(data.error || 'Lookup failed.')}</div>`;
+      return;
+    }
+
+    let groups = data.results || [];
+    if (type === 'ALL' || type === 'ANY') {
+      const withRecords = groups.filter(r => r.records && r.records.length > 0);
+      if (withRecords.length > 0) {
+        groups = withRecords;
+      } else {
+        results.innerHTML = `<div class="lookup-status">No DNS records found for ${escapeHtml(domain)}.</div>`;
+        return;
+      }
+    } else {
+      const target = groups[0];
+      if (!target || (!target.records?.length && target.error)) {
+        results.innerHTML = `
+          <div class="lookup-group">
+            <div class="lookup-group-type">${escapeHtml(type)}</div>
+            <div class="lookup-empty">${escapeHtml(target?.error || `No ${type} records found.`)}</div>
+          </div>`;
+        return;
+      }
+    }
+
+    results.innerHTML = groups.map(group => `
+      <div class="lookup-group">
+        <div class="lookup-group-type">${group.type}</div>
+        ${group.records && group.records.length > 0
+          ? `<table class="lookup-table">
+              <tbody>
+                ${group.records.map(r => `
+                  <tr>
+                    <td class="lookup-value" style="word-break: break-all; font-family: var(--mono);">${escapeHtml(r.value)}</td>
+                    ${r.priority !== undefined ? `<td class="lookup-meta">priority ${r.priority}${r.weight !== undefined ? `, weight ${r.weight}` : ''}</td>` : '<td></td>'}
+                  </tr>`).join('')}
+              </tbody>
+            </table>`
+          : `<div class="lookup-empty">${escapeHtml(group.error || 'No records found.')}</div>`}
+      </div>`).join('');
+  } catch (err) {
+    results.innerHTML = `<div class="lookup-status lookup-error">Something went wrong — try again.</div>`;
+  }
+}
+
+fetch('/api/auth/me').then(res => {
+  if (res.ok) {
+    document.getElementById('navButtons').innerHTML =
+      '<a href="/dashboard" class="btn btn-primary btn-sm">Go to dashboard</a>';
+    const genLink = document.getElementById('navCertGen');
+    if (genLink) genLink.href = '/dashboard#certificates';
+    const toolsLink = document.getElementById('navSSLTools');
+    if (toolsLink) toolsLink.href = '/dashboard#ssl-tools';
+  }
+}).catch(() => {});
+</script>
+</body>
+</html>

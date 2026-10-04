@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    container_name: harisree-ssl-alerts
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./public:/app/public
+      - ./src:/app/src
+      - ./server.js:/app/server.js
+    networks:
+      - harisree-network
+
+  admin:
+    build: .
+    container_name: harisree-admin-panel
+    restart: unless-stopped
+    command: ["node", "admin-server.js"]
+    ports:
+      - "3005:3005"
+    env_file:
+      - .env
+    environment:
+      - PORT=3005
+    volumes:
+      - ./data:/app/data
+      - ./public:/app/public
+      - ./src:/app/src
+      - ./admin-server.js:/app/admin-server.js
+      - ./server.js:/app/server.js
+    networks:
+      - harisree-network
+
+networks:
+  harisree-network:
+    external: true

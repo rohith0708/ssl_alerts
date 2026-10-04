@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+<script>
+fetch('/api/auth/me').then(res => {
+  if (res.ok) window.location.replace('/dashboard');
+}).catch(() => {});
+</script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-side">
+    <a href="/" class="auth-brand-link">
+      <img src="/assets/mark.svg" alt="SSL Alerts Mark">
+      <span>SSL Alerts</span>
+    </a>
+
+    <div class="auth-butterfly-stage" id="authButterflyStage">
+      <div class="auth-butterfly-scene" id="authButterflyScene">
+        <!-- Floating Status Badge Top Left -->
+        <div class="auth-cert-badge badge-top-left">
+          <span class="status-dot-pulse"></span>
+          <div>
+            <div class="cert-host">api.example.com</div>
+            <div class="cert-sub">TLS 1.3 · Valid (82d)</div>
+          </div>
+          <span class="pill pill-valid">Valid</span>
+        </div>
+
+        <!-- 3D Butterfly Centerpiece -->
+        <div class="butterfly-3d-centerpiece">
+          <div class="butterfly-halo-aura" aria-hidden="true"></div>
+          <div class="butterfly-model">
+            <svg class="butterfly-svg" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="auraRadial" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#1BC7B5" stop-opacity="0.38"/>
+                  <stop offset="55%" stop-color="#0E3A56" stop-opacity="0.18"/>
+                  <stop offset="100%" stop-color="#071B2E" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="bfWingL" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                  <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="bfWingR" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                  <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="bfWingLL" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+                </linearGradient>
+                <linearGradient id="bfWingRL" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+                </linearGradient>
+                <linearGradient id="bfBody" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#071B2E"/>
+                  <stop offset="25%" stop-color="#0E3A56"/>
+                  <stop offset="60%" stop-color="#122A40"/>
+                  <stop offset="100%" stop-color="#051424"/>
+                </linearGradient>
+                <linearGradient id="bfShackle" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#475569"/>
+                  <stop offset="35%" stop-color="#94A3B8"/>
+                  <stop offset="55%" stop-color="#E2E8F0"/>
+                  <stop offset="75%" stop-color="#94A3B8"/>
+                  <stop offset="100%" stop-color="#334155"/>
+                </linearGradient>
+                <filter id="bfGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+                <filter id="keyholeEmit" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="glow"/>
+                  <feMerge>
+                    <feMergeNode in="glow"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <g transform="translate(120,112) scale(0.66)">
+                <!-- Ambient Underglow -->
+                <circle cx="0" cy="0" r="140" fill="url(#auraRadial)" />
+
+                <!-- Left Wings Group (3D Flying Flap) -->
+                <g class="butterfly-wings-group-left">
+                  <path d="M -8,-58 C -60,-96 -132,-96 -158,-48 C -178,-10 -168,42 -122,72 C -90,93 -46,86 -8,54 Z" fill="url(#bfWingL)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                  <path d="M -6,50 C -40,68 -84,72 -104,102 C -118,124 -110,152 -80,160 C -52,167 -22,150 -4,118 Z" fill="url(#bfWingLL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                  <path d="M -34,-58 C -70,-40 -92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#bfGlow)"/>
+                </g>
+
+                <!-- Right Wings Group (3D Flying Flap) -->
+                <g class="butterfly-wings-group-right">
+                  <path d="M 8,-58 C 60,-96 132,-96 158,-48 C 178,-10 168,42 122,72 C 90,93 46,86 8,54 Z" fill="url(#bfWingR)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                  <path d="M 6,50 C 40,68 84,72 104,102 C 118,124 110,152 80,160 C 52,167 22,150 4,118 Z" fill="url(#bfWingRL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                  <path d="M 34,-58 C 70,-40 92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#bfGlow)"/>
+                </g>
+
+                <!-- Central Padlock Body & Antennae Core -->
+                <g class="butterfly-body-core">
+                  <path d="M -18,-68 C -18,-96 18,-96 18,-68 L 18,-50 L 9,-50 L 9,-68 C 9,-84 -9,-84 -9,-68 L -9,-50 L -18,-50 Z" fill="url(#bfShackle)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.4))"/>
+                  <rect x="-26" y="-52" width="52" height="152" rx="20" fill="url(#bfBody)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" filter="drop-shadow(0 18px 32px rgba(0, 0, 0, 0.5))"/>
+                  <path d="M -22,-48 L -22,96" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+                  <g class="butterfly-keyhole" filter="url(#keyholeEmit)">
+                    <circle cx="0" cy="12" r="8" fill="#2DD4BF"/>
+                    <path d="M -5,18 L 5,18 L 7,40 L -7,40 Z" fill="#2DD4BF"/>
+                  </g>
+                  <path d="M -6,-72 C -22,-98 -36,-110 -32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                  <path d="M 6,-72 C 22,-98 36,-110 32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                  <circle cx="-32" cy="-128" r="7.5" fill="#FF6F5E" filter="drop-shadow(0 0 10px #FF6F5E)"/>
+                  <circle cx="32" cy="-128" r="7.5" fill="#FF6F5E" filter="drop-shadow(0 0 10px #FF6F5E)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Floating Status Badge Bottom Right -->
+        <div class="auth-cert-badge badge-bottom-right">
+          <span class="status-dot-pulse"></span>
+          <div>
+            <div class="cert-host">shop.example.com</div>
+            <div class="cert-sub">Active monitoring · Auto-check</div>
+          </div>
+          <span class="pill pill-valid">Valid</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-side-content">
+      <h2>Welcome back.</h2>
+      <p>Your domains have been checked while you were away. Log in to review certificate health and alert history.</p>
+      <div class="auth-trust-list">
+        <div class="auth-trust-item"><span class="check-icon">✓</span> Real-time TLS & Expiration Checks</div>
+        <div class="auth-trust-item"><span class="check-icon">✓</span> Instant Alerts</div>
+        <div class="auth-trust-item"><span class="check-icon">✓</span> Free SSL tools, cert generator, DNS lookup</div>
+        <div class="auth-trust-item"><span class="check-icon">✓</span> Zero Agent Installation Required</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-form-wrap">
+    <form class="auth-form" id="loginForm">
+      <!-- Mobile 3D Butterfly Brand Header -->
+      <div class="auth-mobile-header">
+        <a href="/" class="mobile-brand-title">
+          <img src="/assets/mark.svg" alt="SSL Alerts" style="width:28px;height:28px;">
+          <span>SSL Alerts</span>
+        </a>
+        <div class="mobile-butterfly-preview">
+          <svg class="butterfly-svg" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="mobAuraRadial" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.38"/>
+                <stop offset="55%" stop-color="#14B8A6" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="#0E3A56" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="mobBfWingL" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+              </linearGradient>
+              <linearGradient id="mobBfWingR" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+              </linearGradient>
+              <linearGradient id="mobBfWingLL" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+              </linearGradient>
+              <linearGradient id="mobBfWingRL" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+              </linearGradient>
+              <linearGradient id="mobBfBody" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#071B2E"/>
+                <stop offset="25%" stop-color="#0E3A56"/>
+                <stop offset="60%" stop-color="#122A40"/>
+                <stop offset="100%" stop-color="#051424"/>
+              </linearGradient>
+              <linearGradient id="mobBfShackle" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#475569"/>
+                <stop offset="35%" stop-color="#94A3B8"/>
+                <stop offset="55%" stop-color="#E2E8F0"/>
+                <stop offset="75%" stop-color="#94A3B8"/>
+                <stop offset="100%" stop-color="#334155"/>
+              </linearGradient>
+              <filter id="mobBfGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+              <filter id="mobKeyholeEmit" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="glow"/>
+                <feMerge>
+                  <feMergeNode in="glow"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <g transform="translate(120,112) scale(0.66)">
+              <!-- Ambient Underglow -->
+              <circle cx="0" cy="0" r="140" fill="url(#mobAuraRadial)" />
+
+              <!-- Left Wings Group (3D Flying Flap) -->
+              <g class="butterfly-wings-group-left">
+                <path d="M -8,-58 C -60,-96 -132,-96 -158,-48 C -178,-10 -168,42 -122,72 C -90,93 -46,86 -8,54 Z" fill="url(#mobBfWingL)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                <path d="M -6,50 C -40,68 -84,72 -104,102 C -118,124 -110,152 -80,160 C -52,167 -22,150 -4,118 Z" fill="url(#mobBfWingLL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                <path d="M -34,-58 C -70,-40 -92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#mobBfGlow)"/>
+              </g>
+
+              <!-- Right Wings Group (3D Flying Flap) -->
+              <g class="butterfly-wings-group-right">
+                <path d="M 8,-58 C 60,-96 132,-96 158,-48 C 178,-10 168,42 122,72 C 90,93 46,86 8,54 Z" fill="url(#mobBfWingR)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                <path d="M 6,50 C 40,68 84,72 104,102 C 118,124 110,152 80,160 C 52,167 22,150 4,118 Z" fill="url(#mobBfWingRL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                <path d="M 34,-58 C 70,-40 92,-4 84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#mobBfGlow)"/>
+              </g>
+
+              <!-- Central Padlock Body & Antennae Core -->
+              <g class="butterfly-body-core">
+                <path d="M -18,-68 C -18,-96 18,-96 18,-68 L 18,-50 L 9,-50 L 9,-68 C 9,-84 -9,-84 -9,-68 L -9,-50 L -18,-50 Z" fill="url(#mobBfShackle)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.4))"/>
+                <rect x="-26" y="-52" width="52" height="152" rx="20" fill="url(#mobBfBody)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" filter="drop-shadow(0 18px 32px rgba(0, 0, 0, 0.5))"/>
+                <path d="M -22,-48 L -22,96" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+                <g class="butterfly-keyhole" filter="url(#mobKeyholeEmit)">
+                  <circle cx="0" cy="12" r="8" fill="#2DD4BF"/>
+                  <path d="M -5,18 L 5,18 L 7,40 L -7,40 Z" fill="#2DD4BF"/>
+                </g>
+                <path d="M -6,-72 C -22,-98 -36,-110 -32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                <path d="M 6,-72 C 22,-98 36,-110 32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                <circle cx="-32" cy="-128" r="7.5" fill="#FF6F5E"/>
+                <circle cx="32" cy="-128" r="7.5" fill="#FF6F5E"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <h1>Log in</h1>
+      <div class="sub">Monitor your certificates in seconds.</div>
+      <div class="form-error" id="formError"></div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label for="password" style="margin:0;">Password</label>
+          <a href="#" id="forgotPasswordLink" style="font-size:13px; color:#1BC7B5; text-decoration:none; font-weight:600;">Forgot password?</a>
+        </div>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Log in</button>
+      <div class="auth-switch">New here? <a href="/signup.html">Create a free account</a></div>
+      <div style="text-align:center; margin-top:20px; font-size:12px; color:#6E828C;">
+        © Copyright 2026 HS technologies . All Rights Reserved
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-overlay" id="forgotModal" style="display:none; align-items:center; justify-content:center;">
+  <div class="modal" style="max-width:440px; width:90%; position:relative; background:#ffffff; border-radius:12px; padding:28px; border:1px solid #E3E9EA; box-shadow:0 10px 30px rgba(0,0,0,0.12);">
+    <div class="modal-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="margin:0; font-size:20px; color:#0A2740;" id="fpModalTitle">Reset Password</h2>
+      <button type="button" class="modal-close" id="closeFpModalBtn" style="background:none; border:none; font-size:24px; cursor:pointer; color:#8996A0;">&times;</button>
+    </div>
+
+    <!-- Step 1: Enter email -->
+    <div id="fpStep1">
+      <p style="color:#4A5B66; font-size:14px; line-height:1.5; margin:0 0 16px;">
+        Enter your account email. We'll send you a 6-digit code to securely reset your password.
+      </p>
+      <div class="form-error" id="fpError1" style="display:none; margin-bottom:14px;"></div>
+      <div class="field">
+        <label for="fpEmail">Account Email</label>
+        <input type="email" id="fpEmail" placeholder="you@company.com" required>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="sendFpCodeBtn" style="margin-top:14px;">Send Reset Code</button>
+    </div>
+
+    <!-- Step 2: Enter code & new password -->
+    <div id="fpStep2" style="display:none;">
+      <div class="form-error" id="fpError2" style="display:none; margin-bottom:14px;"></div>
+      <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px 14px; margin-bottom:16px; color:#166534; font-size:13px; line-height:1.5;">
+        <div>✓ A 6-digit recovery code was sent to <strong id="fpTargetEmailDisplay"></strong>.</div>
+        <div style="margin-top:8px; color:#92400E; font-size:12px; background:#FEF3C7; padding:8px 10px; border-radius:6px; border:1px solid #FCD34D;">
+          ⏱ <strong>Email not showing up?</strong> Please check your <strong>Spam / Junk</strong> and <strong>Promotions</strong> folder. It may take 1-2 minutes to arrive.
+        </div>
+      </div>
+      <div class="field">
+        <label for="fpOtp">6-Digit Code</label>
+        <input type="text" id="fpOtp" maxlength="6" placeholder="123456" style="letter-spacing:4px; font-weight:700; text-align:center;" required>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="fpNewPassword">New Password</label>
+        <input type="password" id="fpNewPassword" placeholder="Min. 8 chars (A-Z, a-z, 0-9, symbol)" required>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="fpConfirmPassword">Confirm New Password</label>
+        <input type="password" id="fpConfirmPassword" placeholder="Re-enter new password" required>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="resetPasswordSubmitBtn" style="margin-top:18px;">Update Password</button>
+      <div style="text-align:center; margin-top:12px;">
+        <a href="#" id="fpResendBtn" style="font-size:13px; color:#1BC7B5; text-decoration:none;">Resend code</a>
+        <span id="fpResendStatus" style="display:none; font-size:12px; color:#059669; margin-left:8px;">✓ Sent!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorBox = document.getElementById('formError');
+  errorBox.classList.remove('visible');
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.requireOtp && data.email) {
+        window.location.href = `/signup.html?verify=1&email=${encodeURIComponent(data.email)}`;
+        return;
+      }
+      throw new Error(data.error || 'Login failed');
+    }
+    window.location.href = '/dashboard.html';
+  } catch (err) {
+    errorBox.textContent = err.message;
+    errorBox.classList.add('visible');
+  }
+});
+
+// Forgot Password Flow
+const forgotModal = document.getElementById('forgotModal');
+const fpStep1 = document.getElementById('fpStep1');
+const fpStep2 = document.getElementById('fpStep2');
+const fpError1 = document.getElementById('fpError1');
+const fpError2 = document.getElementById('fpError2');
+let activeResetEmail = '';
+
+document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  fpError1.style.display = 'none';
+  fpError2.style.display = 'none';
+  fpStep1.style.display = 'block';
+  fpStep2.style.display = 'none';
+  document.getElementById('fpEmail').value = document.getElementById('email').value.trim();
+  forgotModal.style.display = 'flex';
+  document.getElementById('fpEmail').focus();
+});
+
+document.getElementById('closeFpModalBtn').addEventListener('click', () => {
+  forgotModal.style.display = 'none';
+});
+
+forgotModal.addEventListener('click', (e) => {
+  if (e.target === forgotModal) forgotModal.style.display = 'none';
+});
+
+document.getElementById('sendFpCodeBtn').addEventListener('click', async () => {
+  const email = document.getElementById('fpEmail').value.trim();
+  fpError1.style.display = 'none';
+  if (!email) {
+    fpError1.textContent = 'Please enter your email.';
+    fpError1.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('sendFpCodeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending code…';
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send recovery code.');
+
+    activeResetEmail = email;
+    document.getElementById('fpTargetEmailDisplay').textContent = email;
+    document.getElementById('fpOtp').value = '';
+
+    fpStep1.style.display = 'none';
+    fpStep2.style.display = 'block';
+    document.getElementById('fpOtp').focus();
+  } catch (err) {
+    fpError1.textContent = err.message;
+    fpError1.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Code';
+  }
+});
+
+document.getElementById('fpResendBtn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const resendBtn = document.getElementById('fpResendBtn');
+  const resendStatus = document.getElementById('fpResendStatus');
+  if (resendBtn.getAttribute('data-disabled') === 'true') return;
+  fpError2.style.display = 'none';
+  resendBtn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: activeResetEmail })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to resend code.');
+
+    document.getElementById('fpOtp').value = '';
+
+    if (resendStatus) {
+      resendStatus.style.display = 'inline';
+      setTimeout(() => { resendStatus.style.display = 'none'; }, 4000);
+    }
+
+    let secondsLeft = 60;
+    resendBtn.setAttribute('data-disabled', 'true');
+    resendBtn.style.color = '#94A3B8';
+    resendBtn.style.pointerEvents = 'none';
+    const timer = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        resendBtn.removeAttribute('data-disabled');
+        resendBtn.textContent = 'Resend code';
+        resendBtn.style.color = '#1BC7B5';
+        resendBtn.style.pointerEvents = 'auto';
+      } else {
+        resendBtn.textContent = `Resend in ${secondsLeft}s`;
+      }
+    }, 1000);
+  } catch (err) {
+    resendBtn.textContent = 'Resend code';
+    fpError2.textContent = err.message;
+    fpError2.style.display = 'block';
+  }
+});
+
+document.getElementById('resetPasswordSubmitBtn').addEventListener('click', async () => {
+  const otp = document.getElementById('fpOtp').value.trim();
+  const newPassword = document.getElementById('fpNewPassword').value;
+  const confirmPassword = document.getElementById('fpConfirmPassword').value;
+  fpError2.style.display = 'none';
+
+  if (!otp || !newPassword) {
+    fpError2.textContent = 'Please fill in all fields.';
+    fpError2.style.display = 'block';
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    fpError2.textContent = 'Passwords do not match.';
+    fpError2.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('resetPasswordSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Updating…';
+
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: activeResetEmail, otp, newPassword, confirmPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to reset password.');
+
+    forgotModal.style.display = 'none';
+    document.getElementById('email').value = activeResetEmail;
+    document.getElementById('password').value = '';
+    const errBox = document.getElementById('formError');
+    errBox.textContent = 'Password reset successfully! Please log in with your new password.';
+    errBox.style.color = '#047857';
+    errBox.style.borderColor = '#10B981';
+    errBox.style.background = '#ECFDF5';
+    errBox.classList.add('visible');
+  } catch (err) {
+    fpError2.textContent = err.message;
+    fpError2.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Update Password';
+  }
+});
+
+// Interactive 3D butterfly parallax tilt
+(function initButterflyParallax() {
+  const stage = document.getElementById('authButterflyStage');
+  const scene = document.getElementById('authButterflyScene');
+  if (!stage || !scene) return;
+
+  let currentRx = 0, currentRy = 0;
+  let targetRx = 0, targetRy = 0;
+  let rafId = null;
+
+  function onMouseMove(e) {
+    const rect = stage.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const normX = (e.clientX - centerX) / (window.innerWidth / 2);
+    const normY = (e.clientY - centerY) / (window.innerHeight / 2);
+
+    targetRy = Math.max(-18, Math.min(18, normX * 18));
+    targetRx = Math.max(-14, Math.min(14, -normY * 14));
+
+    if (!rafId) {
+      rafId = requestAnimationFrame(updateParallax);
+    }
+  }
+
+  function updateParallax() {
+    currentRx += (targetRx - currentRx) * 0.1;
+    currentRy += (targetRy - currentRy) * 0.1;
+
+    scene.style.transform = `rotateX(${currentRx.toFixed(2)}deg) rotateY(${currentRy.toFixed(2)}deg)`;
+
+    if (Math.abs(targetRx - currentRx) > 0.05 || Math.abs(targetRy - currentRy) > 0.05) {
+      rafId = requestAnimationFrame(updateParallax);
+    } else {
+      rafId = null;
+    }
+  }
+
+  window.addEventListener('mousemove', onMouseMove, { passive: true });
+})();
+</script>
+</body>
+</html>

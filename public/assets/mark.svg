@@ -1,0 +1,37 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1BC7B5"/><stop offset="100%" stop-color="#0E3A56"/>
+    </linearGradient>
+    <linearGradient id="wR" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1BC7B5"/><stop offset="100%" stop-color="#0E3A56"/>
+    </linearGradient>
+    <linearGradient id="wLL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E3A56"/><stop offset="100%" stop-color="#0A2740"/>
+    </linearGradient>
+    <linearGradient id="wRL" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0E3A56"/><stop offset="100%" stop-color="#0A2740"/>
+    </linearGradient>
+    <linearGradient id="bG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0A2740"/><stop offset="100%" stop-color="#071B2E"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(120,132) scale(0.62)">
+    <path d="M -8,-58 C -60,-96 -132,-96 -158,-48 C -178,-10 -168,42 -122,72 C -90,93 -46,86 -8,54 Z" fill="url(#wL)"/>
+    <path d="M 8,-58 C 60,-96 132,-96 158,-48 C 178,-10 168,42 122,72 C 90,93 46,86 8,54 Z" fill="url(#wR)"/>
+    <path d="M -6,50 C -40,68 -84,72 -104,102 C -118,124 -110,152 -80,160 C -52,167 -22,150 -4,118 Z" fill="url(#wLL)"/>
+    <path d="M 6,50 C 40,68 84,72 104,102 C 118,124 110,152 80,160 C 52,167 22,150 4,118 Z" fill="url(#wRL)"/>
+    <path d="M -34,-58 C -70,-40 -92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+    <path d="M 34,-58 C 70,-40 92,-4 84,34" fill="none" stroke="#EAF7F5" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+    <g>
+      <path d="M -17,-70 C -17,-92 17,-92 17,-70 L 17,-52 L 8,-52 L 8,-70 C 8,-82 -8,-82 -8,-70 L -8,-52 L -17,-52 Z" fill="url(#bG)"/>
+      <rect x="-24" y="-54" width="48" height="150" rx="18" fill="url(#bG)"/>
+      <circle cx="0" cy="8" r="7" fill="#1BC7B5"/>
+      <path d="M -4,14 L 4,14 L 6,34 L -6,34 Z" fill="#1BC7B5"/>
+    </g>
+    <path d="M -6,-72 C -22,-96 -34,-108 -30,-126" fill="none" stroke="#0A2740" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 6,-72 C 22,-96 34,-108 30,-126" fill="none" stroke="#0A2740" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-30" cy="-126" r="6" fill="#FF6F5E"/>
+    <circle cx="30" cy="-126" r="6" fill="#FF6F5E"/>
+  </g>
+</svg>

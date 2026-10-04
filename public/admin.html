@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Command Center — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+<style>
+/* Futuristic Command Center Styling */
+:root {
+  --admin-cyan: #06b6d4;
+  --admin-cyan-glow: rgba(6, 182, 212, 0.2);
+  --admin-dark-card: #0f172a;
+  --admin-border: #e2e8f0;
+}
+
+.admin-header-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.admin-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-glow 2s infinite;
+}
+@keyframes pulse-glow {
+  0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Tab Navigation */
+.admin-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid var(--line);
+  margin: 24px 0 20px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.admin-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-tab-btn:hover {
+  color: var(--navy);
+  background: rgba(241, 245, 249, 0.7);
+}
+.admin-tab-btn.active {
+  color: var(--navy);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-bottom: 2px solid #fff;
+  margin-bottom: -2px;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.02);
+}
+.admin-tab-btn .badge-pill {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+}
+.admin-tab-btn.active .badge-pill {
+  background: var(--navy);
+  color: #fff;
+}
+
+.admin-tab-content {
+  display: none;
+}
+.admin-tab-content.active {
+  display: block;
+}
+
+/* Control Bar: Filters, Search, Actions */
+.admin-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.admin-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.filter-chip:hover {
+  border-color: var(--teal);
+  color: var(--navy);
+}
+.filter-chip.active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+.admin-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 480px;
+}
+.admin-search-input {
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--paper);
+  transition: all 0.15s ease;
+}
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.admin-user-email-link {
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(10, 39, 64, 0.3);
+  cursor: pointer;
+}
+.admin-user-email-link:hover {
+  color: var(--teal);
+  text-decoration-color: var(--teal);
+}
+
+.plan-chip-enterprise {
+  background: #7c3aed !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+/* Pagination Bar */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.page-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.page-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  color: var(--teal-dark);
+}
+.page-btn.active {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Deep User Details Modal */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 39, 64, 0.65);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.admin-modal {
+  background: var(--paper);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.admin-modal-head {
+  padding: 20px 26px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.admin-modal-head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--navy);
+}
+.admin-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.admin-modal-close:hover { color: #000; }
+.admin-modal-body {
+  padding: 24px 26px;
+  overflow-y: auto;
+}
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.admin-stat-box {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.admin-stat-box .val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  font-family: var(--serif);
+}
+.admin-stat-box .lbl {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.admin-panel-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.admin-panel-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.admin-panel-card-head h4 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--navy);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* System Health Card Grid */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.health-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.health-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), #06b6d4);
+}
+.health-card .title {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.health-card .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy);
+  font-family: var(--serif);
+}
+.health-card .desc {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+/* Danger Zone */
+.danger-zone {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(254, 242, 242, 0.4);
+  border-radius: 10px;
+  padding: 18px;
+  margin-top: 24px;
+}
+
+/* Dedicated Admin Login Card if unauthenticated */
+#adminLoginContainer {
+  max-width: 420px;
+  margin: 60px auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 32px 28px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+</style>
+</head>
+<body>
+<div class="app-shell" id="adminShell" style="display:none;">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand-wrapper">
+      <a href="/admin" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="sidebar-plan-pill plan-pill-enterprise" id="sidebarPlanBadge">
+        <span class="plan-pill-dot"></span>
+        <span id="sidebarPlanBadgeText">Admin Panel</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/admin" class="active">Admin panel</a>
+      <a href="#" id="logoutLink">Log out</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-topbar">
+      <button id="hamburgerBtn" class="hamburger" aria-label="Menu">☰</button>
+      <a href="/admin" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+    </div>
+
+    <!-- Header & Command Bar -->
+    <div class="main-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div>
+        <h1 style="margin:0 0 6px;">Admin Command Center</h1>
+        <div class="admin-header-status">
+          <span class="admin-pulse-dot"></span>
+          <span>SYSTEM ONLINE · MYSQL 8.0 POOL ACTIVE</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="btn btn-ghost btn-sm" id="runSweepBtn">⚡ Run Sweep Now</button>
+      </div>
+    </div>
+
+    <!-- High-level Metric Stat Cards -->
+    <div class="stat-row">
+      <div class="stat-card"><div class="n" id="statUsers">—</div><div class="l">Total signups</div></div>
+      <div class="stat-card"><div class="n" id="statPaid">—</div><div class="l">Paid subscribers</div></div>
+      <div class="stat-card"><div class="n" id="statHalted">—</div><div class="l">Missed payments</div></div>
+      <div class="stat-card"><div class="n" id="statDomains">—</div><div class="l">Certs monitored (all users)</div></div>
+      <div class="stat-card"><div class="n" id="statGroups">—</div><div class="l">Groups created</div></div>
+      <div class="stat-card"><div class="n" id="statMrr">—</div><div class="l">Estimated MRR</div></div>
+      <div class="stat-card"><div class="n" id="statEmailsToday">—</div><div class="l">Emails sent today</div></div>
+    </div>
+
+    <!-- Plan breakdown -->
+    <div class="stat-row" id="planBreakdown" style="margin-top: -12px; margin-bottom: 24px;"></div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tabs-nav">
+      <button type="button" class="admin-tab-btn active" onclick="switchAdminTab('users')">
+        👥 Users Management <span class="badge-pill" id="tabUsersBadge">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" onclick="switchAdminTab('certificates')">
+        🌐 Global Certificates Explorer <span class="badge-pill" id="tabCertsBadge">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" onclick="switchAdminTab('alerts')">
+        ✉️ Alert Logs &amp; Delivery <span class="badge-pill" id="tabAlertsBadge">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" onclick="switchAdminTab('health')">
+        ⚡ System &amp; Database Health
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: USERS MANAGEMENT                    -->
+    <!-- ========================================== -->
+    <div class="admin-tab-content active" id="tabUsers">
+      <div class="admin-control-bar">
+        <div class="admin-filter-group">
+          <button type="button" class="filter-chip active" data-filter="all" onclick="setUserPlanFilter('all', this)">All Plans</button>
+          <button type="button" class="filter-chip" data-filter="trial" onclick="setUserPlanFilter('trial', this)">Free (5)</button>
+          <button type="button" class="filter-chip" data-filter="micro" onclick="setUserPlanFilter('micro', this)">Micro ($1)</button>
+          <button type="button" class="filter-chip" data-filter="starter" onclick="setUserPlanFilter('starter', this)">Starter ($5)</button>
+          <button type="button" class="filter-chip" data-filter="growth" onclick="setUserPlanFilter('growth', this)">Growth ($10)</button>
+          <button type="button" class="filter-chip" data-filter="pro" onclick="setUserPlanFilter('pro', this)">Pro ($20)</button>
+          <button type="button" class="filter-chip" data-filter="agency" onclick="setUserPlanFilter('agency', this)">Agency ($50)</button>
+          <button type="button" class="filter-chip" data-filter="enterprise" onclick="setUserPlanFilter('enterprise', this)">Enterprise</button>
+          <button type="button" class="filter-chip" data-filter="halted" onclick="setUserPlanFilter('halted', this)">Halted</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="admin-search-wrapper">
+            <input type="text" id="userSearchInput" class="admin-search-input" placeholder="🔍 Search users by name, email, plan, or status…">
+          </div>
+          <select id="userPageSizeSelect" onchange="changeUserPageSize(this.value)" style="padding:7px 10px; border:1px solid var(--line); border-radius:8px; font-size:13px; background:#fff;">
+            <option value="5">5 per page</option>
+            <option value="10" selected>10 per page</option>
+            <option value="25">25 per page</option>
+            <option value="50">50 per page</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="exportUsersCsv()">📥 Export CSV</button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Email (click for details)</th><th>Plan</th><th>Billing</th><th>Verified</th><th>Domains</th><th>Limit</th><th>Signed up</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="usersPagination"></div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: GLOBAL CERTIFICATES EXPLORER        -->
+    <!-- ========================================== -->
+    <div class="admin-tab-content" id="tabCertificates">
+      <div class="admin-control-bar">
+        <div class="admin-filter-group">
+          <button type="button" class="filter-chip active" onclick="setCertStatusFilter('all', this)">All Statuses</button>
+          <button type="button" class="filter-chip" onclick="setCertStatusFilter('valid', this)">Valid</button>
+          <button type="button" class="filter-chip" onclick="setCertStatusFilter('warning', this)">Warning (&lt;14d)</button>
+          <button type="button" class="filter-chip" onclick="setCertStatusFilter('critical', this)">Critical (&lt;3d)</button>
+          <button type="button" class="filter-chip" onclick="setCertStatusFilter('expired', this)">Expired</button>
+          <button type="button" class="filter-chip" onclick="setCertStatusFilter('error', this)">Error</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="admin-search-wrapper">
+            <input type="text" id="certSearchInput" class="admin-search-input" placeholder="🔍 Search domain, owner email, or issuer…">
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="exportCertsCsv()">📥 Export CSV</button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Domain</th><th>Owner</th><th>Status</th><th>Issuer</th><th>Expiry Date</th><th>Days Left</th><th>Last Checked</th>
+            </tr>
+          </thead>
+          <tbody id="globalCertsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="globalCertsPagination"></div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: ALERT LOGS & DELIVERY               -->
+    <!-- ========================================== -->
+    <div class="admin-tab-content" id="tabAlerts">
+      <div class="admin-control-bar">
+        <div class="admin-filter-group">
+          <button type="button" class="filter-chip active" onclick="setAlertStatusFilter('all', this)">All Severities</button>
+          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('warning', this)">Warning</button>
+          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('critical', this)">Critical</button>
+          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('expired', this)">Expired</button>
+        </div>
+        <div class="admin-search-wrapper">
+          <input type="text" id="alertSearchInput" class="admin-search-input" placeholder="🔍 Search by domain or recipient…">
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th><th>Domain</th><th>Recipient</th><th>Alert Severity</th>
+            </tr>
+          </thead>
+          <tbody id="globalAlertsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="globalAlertsPagination"></div>
+
+      <!-- Historical Chart Section -->
+      <div class="section-head" style="margin:24px 0 16px;">
+        <h3 style="font-size:16px;">Alert Emails Dispatched — Last 14 Days</h3>
+      </div>
+      <div class="admin-table-wrap" style="max-height:220px; overflow-y:auto;">
+        <table class="admin-table">
+          <thead><tr><th>Date</th><th>Alert Emails Sent</th></tr></thead>
+          <tbody id="emailsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: SYSTEM & DATABASE HEALTH            -->
+    <!-- ========================================== -->
+    <div class="admin-tab-content" id="tabHealth">
+      <div class="health-grid">
+        <div class="health-card">
+          <div class="title">MySQL 8.0 Cluster</div>
+          <div class="value" id="healthDbStatus">ONLINE</div>
+          <div class="desc" id="healthDbPing">Latency: ~2ms</div>
+        </div>
+        <div class="health-card">
+          <div class="title">Server Uptime</div>
+          <div class="value" id="healthUptime">—</div>
+          <div class="desc">Continuous Node service</div>
+        </div>
+        <div class="health-card">
+          <div class="title">Memory Usage</div>
+          <div class="value" id="healthMemory">—</div>
+          <div class="desc" id="healthMemoryRss">RSS: —</div>
+        </div>
+        <div class="health-card">
+          <div class="title">Background Scheduler</div>
+          <div class="value">ACTIVE</div>
+          <div class="desc">Every 5 mins · 30m re-alert</div>
+        </div>
+      </div>
+
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>🗄️ Database Record Counts</h4>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="loadSystemHealth()">🔄 Refresh Metrics</button>
+        </div>
+        <div class="admin-stat-grid" style="margin:0;">
+          <div class="admin-stat-box"><div class="val" id="countUsers">—</div><div class="lbl">Users</div></div>
+          <div class="admin-stat-box"><div class="val" id="countDomains">—</div><div class="lbl">Domains</div></div>
+          <div class="admin-stat-box"><div class="val" id="countAlerts">—</div><div class="lbl">Alert Records</div></div>
+          <div class="admin-stat-box"><div class="val" id="countCerts">—</div><div class="lbl">Generated Certs</div></div>
+        </div>
+      </div>
+
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>⚠️ Stale &amp; Unacknowledged Certificates (&gt; 24h)</h4>
+        </div>
+        <p style="color:var(--muted); font-size:13px; margin:0 0 12px;">Certificates stuck in warning/critical/expired that haven't been acknowledged by their owner.</p>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Domain</th><th>Owner</th><th>Status</th><th>Days left</th><th>Unacknowledged for</th></tr></thead>
+            <tbody id="staleTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 48px; padding: 24px 0; border-top: 1px solid var(--line); font-size: 13px; color: #6E828C; text-align: center;">
+      <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+    </div>
+  </main>
+</div>
+
+<!-- Admin Login Card for unauthenticated state -->
+<div id="adminLoginContainer" style="display:none;">
+  <div style="text-align:center; margin-bottom:24px;">
+    <img src="/assets/mark.svg" alt="" style="width:48px; height:48px; margin-bottom:12px;">
+    <h2 style="margin:0 0 6px; font-size:22px; color:var(--navy);">SSL Alerts Admin</h2>
+    <p style="margin:0; font-size:14px; color:var(--muted);">Sign in with administrator credentials</p>
+  </div>
+  <div class="form-error" id="adminLoginError" style="display:none; margin-bottom:16px; color:#ef4444; font-size:13px;"></div>
+  <form id="adminLoginForm">
+    <div class="field full">
+      <label for="adminEmail">Admin Email</label>
+      <input type="email" id="adminEmail" value="admin@sslalerts.info" required style="width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; margin-top:4px;">
+    </div>
+    <div class="field full" style="margin-top:16px;">
+      <label for="adminPassword">Password</label>
+      <input type="password" id="adminPassword" required placeholder="••••••••" style="width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; margin-top:4px;">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" id="adminLoginBtn" style="width:100%; margin-top:20px; padding:12px;">Log in to Admin Panel</button>
+  </form>
+</div>
+
+<!-- ========================================== -->
+<!-- DEEP USER DRILLDOWN MODAL                  -->
+<!-- ========================================== -->
+<div class="admin-modal-overlay" id="adminUserModal" style="display:none;">
+  <div class="admin-modal">
+    <div class="admin-modal-head">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 id="modalUserName" style="margin:0;">User Details</h3>
+          <span id="modalVerifiedPill" class="pill pill-valid" style="font-size:11px;">Verified</span>
+        </div>
+        <div id="modalUserEmail" style="font-size:13px; color:var(--muted); margin-top:4px;"></div>
+      </div>
+      <button type="button" class="admin-modal-close" onclick="closeUserModal()">✕</button>
+    </div>
+    <div class="admin-modal-body">
+      <!-- Top Metrics -->
+      <div class="admin-stat-grid">
+        <div class="admin-stat-box">
+          <div class="val" id="modalStatDomains">0</div>
+          <div class="lbl">Monitored Certs</div>
+        </div>
+        <div class="admin-stat-box">
+          <div class="val" id="modalStatGroups">0</div>
+          <div class="lbl">Groups Created</div>
+        </div>
+        <div class="admin-stat-box">
+          <div class="val" id="modalStatEmailsSent">0</div>
+          <div class="lbl">Alerts Sent</div>
+        </div>
+        <div class="admin-stat-box">
+          <div class="val" id="modalStatGeneratedCerts">0</div>
+          <div class="lbl">Certs Generated</div>
+        </div>
+        <div class="admin-stat-box">
+          <div class="val" id="modalStatPlan">—</div>
+          <div class="lbl">Current Plan</div>
+        </div>
+      </div>
+
+      <!-- PRIMARY EMAIL MANAGEMENT WITH OTP -->
+      <div class="admin-panel-card" style="background:#F0FDFA; border-color:#99F6E4;">
+        <div class="admin-panel-card-head" style="border-color:#CCFBF1;">
+          <h4 style="color:#0F766E;">📧 Primary Login &amp; Account Email</h4>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnToggleEmailChange" onclick="toggleEmailChangeFlow()">✏️ Change Primary Email</button>
+        </div>
+        <div id="currentEmailDisplayWrap" style="font-size:13px; color:#134E4A;">
+          Current Primary Email: <strong id="modalPrimaryEmailText">—</strong>
+        </div>
+
+        <!-- In-Modal Email Change Workflow -->
+        <div id="emailChangeBox" style="display:none; margin-top:14px; padding-top:14px; border-top:1px dashed #99F6E4;">
+          <!-- Step 1: Request Email Change -->
+          <div id="emailStep1">
+            <label style="display:block; font-size:12px; font-weight:700; color:#0F766E; margin-bottom:4px;">ENTER NEW PRIMARY EMAIL ADDRESS:</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="email" id="inputNewPrimaryEmail" placeholder="customer@newdomain.com" style="flex:1; min-width:240px; padding:8px 12px; border:1px solid #5EEAD4; border-radius:6px; font-size:13px; background:#fff;">
+              <button type="button" class="btn btn-primary btn-sm" id="btnSendEmailOtp" onclick="requestEmailChangeOtp()">Send 6-Digit Code</button>
+            </div>
+            <p style="font-size:12px; color:#0F766E; margin:6px 0 0;">An OTP verification code will be dispatched to the new email address to ensure ownership before updating.</p>
+          </div>
+
+          <!-- Step 2: Confirm OTP -->
+          <div id="emailStep2" style="display:none;">
+            <div style="background:#fff; border:1px solid #5EEAD4; border-radius:8px; padding:12px; margin-bottom:10px;">
+              <div style="font-size:13px; color:#0F766E; margin-bottom:6px;">
+                Verification code dispatched to: <strong id="targetNewEmailText">user@domain.com</strong>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="inputEmailOtpCode" maxlength="6" placeholder="123456" style="width:120px; font-size:18px; font-family:monospace; letter-spacing:4px; text-align:center; padding:6px; border:2px solid #0D9488; border-radius:6px;">
+                <button type="button" class="btn btn-primary btn-sm" id="btnVerifyEmailOtp" onclick="confirmEmailChangeOtp()">Verify &amp; Update Email</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btnResendEmailOtp" onclick="resendEmailChangeOtp()">Resend Code</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="cancelEmailChangeFlow()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBSCRIPTION & MANUAL BANK PAYMENT UPGRADE -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>💳 Subscription &amp; Manual Bank Payment Management</h4>
+          <button type="button" class="btn btn-ghost btn-sm" style="color:#ef4444;" onclick="quickCancelSubscription()">❌ Revert to Free Plan</button>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Plan Tier</label>
+            <select id="modalPlanSelect" onchange="toggleEnterpriseLimitInput()" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
+              <option value="trial">Free Trial (5 domains)</option>
+              <option value="micro">Micro — $1/mo (5 domains)</option>
+              <option value="starter">Starter — $5/mo (20 domains)</option>
+              <option value="growth">Growth — $10/mo (50 domains)</option>
+              <option value="pro">Pro — $20/mo (100 domains)</option>
+              <option value="agency">Agency — $50/mo (500 domains)</option>
+              <option value="enterprise">🏢 Enterprise (Custom Limit)</option>
+            </select>
+          </div>
+          <div id="enterpriseLimitWrap" style="display:none;">
+            <label for="modalDomainLimitInput" style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Custom Domain Limit</label>
+            <input type="number" id="modalDomainLimitInput" min="1" max="1000000" placeholder="e.g. 250" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Account Status</label>
+            <select id="modalBillingSelect" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
+              <option value="active">Active</option>
+              <option value="halted">Halted (Payment Failed)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+          <div>
+            <label for="modalPaymentRefInput" style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Bank / Payment Reference (UTR, Wire #)</label>
+            <input type="text" id="modalPaymentRefInput" placeholder="e.g. UTR-982138921 / Wire #104" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
+          </div>
+          <div>
+            <label for="modalAdminNotesInput" style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Admin Internal Notes</label>
+            <input type="text" id="modalAdminNotesInput" placeholder="e.g. Upgraded manually via Bank Wire on 27/09" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-sm" id="modalSavePlanBtn" onclick="saveUserPlanChanges()">💾 Save Plan &amp; Payment Changes</button>
+      </div>
+
+      <!-- Monitored Domains Section -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>🌐 Monitored Certificates (<span id="modalDomainListCount">0</span>)</h4>
+        </div>
+        <div class="admin-table-wrap" style="max-height:220px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Domain</th><th>Status</th><th>Issuer</th><th>Expires</th><th>Days Left</th></tr>
+            </thead>
+            <tbody id="modalDomainsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Configured Alert Email Recipients -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>📧 Notification Recipients (<span id="modalEmailListCount">0</span>)</h4>
+        </div>
+        <div id="modalNotificationEmailsList" style="font-size:13px; color:#334155; line-height:1.6;"></div>
+      </div>
+
+      <!-- Generated Certificates History -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>🔐 Generated Certificates History (<span id="modalGenCertListCount">0</span>)</h4>
+        </div>
+        <div class="admin-table-wrap" style="max-height:200px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Type</th><th>Domain</th><th>Generated</th><th>Expires</th><th>Status</th></tr>
+            </thead>
+            <tbody id="modalGenCertsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Alert Log -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>✉️ Recent Alert Emails Sent (<span id="modalRecentAlertsCount">0</span>)</h4>
+        </div>
+        <div class="admin-table-wrap" style="max-height:200px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Domain</th><th>Alert Status</th><th>Timestamp</th></tr>
+            </thead>
+            <tbody id="modalAlertsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DANGER ZONE: DELETE ACCOUNT -->
+      <div class="danger-zone">
+        <h4 style="color:#b91c1c; margin:0 0 6px; font-size:14px; text-transform:uppercase;">⚠️ Danger Zone — Delete Account</h4>
+        <p style="color:#7f1d1d; font-size:13px; margin:0 0 12px; line-height:1.5;">
+          Permanently delete this customer account. This will immediately cascade and delete all monitored domains, certificates, groups, notification emails, and history. <strong>This action cannot be undone.</strong>
+        </p>
+        <button type="button" class="btn btn-sm" style="background:#dc2626; color:#fff; border:none;" onclick="initiateUserDeletion()">🗑️ Delete User Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const toastEl = document.getElementById('toast');
+function toast(msg, isError = false) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast visible' + (isError ? ' error' : '');
+  setTimeout(() => toastEl.classList.remove('visible'), 3500);
+}
+
+const PLAN_LABELS = {
+  trial: 'Free Trial (5)',
+  micro: 'Micro ($1/mo)',
+  starter: 'Starter ($5/mo)',
+  growth: 'Growth ($10/mo)',
+  pro: 'Pro ($20/mo)',
+  agency: 'Agency ($50/mo)',
+  enterprise: 'Enterprise',
+  unlimited: 'Enterprise'
+};
+
+function formatLimit(n, plan) {
+  if (plan === 'enterprise' || plan === 'unlimited') return `${n || 'Custom'}`;
+  return n;
+}
+
+// Global Tab Navigation
+let currentTab = 'users';
+function switchAdminTab(tabName) {
+  currentTab = tabName;
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick').includes(tabName));
+  });
+  document.querySelectorAll('.admin-tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  const target = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+  if (target) target.classList.add('active');
+
+  if (tabName === 'certificates') loadGlobalCertificates();
+  if (tabName === 'alerts') loadGlobalAlerts();
+  if (tabName === 'health') loadSystemHealth();
+}
+
+// State
+let allUsers = [];
+let filteredUsers = [];
+let usersCurrentPage = 1;
+let usersPageSize = 10;
+let userPlanFilter = 'all';
+let currentModalUserId = null;
+let currentModalUserObj = null;
+
+// Global Certs State
+let certsCurrentPage = 1;
+let certsFilterStatus = 'all';
+let currentCertsList = [];
+
+// Global Alerts State
+let alertsCurrentPage = 1;
+let alertsFilterStatus = 'all';
+
+async function checkAdminAuth() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    if (res.status === 401 || res.status === 403) {
+      showAdminLogin();
+      return;
+    }
+    const data = await res.json();
+    showAdminDashboard(data);
+  } catch (err) {
+    showAdminLogin();
+  }
+}
+
+function showAdminLogin() {
+  document.getElementById('adminShell').style.display = 'none';
+  document.getElementById('adminLoginContainer').style.display = 'block';
+}
+
+function showAdminDashboard(data) {
+  document.getElementById('adminLoginContainer').style.display = 'none';
+  document.getElementById('adminShell').style.display = 'grid';
+  renderStats(data);
+  loadGlobalCertificates();
+  loadGlobalAlerts();
+}
+
+document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const btn = document.getElementById('adminLoginBtn');
+  const errEl = document.getElementById('adminLoginError');
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    toast('Welcome, Administrator!');
+    await checkAdminAuth();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Log in to Admin Panel';
+  }
+});
+
+function renderStats(data) {
+  document.getElementById('statUsers').textContent = data.totalUsers;
+  document.getElementById('statPaid').textContent = data.paidUsers;
+  document.getElementById('statHalted').textContent = data.haltedUsers;
+  document.getElementById('statDomains').textContent = data.totalDomains;
+  document.getElementById('statGroups').textContent = data.totalGroups;
+  document.getElementById('statMrr').textContent = `$${data.estimatedMrr}`;
+  document.getElementById('statEmailsToday').textContent = data.emailsSentToday;
+
+  document.getElementById('tabUsersBadge').textContent = data.totalUsers;
+  document.getElementById('tabCertsBadge').textContent = data.totalDomains;
+
+  document.getElementById('planBreakdown').innerHTML = Object.entries(data.byPlan).map(([plan, count]) => `
+    <div class="stat-card">
+      <div class="n">${count}</div>
+      <div class="l">${PLAN_LABELS[plan] || plan}</div>
+    </div>`).join('');
+
+  document.getElementById('emailsTableBody').innerHTML = (data.emailsByDay && data.emailsByDay.length)
+    ? data.emailsByDay.map(row => `
+        <tr>
+          <td>${new Date(row.day + 'T00:00:00Z').toLocaleDateString()}</td>
+          <td><strong>${row.n}</strong> alert email(s)</td>
+        </tr>`).join('')
+    : `<tr><td colspan="2" style="color:var(--muted);">No alert emails sent in the last 14 days.</td></tr>`;
+
+  document.getElementById('staleTableBody').innerHTML = (data.staleUnacknowledged && data.staleUnacknowledged.length)
+    ? data.staleUnacknowledged.map(d => `
+        <tr>
+          <td>${escapeHtml(d.hostname)}</td>
+          <td>${escapeHtml(d.user_name)} (${escapeHtml(d.user_email)})</td>
+          <td><span class="pill pill-${d.status}">${d.status}</span></td>
+          <td>${d.days_left ?? '—'}</td>
+          <td>${daysSince(d.status_since)}</td>
+        </tr>`).join('')
+    : `<tr><td colspan="5" style="color:var(--muted);">Nothing unacknowledged for more than a day — all systems healthy.</td></tr>`;
+
+  allUsers = data.users || [];
+  applyUserFilters();
+}
+
+// Users Tab Logic
+function setUserPlanFilter(filter, btn) {
+  userPlanFilter = filter;
+  document.querySelectorAll('#tabUsers .filter-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  usersCurrentPage = 1;
+  applyUserFilters();
+}
+
+function changeUserPageSize(val) {
+  usersPageSize = parseInt(val, 10) || 10;
+  usersCurrentPage = 1;
+  applyUserFilters();
+}
+
+function applyUserFilters() {
+  const q = (document.getElementById('userSearchInput')?.value || '').trim().toLowerCase();
+  
+  filteredUsers = allUsers.filter(u => {
+    // Plan / status chip filter
+    if (userPlanFilter === 'halted') {
+      if (u.billing_status !== 'halted') return false;
+    } else if (userPlanFilter === 'enterprise') {
+      if (u.plan !== 'enterprise' && u.plan !== 'unlimited') return false;
+    } else if (userPlanFilter !== 'all') {
+      if (u.plan !== userPlanFilter) return false;
+    }
+
+    // Text search query
+    if (q) {
+      const match = (u.name || '').toLowerCase().includes(q) ||
+                    (u.email || '').toLowerCase().includes(q) ||
+                    (u.plan || '').toLowerCase().includes(q) ||
+                    (u.billing_status || '').toLowerCase().includes(q) ||
+                    (u.payment_reference || '').toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  renderUsersList();
+}
+
+function renderUsersList() {
+  const tbody = document.getElementById('usersTableBody');
+  if (filteredUsers.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:32px; color:var(--muted);">No users matching your filters.</td></tr>`;
+    document.getElementById('usersPagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(filteredUsers.length / usersPageSize);
+  if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
+  if (usersCurrentPage < 1) usersCurrentPage = 1;
+
+  const startIndex = (usersCurrentPage - 1) * usersPageSize;
+  const pageUsers = filteredUsers.slice(startIndex, startIndex + usersPageSize);
+
+  tbody.innerHTML = pageUsers.map(u => `
+    <tr>
+      <td><strong>${escapeHtml(u.name)}</strong></td>
+      <td>
+        <a href="#" class="admin-user-email-link" onclick="openUserModal(${u.id}); return false;" title="Inspect user details">
+          ${escapeHtml(u.email)} 🔍
+        </a>
+      </td>
+      <td><span class="plan-chip plan-chip-${u.plan}">${u.plan}</span></td>
+      <td>${u.billing_status === 'halted' ? '<span class="pill pill-critical">Halted</span>' : '<span class="pill pill-valid">Active</span>'}</td>
+      <td>${u.is_verified ? '<span class="pill pill-valid" style="font-size:11px;">✓ Verified</span>' : '<span class="pill pill-warning" style="font-size:11px;">Unverified</span>'}</td>
+      <td><strong>${u.domain_count}</strong></td>
+      <td>${formatLimit(u.domain_limit, u.plan)}</td>
+      <td>${new Date(u.created_at + 'Z').toLocaleDateString()}</td>
+      <td>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
+      </td>
+    </tr>`).join('');
+
+  renderPagination('usersPagination', usersCurrentPage, totalPages, filteredUsers.length, usersPageSize, 'goToUsersPage');
+}
+
+function goToUsersPage(p) {
+  usersCurrentPage = p;
+  renderUsersList();
+}
+
+document.getElementById('userSearchInput')?.addEventListener('input', () => {
+  usersCurrentPage = 1;
+  applyUserFilters();
+});
+
+function exportUsersCsv() {
+  if (!filteredUsers.length) return toast('No users to export', true);
+  let csv = 'ID,Name,Email,Plan,Billing Status,Verified,Domains,Domain Limit,Signed Up,Payment Reference\n';
+  filteredUsers.forEach(u => {
+    csv += `"${u.id}","${(u.name||'').replace(/"/g, '""')}","${(u.email||'').replace(/"/g, '""')}","${u.plan}","${u.billing_status}","${u.is_verified ? 'Yes' : 'No'}","${u.domain_count}","${u.domain_limit}","${u.created_at}","${(u.payment_reference||'').replace(/"/g, '""')}"\n`;
+  });
+  downloadBlob(csv, 'sslalerts_users.csv', 'text/csv;charset=utf-8;');
+}
+
+// Global Certificates Explorer Tab Logic
+async function loadGlobalCertificates() {
+  const tbody = document.getElementById('globalCertsTableBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--muted);">Loading certificates…</td></tr>';
+
+  const q = encodeURIComponent((document.getElementById('certSearchInput')?.value || '').trim());
+  const status = encodeURIComponent(certsFilterStatus);
+
+  try {
+    const res = await fetch(`/api/admin/certificates?page=${certsCurrentPage}&limit=10&q=${q}&status=${status}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load certificates');
+
+    currentCertsList = data.certs || [];
+    document.getElementById('tabCertsBadge').textContent = data.total;
+
+    if (currentCertsList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--muted);">No monitored certificates match your query.</td></tr>';
+      document.getElementById('globalCertsPagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = currentCertsList.map(c => `
+      <tr>
+        <td><strong>${escapeHtml(c.hostname)}</strong> ${c.port !== 443 ? `:${c.port}` : ''}</td>
+        <td>
+          <a href="#" class="admin-user-email-link" onclick="openUserModal(${c.user_id}); return false;">
+            ${escapeHtml(c.user_name)} (${escapeHtml(c.user_email)})
+          </a>
+        </td>
+        <td><span class="pill pill-${c.status}">${c.status}</span></td>
+        <td>${escapeHtml(c.issuer || '—')}</td>
+        <td>${c.valid_to ? new Date(c.valid_to).toLocaleDateString() : '—'}</td>
+        <td><strong>${c.days_left !== null ? `${c.days_left}d` : '—'}</strong></td>
+        <td>${c.last_checked_at ? new Date(c.last_checked_at + 'Z').toLocaleString() : '—'}</td>
+      </tr>
+    `).join('');
+
+    renderPagination('globalCertsPagination', data.page, data.totalPages, data.total, 10, 'goToCertsPage');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:#ef4444; padding:20px; text-align:center;">${err.message}</td></tr>`;
+  }
+}
+
+function setCertStatusFilter(status, btn) {
+  certsFilterStatus = status;
+  document.querySelectorAll('#tabCertificates .filter-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  certsCurrentPage = 1;
+  loadGlobalCertificates();
+}
+
+function goToCertsPage(p) {
+  certsCurrentPage = p;
+  loadGlobalCertificates();
+}
+
+document.getElementById('certSearchInput')?.addEventListener('input', () => {
+  certsCurrentPage = 1;
+  loadGlobalCertificates();
+});
+
+function exportCertsCsv() {
+  if (!currentCertsList.length) return toast('No certificates to export', true);
+  let csv = 'ID,Hostname,Port,Status,Owner Name,Owner Email,Issuer,Expires,Days Left\n';
+  currentCertsList.forEach(c => {
+    csv += `"${c.id}","${c.hostname}","${c.port}","${c.status}","${(c.user_name||'').replace(/"/g, '""')}","${(c.user_email||'').replace(/"/g, '""')}","${(c.issuer||'').replace(/"/g, '""')}","${c.valid_to||''}","${c.days_left||''}"\n`;
+  });
+  downloadBlob(csv, 'sslalerts_certificates.csv', 'text/csv;charset=utf-8;');
+}
+
+// Global Alerts Tab Logic
+async function loadGlobalAlerts() {
+  const tbody = document.getElementById('globalAlertsTableBody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:24px; color:var(--muted);">Loading alerts log…</td></tr>';
+
+  const q = encodeURIComponent((document.getElementById('alertSearchInput')?.value || '').trim());
+  const status = encodeURIComponent(alertsFilterStatus);
+
+  try {
+    const res = await fetch(`/api/admin/alerts?page=${alertsCurrentPage}&limit=10&q=${q}&status=${status}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load alerts');
+
+    document.getElementById('tabAlertsBadge').textContent = data.total;
+
+    if (!data.alerts || data.alerts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:32px; color:var(--muted);">No alerts dispatched matching your query.</td></tr>';
+      document.getElementById('globalAlertsPagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.alerts.map(a => `
+      <tr>
+        <td>${new Date(a.sent_at + 'Z').toLocaleString()}</td>
+        <td><strong>${escapeHtml(a.hostname || '—')}</strong></td>
+        <td>
+          <a href="#" class="admin-user-email-link" onclick="openUserModal(${a.user_id}); return false;">
+            ${escapeHtml(a.user_name)} (${escapeHtml(a.user_email)})
+          </a>
+        </td>
+        <td><span class="pill pill-${a.status}">${a.status}</span></td>
+      </tr>
+    `).join('');
+
+    renderPagination('globalAlertsPagination', data.page, data.totalPages, data.total, 10, 'goToAlertsPage');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:#ef4444; padding:20px; text-align:center;">${err.message}</td></tr>`;
+  }
+}
+
+function setAlertStatusFilter(status, btn) {
+  alertsFilterStatus = status;
+  document.querySelectorAll('#tabAlerts .filter-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  alertsCurrentPage = 1;
+  loadGlobalAlerts();
+}
+
+function goToAlertsPage(p) {
+  alertsCurrentPage = p;
+  loadGlobalAlerts();
+}
+
+document.getElementById('alertSearchInput')?.addEventListener('input', () => {
+  alertsCurrentPage = 1;
+  loadGlobalAlerts();
+});
+
+// System Health Tab Logic
+async function loadSystemHealth() {
+  try {
+    const res = await fetch('/api/admin/system-health');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load health metrics');
+
+    document.getElementById('healthDbStatus').textContent = data.db.status.toUpperCase();
+    document.getElementById('healthDbPing').textContent = `Latency: ${data.db.latencyMs}ms ping`;
+
+    const hrs = Math.floor(data.uptimeSeconds / 3600);
+    const mins = Math.floor((data.uptimeSeconds % 3600) / 60);
+    const secs = data.uptimeSeconds % 60;
+    document.getElementById('healthUptime').textContent = `${hrs}h ${mins}m ${secs}s`;
+
+    document.getElementById('healthMemory').textContent = `${data.memory.heapUsedMb} MB`;
+    document.getElementById('healthMemoryRss').textContent = `Heap: ${data.memory.heapTotalMb}MB · RSS: ${data.memory.rssMb}MB`;
+
+    document.getElementById('countUsers').textContent = data.db.counts.users_count;
+    document.getElementById('countDomains').textContent = data.db.counts.domains_count;
+    document.getElementById('countAlerts').textContent = data.db.counts.alerts_count;
+    document.getElementById('countCerts').textContent = data.db.counts.certs_count;
+  } catch (err) {
+    console.error('System health error:', err);
+  }
+}
+
+// User Modal Details & Actions
+async function openUserModal(userId) {
+  currentModalUserId = userId;
+  cancelEmailChangeFlow();
+  const modal = document.getElementById('adminUserModal');
+  modal.style.display = 'flex';
+
+  document.getElementById('modalUserName').textContent = 'Loading user details…';
+  document.getElementById('modalUserEmail').textContent = '';
+  document.getElementById('modalPrimaryEmailText').textContent = '…';
+  document.getElementById('modalStatDomains').textContent = '…';
+  document.getElementById('modalStatGroups').textContent = '…';
+  document.getElementById('modalStatEmailsSent').textContent = '…';
+  document.getElementById('modalStatGeneratedCerts').textContent = '…';
+  document.getElementById('modalStatPlan').textContent = '…';
+  document.getElementById('modalPaymentRefInput').value = '';
+  document.getElementById('modalAdminNotesInput').value = '';
+  document.getElementById('modalDomainsTbody').innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  document.getElementById('modalNotificationEmailsList').innerHTML = 'Loading…';
+  document.getElementById('modalGenCertsTbody').innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+  document.getElementById('modalAlertsTbody').innerHTML = '<tr><td colspan="3">Loading…</td></tr>';
+
+  try {
+    const res = await fetch(`/api/admin/users/${userId}/details`);
+    if (!res.ok) throw new Error('Failed to load user details');
+    const data = await res.json();
+    currentModalUserObj = data.user;
+
+    const u = data.user;
+    document.getElementById('modalUserName').textContent = u.name;
+    document.getElementById('modalUserEmail').textContent = `${u.email} · Member since ${new Date(u.created_at + 'Z').toLocaleDateString()}`;
+    document.getElementById('modalPrimaryEmailText').textContent = u.email;
+
+    const verifiedPill = document.getElementById('modalVerifiedPill');
+    if (u.is_verified) {
+      verifiedPill.className = 'pill pill-valid';
+      verifiedPill.textContent = '✓ Verified Account';
+    } else {
+      verifiedPill.className = 'pill pill-warning';
+      verifiedPill.textContent = 'Pending Email Verification';
+    }
+
+    document.getElementById('modalStatDomains').textContent = data.domains.length;
+    document.getElementById('modalStatGroups').textContent = data.groups.length;
+    document.getElementById('modalStatEmailsSent').textContent = data.totalAlertsSent;
+    document.getElementById('modalStatGeneratedCerts').textContent = data.totalGeneratedCerts;
+    document.getElementById('modalStatPlan').textContent = u.plan.toUpperCase();
+
+    // Selects & Inputs
+    const planVal = (u.plan === 'unlimited') ? 'enterprise' : u.plan;
+    document.getElementById('modalPlanSelect').value = planVal;
+    document.getElementById('modalDomainLimitInput').value = u.domain_limit || 250;
+    toggleEnterpriseLimitInput();
+    document.getElementById('modalBillingSelect').value = u.billing_status || 'active';
+    document.getElementById('modalPaymentRefInput').value = u.payment_reference || '';
+    document.getElementById('modalAdminNotesInput').value = u.admin_notes || '';
+
+    // Monitored Domains
+    document.getElementById('modalDomainListCount').textContent = data.domains.length;
+    document.getElementById('modalDomainsTbody').innerHTML = data.domains.length
+      ? data.domains.map(d => `
+          <tr>
+            <td><strong>${escapeHtml(d.hostname)}</strong> ${d.port !== 443 ? `:${d.port}` : ''}</td>
+            <td><span class="pill pill-${d.status}">${d.status}</span></td>
+            <td>${escapeHtml(d.issuer || '—')}</td>
+            <td>${d.valid_to ? new Date(d.valid_to).toLocaleDateString() : '—'}</td>
+            <td>${d.days_left !== null ? `${d.days_left}d` : '—'}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="5" style="color:var(--muted);">No domains currently monitored.</td></tr>`;
+
+    // Notification emails
+    document.getElementById('modalEmailListCount').textContent = data.notificationEmails.length;
+    document.getElementById('modalNotificationEmailsList').innerHTML = data.notificationEmails.length
+      ? data.notificationEmails.map(e => `<div>📧 <strong>${escapeHtml(e.email)}</strong> <span style="color:var(--muted); font-size:11px;">(added ${new Date(e.created_at + 'Z').toLocaleDateString()})</span></div>`).join('')
+      : `<span style="color:var(--muted);">No extra notification recipients configured (defaults to primary account email).</span>`;
+
+    // Generated certs
+    document.getElementById('modalGenCertListCount').textContent = data.generatedCertificates.length;
+    document.getElementById('modalGenCertsTbody').innerHTML = data.generatedCertificates.length
+      ? data.generatedCertificates.map(c => `
+          <tr>
+            <td><span class="plan-chip">${escapeHtml(c.type)}</span></td>
+            <td>${escapeHtml(c.domain)}</td>
+            <td>${new Date(c.created_at + 'Z').toLocaleDateString()}</td>
+            <td>${c.expires_at ? new Date(c.expires_at).toLocaleDateString() : '—'}</td>
+            <td>${c.status}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="5" style="color:var(--muted);">No certificates generated yet.</td></tr>`;
+
+    // Recent alerts
+    document.getElementById('modalRecentAlertsCount').textContent = data.recentAlerts.length;
+    document.getElementById('modalAlertsTbody').innerHTML = data.recentAlerts.length
+      ? data.recentAlerts.map(a => `
+          <tr>
+            <td>${escapeHtml(a.hostname || '—')}</td>
+            <td><span class="pill pill-${a.status}">${a.status}</span></td>
+            <td>${new Date(a.sent_at + 'Z').toLocaleString()}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="3" style="color:var(--muted);">No alert emails have been sent to this user.</td></tr>`;
+
+  } catch (err) {
+    toast(err.message, true);
+    closeUserModal();
+  }
+}
+
+function closeUserModal() {
+  document.getElementById('adminUserModal').style.display = 'none';
+  currentModalUserId = null;
+  currentModalUserObj = null;
+}
+
+function toggleEnterpriseLimitInput() {
+  const plan = document.getElementById('modalPlanSelect').value;
+  const wrap = document.getElementById('enterpriseLimitWrap');
+  if (plan === 'enterprise') {
+    wrap.style.display = 'block';
+    if (!document.getElementById('modalDomainLimitInput').value) {
+      document.getElementById('modalDomainLimitInput').value = '250';
+    }
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+// PRIMARY EMAIL CHANGE WITH OTP
+function toggleEmailChangeFlow() {
+  const box = document.getElementById('emailChangeBox');
+  if (box.style.display === 'none') {
+    box.style.display = 'block';
+    document.getElementById('emailStep1').style.display = 'block';
+    document.getElementById('emailStep2').style.display = 'none';
+    document.getElementById('inputNewPrimaryEmail').value = '';
+    document.getElementById('inputNewPrimaryEmail').focus();
+  } else {
+    cancelEmailChangeFlow();
+  }
+}
+
+function cancelEmailChangeFlow() {
+  const box = document.getElementById('emailChangeBox');
+  if (box) box.style.display = 'none';
+  const input = document.getElementById('inputNewPrimaryEmail');
+  if (input) input.value = '';
+  const otpInput = document.getElementById('inputEmailOtpCode');
+  if (otpInput) otpInput.value = '';
+}
+
+async function requestEmailChangeOtp() {
+  if (!currentModalUserId) return;
+  const newEmail = document.getElementById('inputNewPrimaryEmail').value.trim();
+  if (!newEmail) return toast('Please enter a valid new email address', true);
+
+  const btn = document.getElementById('btnSendEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Sending Code…';
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentModalUserId}/request-email-change`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_email: newEmail })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to dispatch verification code');
+
+    toast(`Verification code dispatched to ${newEmail}!`);
+    document.getElementById('targetNewEmailText').textContent = newEmail;
+    document.getElementById('emailStep1').style.display = 'none';
+    document.getElementById('emailStep2').style.display = 'block';
+    document.getElementById('inputEmailOtpCode').focus();
+    if (data.devOtp) {
+      console.log('DEV Email Change OTP:', data.devOtp);
+    }
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send 6-Digit Code';
+  }
+}
+
+async function confirmEmailChangeOtp() {
+  if (!currentModalUserId) return;
+  const otp = document.getElementById('inputEmailOtpCode').value.trim();
+  if (!otp || otp.length !== 6) return toast('Please enter the 6-digit verification code', true);
+
+  const btn = document.getElementById('btnVerifyEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentModalUserId}/confirm-email-change`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to verify code');
+
+    toast(data.message || 'Primary email successfully updated!');
+    document.getElementById('modalPrimaryEmailText').textContent = data.new_email;
+    document.getElementById('modalUserEmail').textContent = `${data.new_email} · Member since ${new Date(currentModalUserObj?.created_at + 'Z').toLocaleDateString()}`;
+
+    // Update in allUsers array
+    const target = allUsers.find(u => String(u.id) === String(currentModalUserId));
+    if (target) {
+      target.email = data.new_email;
+      applyUserFilters();
+    }
+    cancelEmailChangeFlow();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify & Update Email';
+  }
+}
+
+async function resendEmailChangeOtp() {
+  if (!currentModalUserId) return;
+  const btn = document.getElementById('btnResendEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Resending…';
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentModalUserId}/resend-email-otp`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to resend code');
+    toast('A fresh verification code has been dispatched!');
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Resend Code';
+  }
+}
+
+// SAVE PLAN & MANUAL BANK PAYMENT
+async function saveUserPlanChanges() {
+  if (!currentModalUserId) return;
+  const plan = document.getElementById('modalPlanSelect').value;
+  const billing_status = document.getElementById('modalBillingSelect').value;
+  const payment_reference = document.getElementById('modalPaymentRefInput').value.trim();
+  const admin_notes = document.getElementById('modalAdminNotesInput').value.trim();
+
+  let domain_limit = undefined;
+  if (plan === 'enterprise') {
+    const lim = parseInt(document.getElementById('modalDomainLimitInput').value, 10);
+    domain_limit = (!isNaN(lim) && lim > 0) ? lim : 250;
+  }
+  const btn = document.getElementById('modalSavePlanBtn');
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const payload = {
+      plan,
+      billing_status,
+      payment_reference,
+      admin_notes
+    };
+    if (domain_limit !== undefined) payload.domain_limit = domain_limit;
+
+    const res = await fetch(`/api/admin/users/${currentModalUserId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update plan');
+
+    toast('User plan & payment reference updated!');
+    document.getElementById('modalStatPlan').textContent = plan === 'enterprise' ? `ENTERPRISE (${data.user?.domain_limit || domain_limit})` : plan.toUpperCase();
+
+    // Update memory cache
+    const target = allUsers.find(u => String(u.id) === String(currentModalUserId));
+    if (target) {
+      target.plan = plan;
+      target.billing_status = billing_status;
+      target.payment_reference = payment_reference;
+      target.admin_notes = admin_notes;
+      if (data.user && data.user.domain_limit !== undefined) {
+        target.domain_limit = data.user.domain_limit;
+      }
+      applyUserFilters();
+    }
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Save Plan & Payment Changes';
+  }
+}
+
+// 1-CLICK CANCEL SUBSCRIPTION
+async function quickCancelSubscription() {
+  if (!currentModalUserId || !currentModalUserObj) return;
+  if (!confirm(`Are you sure you want to cancel the subscription for ${currentModalUserObj.name}? They will be immediately downgraded to the Free Plan (5 domains).`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentModalUserId}/cancel-subscription`, {
+      method: 'POST'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to cancel subscription');
+
+    toast(data.message || 'Subscription cancelled. Reverted to Free Plan.');
+    document.getElementById('modalPlanSelect').value = 'trial';
+    document.getElementById('modalBillingSelect').value = 'active';
+    document.getElementById('modalStatPlan').textContent = 'TRIAL';
+    toggleEnterpriseLimitInput();
+
+    const target = allUsers.find(u => String(u.id) === String(currentModalUserId));
+    if (target) {
+      target.plan = 'trial';
+      target.domain_limit = 5;
+      target.billing_status = 'active';
+      applyUserFilters();
+    }
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+// PERMANENT USER ACCOUNT DELETION
+async function initiateUserDeletion() {
+  if (!currentModalUserId || !currentModalUserObj) return;
+  const targetEmail = currentModalUserObj.email;
+
+  const entered = prompt(
+    `⚠️ DANGER: PERMANENT ACCOUNT DELETION\n\nAre you sure you want to completely erase the account for ${currentModalUserObj.name}?\nAll monitored domains, certificates, groups, and logs will be permanently deleted.\n\nTo confirm, type the user's email exactly (${targetEmail}):`
+  );
+
+  if (!entered) return;
+  if (entered.trim().toLowerCase() !== targetEmail.toLowerCase()) {
+    return toast('Email does not match. Deletion cancelled.', true);
+  }
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentModalUserId}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete user');
+
+    toast(data.message || 'User account successfully deleted.');
+    closeUserModal();
+
+    // Remove from in-memory array & refresh
+    allUsers = allUsers.filter(u => String(u.id) !== String(currentModalUserId));
+    applyUserFilters();
+    loadGlobalCertificates();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+// Helper: Pagination Component
+function renderPagination(containerId, currentPage, totalPages, totalItems, pageSize, callbackFnName) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (totalPages <= 1) {
+    container.innerHTML = `<span>Showing all <strong>${totalItems}</strong> item${totalItems === 1 ? '' : 's'}</span>`;
+    return;
+  }
+
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  let pageButtonsHtml = '';
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+      pageButtonsHtml += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="${callbackFnName}(${p})">${p}</button>`;
+    } else if (p === currentPage - 3 || p === currentPage + 3) {
+      pageButtonsHtml += `<span style="padding:0 4px;">…</span>`;
+    }
+  }
+
+  container.innerHTML = `
+    <div>Showing <strong>${startItem}–${endItem}</strong> of <strong>${totalItems}</strong> items</div>
+    <div class="pagination-controls">
+      <button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${callbackFnName}(${currentPage - 1})">« Prev</button>
+      ${pageButtonsHtml}
+      <button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${callbackFnName}(${currentPage + 1})">Next »</button>
+    </div>
+  `;
+}
+
+function downloadBlob(content, filename, contentType) {
+  const blob = new Blob([content], { type: contentType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function daysSince(iso) {
+  if (!iso) return '—';
+  const days = Math.floor((Date.now() - new Date(iso + 'Z').getTime()) / (1000 * 60 * 60 * 24));
+  return `${days} day${days === 1 ? '' : 's'}`;
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+document.getElementById('runSweepBtn')?.addEventListener('click', async (e) => {
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = 'Running sweep…';
+  try {
+    const res = await fetch('/api/admin/run-sweep', { method: 'POST' });
+    const data = await res.json();
+    toast(`Sweep complete — checked ${data.checked} domain(s).`);
+    loadGlobalCertificates();
+    loadGlobalAlerts();
+  } catch (err) {
+    toast('Sweep failed.', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Run Sweep Now';
+  }
+});
+
+document.getElementById('logoutLink')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/admin';
+});
+
+// Mobile menu toggle
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+document.getElementById('hamburgerBtn')?.addEventListener('click', () => {
+  sidebar?.classList.add('open');
+  sidebarOverlay?.classList.add('visible');
+});
+sidebarOverlay?.addEventListener('click', () => {
+  sidebar?.classList.remove('open');
+  sidebarOverlay?.classList.remove('visible');
+});
+
+// Initial boot
+checkAdminAuth();
+</script>
+</body>
+</html>

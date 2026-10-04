@@ -1,0 +1,26 @@
+# /etc/systemd/system/harisree.service
+# Alternative to Docker: run the app directly with systemd so it
+# restarts on crash and starts on boot.
+#
+# Install:
+#   sudo cp deploy/harisree.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now harisree
+#
+# Logs: journalctl -u harisree -f
+
+[Unit]
+Description=HariSree SSL Alerts
+After=network.target
+
+[Service]
+Type=simple
+User=harisree
+WorkingDirectory=/opt/harisree-ssl-alerts
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/opt/harisree-ssl-alerts/.env
+
+[Install]
+WantedBy=multi-user.target

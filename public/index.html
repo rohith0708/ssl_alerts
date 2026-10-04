@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSL Alerts — never let a certificate expire on you</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+</head>
+<body class="landing-page-3d">
+
+<div class="site-glow" aria-hidden="true"></div>
+
+<nav class="topnav-wrap" id="topnavWrap">
+  <div class="container">
+    <div class="topnav topnav-3d-split">
+      <div class="topnav-left-links">
+        <a href="#features">Features</a>
+        <a href="/dashboard#certificates">Cert Generator</a>
+        <a href="/dashboard#ssl-tools">SSL Tools</a>
+      </div>
+      <a href="/" class="brand topnav-center-brand">
+        <img src="/assets/mark.svg" alt="SSL Alerts">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="topnav-right-wrap">
+        <div class="topnav-right-links">
+          <a href="#pricing">Pricing</a>
+          <a href="/docs">Docs</a>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;" id="navButtons">
+          <a href="/login" class="btn btn-ghost btn-sm nav-login-btn">Log in</a>
+          <a href="/signup" class="btn btn-ghost btn-sm nav-register-btn mobile-only-btn">Register</a>
+          <a href="/signup" class="btn btn-accent btn-sm nav-start-btn desktop-only-btn">Start free</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="hero-section">
+  <div class="hero-aurora" aria-hidden="true"></div>
+  <div class="container hero">
+    <div class="hero-copy">
+      <h1>The complete SSL platform: <span class="hero-title-gradient">SSL tools, cert generation, and 24/7 monitoring.</span></h1>
+      <p class="lede">Never let an expired SSL certificate take down your website. SSL Alerts monitors your domains with smart persistent alerting, generates free Let's Encrypt certificates, creates internal Root CAs &amp; CSRs, and provides professional SSL diagnostic tools.</p>
+      <div class="cta-row">
+        <a href="/signup" class="btn btn-accent">Start free trial</a>
+        <a href="#pricing" class="btn btn-ghost">View subscription plans</a>
+      </div>
+      <div class="hero-trust-badges">
+        <div class="hero-trust-badge badge-customers" title="Over 1,000 active domains & customers monitored">
+          <span class="badge-icon">👥</span>
+          <span><strong><span id="heroCustomerCount">1</span>+</strong> <span class="badge-label-long">Happy </span>Customers</span>
+        </div>
+        <div class="hero-trust-badge badge-support" title="24/7 Dedicated Support: support@sslalerts.info">
+          <span class="badge-icon">🎧</span>
+          <span><strong><span id="heroSupportCount">1</span>/7</strong> <span class="badge-label-long">Dedicated </span>Support</span>
+        </div>
+        <div class="hero-trust-badge badge-uptime" title="99.99% automated verification and monitoring uptime">
+          <span class="badge-icon">⚡</span>
+          <span><strong><span id="heroUptimeCount">1.00</span>%</strong> Inspection Uptime</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-stage" id="heroStage">
+      <div class="hero-scene" id="heroScene">
+        <!-- 3D Scaled Butterfly Padlock Logo Centerpiece -->
+        <div class="butterfly-3d-centerpiece" id="butterfly3D">
+          <div class="butterfly-halo-aura" aria-hidden="true"></div>
+          <div class="butterfly-model">
+            <svg class="butterfly-svg" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="auraRadial" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#1BC7B5" stop-opacity="0.38"/>
+                  <stop offset="55%" stop-color="#0E3A56" stop-opacity="0.18"/>
+                  <stop offset="100%" stop-color="#071B2E" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="bfWingL" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                  <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="bfWingR" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.95"/>
+                  <stop offset="60%" stop-color="#1BC7B5" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#0E3A56" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="bfWingLL" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+                </linearGradient>
+                <linearGradient id="bfWingRL" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#109385" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#0A2740" stop-opacity="0.95"/>
+                </linearGradient>
+                <linearGradient id="bfBody" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#071B2E"/>
+                  <stop offset="25%" stop-color="#0E3A56"/>
+                  <stop offset="60%" stop-color="#122A40"/>
+                  <stop offset="100%" stop-color="#051424"/>
+                </linearGradient>
+                <linearGradient id="bfShackle" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#475569"/>
+                  <stop offset="35%" stop-color="#94A3B8"/>
+                  <stop offset="55%" stop-color="#E2E8F0"/>
+                  <stop offset="75%" stop-color="#94A3B8"/>
+                  <stop offset="100%" stop-color="#334155"/>
+                </linearGradient>
+                <filter id="bfGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                </filter>
+                <filter id="keyholeEmit" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4" result="glow"/>
+                  <feMerge>
+                    <feMergeNode in="glow"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <g transform="translate(120,112) scale(0.66)">
+                <!-- Ambient Underglow -->
+                <circle cx="0" cy="0" r="140" fill="url(#auraRadial)" />
+
+                <!-- Left Wings Group (3D Flying Flap) -->
+                <g class="butterfly-wings-group-left">
+                  <!-- Upper Left Wing (Layered Frosted Glass) -->
+                  <path d="M -8,-58 C -60,-96 -132,-96 -158,-48 C -178,-10 -168,42 -122,72 C -90,93 -46,86 -8,54 Z" fill="url(#bfWingL)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                  <!-- Lower Left Wing -->
+                  <path d="M -6,50 C -40,68 -84,72 -104,102 C -118,124 -110,152 -80,160 C -52,167 -22,150 -4,118 Z" fill="url(#bfWingLL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                  <!-- Translucent Vein Arc Left -->
+                  <path d="M -34,-58 C -70,-40 -92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#bfGlow)"/>
+                </g>
+
+                <!-- Right Wings Group (3D Flying Flap) -->
+                <g class="butterfly-wings-group-right">
+                  <!-- Upper Right Wing (Layered Frosted Glass) -->
+                  <path d="M 8,-58 C 60,-96 132,-96 158,-48 C 178,-10 168,42 122,72 C 90,93 46,86 8,54 Z" fill="url(#bfWingR)" filter="drop-shadow(0 12px 24px rgba(27, 199, 181, 0.25))"/>
+                  <!-- Lower Right Wing -->
+                  <path d="M 6,50 C 40,68 84,72 104,102 C 118,124 110,152 80,160 C 52,167 22,150 4,118 Z" fill="url(#bfWingRL)" filter="drop-shadow(0 8px 16px rgba(10, 39, 64, 0.4))"/>
+                  <!-- Translucent Vein Arc Right -->
+                  <path d="M 34,-58 C 70,-40 92,-4 84,34" fill="none" stroke="#EAF7F5" stroke-width="4.5" stroke-linecap="round" opacity="0.75" filter="url(#bfGlow)"/>
+                </g>
+
+                <!-- Central Padlock Body & Antennae Core -->
+                <g class="butterfly-body-core">
+                  <!-- Chrome Shackle -->
+                  <path d="M -18,-68 C -18,-96 18,-96 18,-68 L 18,-50 L 9,-50 L 9,-68 C 9,-84 -9,-84 -9,-68 L -9,-50 L -18,-50 Z" fill="url(#bfShackle)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.4))"/>
+                  <!-- Padlock Cylinder Body with Bevel Highlights -->
+                  <rect x="-26" y="-52" width="52" height="152" rx="20" fill="url(#bfBody)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" filter="drop-shadow(0 18px 32px rgba(0, 0, 0, 0.5))"/>
+                  <!-- Specular Cylinder Edge Reflection -->
+                  <path d="M -22,-48 L -22,96" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Pulsating Keyhole Emitter -->
+                  <g class="butterfly-keyhole" filter="url(#keyholeEmit)">
+                    <circle cx="0" cy="12" r="8" fill="#2DD4BF"/>
+                    <path d="M -5,18 L 5,18 L 7,40 L -7,40 Z" fill="#2DD4BF"/>
+                  </g>
+                  <!-- Antennae Arcs with Coral Glow Nodes -->
+                  <path d="M -6,-72 C -22,-98 -36,-110 -32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                  <path d="M 6,-72 C 22,-98 36,-110 32,-128" fill="none" stroke="#64748B" stroke-width="5" stroke-linecap="round"/>
+                  <circle cx="-32" cy="-128" r="7.5" fill="#FF6F5E" filter="drop-shadow(0 0 10px #FF6F5E)"/>
+                  <circle cx="32" cy="-128" r="7.5" fill="#FF6F5E" filter="drop-shadow(0 0 10px #FF6F5E)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Surrounding Spatial 3D Certificate Cards (4 Cards Perfectly Framing Butterfly) -->
+        <div class="cert-card-3d depth-tl">
+          <div class="cert-card">
+            <div>
+              <div class="cert-host">shop.example.com</div>
+              <div class="cert-sub">Let's Encrypt · expires in 62 days</div>
+            </div>
+            <span class="pill pill-valid">Valid</span>
+          </div>
+        </div>
+        <div class="cert-card-3d depth-tr card-app-valid">
+          <div class="cert-card">
+            <div>
+              <div class="cert-host">app.example.com</div>
+              <div class="cert-sub">Let's Encrypt · expires in 84 days</div>
+            </div>
+            <span class="pill pill-valid">Valid</span>
+          </div>
+        </div>
+        <div class="cert-card-3d depth-bl">
+          <div class="cert-card">
+            <div>
+              <div class="cert-host">api.example.com</div>
+              <div class="cert-sub">DigiCert · expires in 11 days</div>
+            </div>
+            <span class="pill pill-warning">Warning</span>
+          </div>
+        </div>
+        <div class="cert-card-3d depth-br">
+          <div class="cert-card cert-card-critical">
+            <div>
+              <div class="cert-host">Internal Root CA</div>
+              <div class="cert-sub">Internal cert · expires in 2 days</div>
+            </div>
+            <span class="pill pill-critical">Critical</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container section" id="pricing">
+  <div class="section-head reveal-group">
+    <h2>Simple, transparent pricing</h2>
+    <p>Start free with our 30-day trial. Upgrade anytime as your infrastructure expands. Need more than 500 domains? Contact us.</p>
+  </div>
+
+  <div class="pricing-carousel-wrapper reveal-group">
+    <button type="button" class="pricing-carousel-btn prev-btn" id="pricingPrevBtn" aria-label="Previous plans">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <div class="pricing-carousel-track" id="pricingCarouselTrack">
+      <!-- 1. Free Trial (30 Days) -->
+      <div class="plan-card">
+        <span class="tag" style="background:#0284C7; color:#fff;">30-DAY TRIAL</span>
+        <h3>Free Trial</h3>
+        <div class="plan-subtitle">(Good for basic testing &amp; evaluation)</div>
+        <div class="price">
+          <div class="price-active-container">
+            <span class="price-current">$0</span><span class="mp-period">/30 days</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>5</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li><strong>1</strong> email alert recipient</li>
+          <li>3-hour expiry alert intervals</li>
+          <li>Let's Encrypt &amp; self-signed cert generation with storage</li>
+          <li>Status filters (warning/critical/healthy)</li>
+          <li>Standard support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-ghost btn-block">Start 30-Day Free Trial</a>
+      </div>
+
+      <!-- 2. Micro (LIMITED TIME OFFER, $2 crossed out, now $1/month) -->
+      <div class="plan-card">
+        <span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800;">LIMITED TIME OFFER</span>
+        <h3>Micro</h3>
+        <div class="plan-subtitle">(Good for personal projects &amp; portfolios)</div>
+        <div class="price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$2</span>
+            <span class="discount-badge-pill" style="background:#FEF3C7; color:#B45309; border:1px solid #FCD34D;">SAVE 50%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$1</span><span class="mp-period">/month</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>5</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li><strong>1</strong> email alert recipient</li>
+          <li>3-hour expiry alert intervals</li>
+          <li>Cert generator with storage</li>
+          <li>Status filters &amp; SSL tools</li>
+          <li>Standard support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-ghost btn-block">Choose Micro</a>
+      </div>
+
+      <!-- 3. Starter (Featured) -->
+      <div class="plan-card featured">
+        <span class="tag">POPULAR</span>
+        <h3>Starter</h3>
+        <div class="plan-subtitle">(Good for early-stage startups &amp; individual devs)</div>
+        <div class="price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$10</span>
+            <span class="discount-badge-pill">SAVE 50%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$5</span><span class="mp-period">/month</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>20</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li>Up to <strong>3</strong> email recipients</li>
+          <li>2-hour expiry alert intervals</li>
+          <li>Cert generator with storage</li>
+          <li>Status filters &amp; SSL tools</li>
+          <li>Enhanced support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-accent btn-block">Choose Starter</a>
+      </div>
+
+      <!-- 4. Growth -->
+      <div class="plan-card">
+        <h3>Growth</h3>
+        <div class="plan-subtitle">(Good for growing companies with multiple subdomains)</div>
+        <div class="price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$20</span>
+            <span class="discount-badge-pill">SAVE 50%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$10</span><span class="mp-period">/month</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>50</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li>Up to <strong>5</strong> email recipients</li>
+          <li>1-hour expiry alert intervals</li>
+          <li>Cert generator with storage</li>
+          <li>Status filters &amp; SSL tools</li>
+          <li>Enhanced support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-ghost btn-block">Choose Growth</a>
+      </div>
+
+      <!-- 5. Pro -->
+      <div class="plan-card">
+        <h3>Pro</h3>
+        <div class="plan-subtitle">(Good for businesses with large web infrastructure)</div>
+        <div class="price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$40</span>
+            <span class="discount-badge-pill">SAVE 50%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$20</span><span class="mp-period">/month</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>100</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li>Up to <strong>10</strong> email recipients</li>
+          <li>30-min expiry alert intervals</li>
+          <li>Cert generator with storage</li>
+          <li>Status filters &amp; SSL tools</li>
+          <li>Premium support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-ghost btn-block">Choose Pro</a>
+      </div>
+
+      <!-- 6. Agency -->
+      <div class="plan-card">
+        <span class="tag" style="background:#7C3AED; color:#fff;">HIGH VOLUME</span>
+        <h3>Agency</h3>
+        <div class="plan-subtitle">(Good for digital agencies and IT consultancies)</div>
+        <div class="price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$99</span>
+            <span class="discount-badge-pill">SAVE 50%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$50</span><span class="mp-period">/month</span>
+          </div>
+        </div>
+        <ul>
+          <li><strong>500</strong> domains monitored</li>
+          <li>Daily SSL expiry checks</li>
+          <li>Up to <strong>25</strong> email recipients</li>
+          <li>10-min expiry alert intervals</li>
+          <li>Cert generator with storage</li>
+          <li>Status filters &amp; SSL tools</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="/signup.html" class="btn btn-ghost btn-block">Choose Agency</a>
+      </div>
+    </div>
+
+    <button type="button" class="pricing-carousel-btn next-btn" id="pricingNextBtn" aria-label="Next plans">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div class="pricing-carousel-pagination" id="pricingPagination">
+    <button class="pricing-dot active" data-index="0" aria-label="Plans view 1"></button>
+    <button class="pricing-dot" data-index="1" aria-label="Plans view 2"></button>
+  </div>
+
+  <div class="enterprise-cta-card reveal-group">
+    <div>
+      <h3>🏢 Have more than 500 domains? Need a 24/7 SLA?</h3>
+      <p>Managing extensive enterprise infrastructure or an agency portfolio? We offer tailored quotas, dedicated checking workers, 24/7 SLA support, and invoice billing.</p>
+    </div>
+    <a href="mailto:support@sslalerts.info?subject=Enterprise%20Plan%20Inquiry%20(500%2B%20domains)" class="btn btn-accent" style="white-space:nowrap; padding:12px 24px; font-weight:700;">Contact Support →</a>
+  </div>
+</section>
+
+<section class="container section how-it-works">
+  <div class="section-head reveal-group">
+    <h2>Set up once, forget about it</h2>
+    <p>Three steps, and you're covered — no agents to install, nothing to maintain.</p>
+  </div>
+  <div class="steps reveal-group">
+    <div class="step">
+      <div class="step-marker">1</div>
+      <h3>Add a certificate</h3>
+      <p>A domain we check live over TLS, or an internal PEM you paste in directly.</p>
+    </div>
+    <div class="step">
+      <div class="step-marker">2</div>
+      <h3>We check it daily</h3>
+      <p>A real handshake each day, plus a faster recheck the moment something looks off.</p>
+    </div>
+    <div class="step">
+      <div class="step-marker">3</div>
+      <h3>You get warned early</h3>
+      <p>Email alerts at 30/14/7/1 days out — and repeated every 30 minutes if it goes critical.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container section product-preview">
+  <div class="preview-frame reveal-group">
+    <div class="preview-chrome">
+      <span></span><span></span><span></span>
+      <div class="preview-url">sslalerts.online/dashboard</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-row">
+        <span class="dot" style="background:#1B8F5C"></span>
+        <div><div class="preview-host">shop.example.com</div><div class="preview-sub">Let's Encrypt · 62 days left</div></div>
+        <span class="pill pill-valid">Valid</span>
+      </div>
+      <div class="preview-row">
+        <span class="dot" style="background:#A8760A"></span>
+        <div><div class="preview-host">api.example.com</div><div class="preview-sub">DigiCert · 11 days left</div></div>
+        <span class="pill pill-warning">Warning</span>
+      </div>
+      <div class="preview-row">
+        <span class="dot" style="background:#C6472F"></span>
+        <div><div class="preview-host">Internal Root CA</div><div class="preview-sub">Internal cert · 2 days left</div></div>
+        <span class="pill pill-critical">Critical</span>
+      </div>
+      <div class="preview-row">
+        <span class="dot" style="background:#1B8F5C"></span>
+        <div><div class="preview-host">app.example.com</div><div class="preview-sub">Let's Encrypt · 84 days left</div></div>
+        <span class="pill pill-valid">Valid</span>
+      </div>
+    </div>
+  </div>
+  <div class="preview-copy reveal-group">
+    <h2>This is the whole app.</h2>
+    <p>One list, colour-coded by urgency, filterable by group or status. No training required — if you can read a traffic light, you can read this dashboard.</p>
+    <a href="/signup" class="btn btn-accent">Try it free</a>
+  </div>
+</section>
+
+<section class="container section" id="features">
+  <div class="section-head reveal-group">
+    <h2>Built for the moment before things go wrong</h2>
+    <p>Continuous monitoring, smart team notifications, and automatic renewal detection ensure complete peace of mind.</p>
+  </div>
+  <div class="features reveal-group">
+    <div class="feature">
+      <div class="icon">⏱</div>
+      <h3>Daily automatic checks</h3>
+      <p>Every domain on your list is checked once a day from a live TLS handshake — exactly what a visitor's browser sees.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">✉</div>
+      <h3>Alerts at 30 / 14 / 7 / 1 days</h3>
+      <p>Automated warning emails fire at critical thresholds so you get warned well before expiration without inbox spam.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔁</div>
+      <h3>Smart repeat alerts &amp; ack</h3>
+      <p>Unacknowledged critical/expired certificates re-alert every 30 minutes. Click <strong>Acknowledge</strong> to pause repeats until status changes or renewal occurs.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🎉</div>
+      <h3>Automatic renewal confirmation</h3>
+      <p>When an acknowledged or expiring certificate is renewed, our scheduler detects it, resets the alert state, and emails you a renewal confirmation!</p>
+    </div>
+    <div class="feature">
+      <div class="icon">👥</div>
+      <h3>Multi-recipient team alerts</h3>
+      <p>Send expiry notifications to multiple team members. Route alerts globally to devops or scope them to specific client groups.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔒</div>
+      <h3>Internal certificates too</h3>
+      <p>Track certs on internal networks, air-gapped hosts, or VPNs. Paste any PEM certificate and we track its expiration date seamlessly.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🎧</div>
+      <h3>24/7 Dedicated Support</h3>
+      <p>Our SSL engineers are available 24/7/365 at <a href="mailto:support@sslalerts.info" style="color:var(--teal-dark); font-weight:600;">support@sslalerts.info</a> to assist with cert installs, DNS setups, or emergency outages.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container section" id="generator">
+  <div class="section-head reveal-group">
+    <h2>Built-In Certificate Generator</h2>
+    <p>Generate production-ready Let's Encrypt certificates, internal Root CA bundles, and CSRs directly inside your browser.</p>
+  </div>
+  <div class="features reveal-group">
+    <div class="feature">
+      <div class="icon">🔐</div>
+      <h3>Let's Encrypt (DNS-01)</h3>
+      <p>Generate authentic, browser-trusted 90-day certificates using DNS challenge verification. No server agent or root SSH access required. Instant PEM bundle download.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📜</div>
+      <h3>Self-Signed &amp; Root CA Bundles</h3>
+      <p>Create custom internal Root CAs and domain certificates for local development, staging servers, and IoT. Includes <code>ca.crt</code> to install into your OS for trusted certificates.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📝</div>
+      <h3>CSR &amp; Private Key Generator</h3>
+      <p>Generate standard Certificate Signing Requests (CSR) with secure 2048-bit RSA private keys. Ready to copy and submit to DigiCert, Sectigo, GlobalSign, and more.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📦</div>
+      <h3>One-Click Bundle Downloads</h3>
+      <p>Download clean, organized <code>.tar.gz</code> bundles containing your cert, chain, fullchain, private key, and ready-to-use Nginx/Apache configuration snippets.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🛡️</div>
+      <h3>Lifetime Retention &amp; Auto-Purge</h3>
+      <p>Generated Let's Encrypt and Self-Signed certificates remain securely stored for download until their expiry date. The moment they expire, they are automatically purged for zero-trace privacy and security.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">⏳</div>
+      <h3>1-Year CSR Retention</h3>
+      <p>Certificate Signing Requests (CSRs) and key configs are safely stored for 1 full year so you can seamlessly re-use them during annual renewal cycles before automatic deletion.</p>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:32px;">
+    <a href="/dashboard#certificates" class="btn btn-primary">Open Certificate Generator Dashboard →</a>
+  </div>
+</section>
+
+<section class="container section" id="ssl-tools">
+  <div class="section-head reveal-group">
+    <h2>Full Suite of SSL Diagnostic Tools</h2>
+    <p>Everything you need to inspect, debug, and verify your TLS infrastructure without touching the command line.</p>
+  </div>
+  <div class="features reveal-group">
+    <div class="feature">
+      <div class="icon">🔍</div>
+      <h3>Certificate Decoder</h3>
+      <p>Paste any X.509 certificate in PEM format to inspect Common Name, Subject Alternative Names (SANs), validity window, serial number, and SHA256 fingerprints.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">📋</div>
+      <h3>CSR Decoder</h3>
+      <p>Decode CSR requests before submitting to public CAs. Verify the subject details, organization, key algorithm, and requested domain names.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔑</div>
+      <h3>Key &amp; Certificate Matcher</h3>
+      <p>Verify whether a private key matches a given certificate before deploying to production. Supports both RSA modulus verification and ECDSA public key comparison.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🌐</div>
+      <h3>Live Installation Checker</h3>
+      <p>Test any public hostname and port over a live TLS handshake. View negotiated TLS protocol (TLS 1.2/1.3), cipher suite, and certificate authorization status.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🔗</div>
+      <h3>Certificate Chain Validator</h3>
+      <p>Paste a full certificate chain to detect broken hierarchies, missing intermediate certificates, and verify whether the chain ends at a valid Root CA.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🧪</div>
+      <h3>Qualys SSL Labs Test</h3>
+      <p>Deep-dive server security analysis. Launch a comprehensive SSL Labs audit to grade your server's cipher strength, forward secrecy, and vulnerabilities.</p>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:32px;">
+    <a href="/dashboard#ssl-tools" class="btn btn-primary">Open SSL Diagnostic Tools Dashboard →</a>
+  </div>
+</section>
+
+
+<section class="container section faq-section">
+  <div class="section-head reveal-group">
+    <h2>Questions people actually ask</h2>
+    <p>The short version — the full documentation covers everything else.</p>
+  </div>
+  <div class="faq-grid reveal-group">
+    <div class="faq-card">
+      <h3>Does this touch my server?</h3>
+      <p>No. We connect the same way a visitor's browser does, read the certificate, disconnect. Nothing installed.</p>
+    </div>
+    <div class="faq-card">
+      <h3>Will I get spammed?</h3>
+      <p>No — only when something actually needs attention, and repeats stop the moment you acknowledge it.</p>
+    </div>
+    <div class="faq-card">
+      <h3>What about certs I can't reach publicly?</h3>
+      <p>Paste the PEM directly. We track its expiry without needing a live connection at all.</p>
+    </div>
+    <div class="faq-card">
+      <h3>What if my payment fails?</h3>
+      <p>Your account reverts to the free tier's limit and monitoring pauses — nothing gets deleted.</p>
+    </div>
+  </div>
+  <a href="/docs" class="docs-cta-link">Read the full documentation →</a>
+</section>
+
+<footer class="site-footer-new">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <p>Certificate monitoring that emails you before things break — not after.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/ssl_alerts" target="_blank" rel="noopener" aria-label="Instagram" class="social-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+        </a>
+        <span class="social-icon disabled" title="Coming soon" aria-label="LinkedIn (coming soon)">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm7 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.6c0-1.34-.02-3.06-1.87-3.06-1.87 0-2.16 1.46-2.16 2.97V21h-4V9z"/></svg>
+        </span>
+        <span class="social-icon disabled" title="Coming soon" aria-label="Facebook (coming soon)">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>
+        </span>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Product</div>
+      <a href="#pricing">Pricing</a>
+      <a href="/docs">Documentation</a>
+      <a href="/dashboard#certificates">Cert Generator</a>
+      <a href="/dashboard#ssl-tools">SSL Tools</a>
+      <a href="/signup">Start free</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Account</div>
+      <a href="/login">Log in</a>
+      <a href="/signup">Sign up</a>
+      <a href="mailto:support@sslalerts.info">Support</a>
+    </div>
+  </div>
+  <div class="footer-bottom container">
+    <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+  </div>
+</footer>
+
+<script>
+const yr = document.getElementById('year');
+if (yr) yr.textContent = new Date().getFullYear();
+
+// Animated 3D hero counters on website launch (1 -> 1,000+ Happy Customers & 99.99% Inspection)
+(function initHeroCounters() {
+  function animateValue(el, start, end, duration, formatFn) {
+    if (!el) return;
+    const startTime = performance.now();
+    function tick(currentTime) {
+      const elapsed = Math.max(0, currentTime - startTime);
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutCubic: snappy acceleration settling smoothly at target
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.max(start, Math.floor(start + (end - start) * ease));
+      el.textContent = formatFn ? formatFn(current) : current.toLocaleString();
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = formatFn ? formatFn(end) : end.toLocaleString();
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function startCounters() {
+    const custEl = document.getElementById('heroCustomerCount');
+    if (custEl) {
+      animateValue(custEl, 1, 1000, 1600, n => n.toLocaleString());
+    }
+    const supportEl = document.getElementById('heroSupportCount');
+    if (supportEl) {
+      animateValue(supportEl, 1, 24, 1600, n => n);
+    }
+    const uptimeEl = document.getElementById('heroUptimeCount');
+    if (uptimeEl) {
+      const startTime = performance.now();
+      const duration = 1600;
+      function tick(currentTime) {
+        const elapsed = Math.max(0, currentTime - startTime);
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = (1.00 + (99.99 - 1.00) * ease).toFixed(2);
+        uptimeEl.textContent = current;
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          uptimeEl.textContent = '99.99';
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startCounters);
+  } else {
+    startCounters();
+  }
+})();
+
+// Interactive 3D tilt on hero trust badges
+(function initBadge3D() {
+  const badges = document.querySelectorAll('.hero-trust-badge');
+  badges.forEach(badge => {
+    badge.addEventListener('mousemove', (e) => {
+      const rect = badge.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      badge.style.transform = `translateY(-5px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) scale(1.03)`;
+    });
+    badge.addEventListener('mouseleave', () => {
+      badge.style.transform = '';
+    });
+  });
+})();
+
+// If there's already a valid session, swap the nav to go straight to
+// the dashboard instead of showing "Log in" (which felt like being
+// logged out even though the session was still fine).
+fetch('/api/auth/me').then(res => {
+  if (res.ok) {
+    document.getElementById('navButtons').innerHTML =
+      '<a href="/dashboard" class="btn btn-primary btn-sm">Go to dashboard</a>';
+  }
+}).catch(() => {});
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Glass nav gains a border/shadow once the page has scrolled past the hero.
+const topnavWrap = document.getElementById('topnavWrap');
+window.addEventListener('scroll', () => {
+  topnavWrap.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+// Pointer-driven smooth 3D parallax tilt on the hero scene (butterfly + certificate cards).
+const stage = document.getElementById('heroStage');
+const scene = document.getElementById('heroScene');
+if (stage && scene && !reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+  let currX = 0, currY = 0;
+  let targetX = 0, targetY = 0;
+  let isHovered = false;
+
+  stage.addEventListener('mousemove', (e) => {
+    isHovered = true;
+    const rect = stage.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    targetX = px * 16;
+    targetY = -py * 12;
+  });
+
+  stage.addEventListener('mouseleave', () => {
+    isHovered = false;
+    targetX = 0;
+    targetY = 0;
+  });
+
+  function animateParallax() {
+    currX += (targetX - currX) * 0.12;
+    currY += (targetY - currY) * 0.12;
+    if (Math.abs(currX) > 0.01 || Math.abs(currY) > 0.01 || isHovered) {
+      scene.style.transform = `rotateY(${currX.toFixed(2)}deg) rotateX(${currY.toFixed(2)}deg)`;
+    } else {
+      scene.style.transform = '';
+    }
+    requestAnimationFrame(animateParallax);
+  }
+  requestAnimationFrame(animateParallax);
+}
+
+// One orchestrated reveal for the features section — not scattered across
+// every section, just this single moment as the person scrolls to it.
+if (!reduceMotion && 'IntersectionObserver' in window) {
+  const groups = document.querySelectorAll('.reveal-group');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  groups.forEach(g => io.observe(g));
+} else {
+  document.querySelectorAll('.reveal-group').forEach(g => g.classList.add('revealed'));
+}
+
+// Pricing Carousel Navigation (3 cards visible at a time)
+const pricingTrack = document.getElementById('pricingCarouselTrack');
+const pricingPrevBtn = document.getElementById('pricingPrevBtn');
+const pricingNextBtn = document.getElementById('pricingNextBtn');
+const pricingDots = document.querySelectorAll('.pricing-dot');
+
+if (pricingTrack && pricingPrevBtn && pricingNextBtn) {
+  function getScrollAmount() {
+    const card = pricingTrack.querySelector('.plan-card');
+    if (!card) return pricingTrack.clientWidth;
+    const cardWidth = card.offsetWidth;
+    const gap = 24;
+    return window.innerWidth >= 992 ? (cardWidth + gap) * 3 : (cardWidth + gap);
+  }
+
+  pricingPrevBtn.addEventListener('click', () => {
+    pricingTrack.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
+  });
+
+  pricingNextBtn.addEventListener('click', () => {
+    pricingTrack.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
+  });
+
+  function updatePricingCarouselState() {
+    const maxScroll = Math.max(0, pricingTrack.scrollWidth - pricingTrack.clientWidth);
+    const scrollLeft = pricingTrack.scrollLeft;
+    pricingPrevBtn.disabled = scrollLeft <= 10;
+    pricingNextBtn.disabled = scrollLeft >= maxScroll - 10;
+
+    if (pricingDots.length >= 2) {
+      const pageIndex = (maxScroll > 0 && scrollLeft > maxScroll * 0.4) ? 1 : 0;
+      pricingDots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === pageIndex);
+      });
+    }
+  }
+
+  pricingTrack.addEventListener('scroll', updatePricingCarouselState, { passive: true });
+  window.addEventListener('resize', updatePricingCarouselState);
+  setTimeout(updatePricingCarouselState, 100);
+
+  pricingDots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.dataset.index, 10);
+      const maxScroll = Math.max(0, pricingTrack.scrollWidth - pricingTrack.clientWidth);
+      pricingTrack.scrollTo({ left: idx === 0 ? 0 : maxScroll, behavior: 'smooth' });
+    });
+  });
+}
+</script>
+</body>
+</html>

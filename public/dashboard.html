@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand-wrapper">
+      <a href="/dashboard" class="brand" onclick="handleBrandClick(event)">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="sidebar-plan-pill plan-pill-free" id="sidebarPlanBadge">
+        <span class="plan-pill-dot"></span>
+        <span id="sidebarPlanBadgeText">Free Trial (30 Days)</span>
+      </div>
+    </div>
+    <nav>
+      <a href="#domains" class="active" data-section="domains" onclick="handleDomainsNav(event)">Monitor Domains</a>
+      <a href="#ssl-tools" data-section="sslTools" onclick="showSSLTools(event)">SSL Tools</a>
+      <a href="#certificates" data-section="certificates" onclick="showCertificates(event)">Certificate Generator</a>
+      <a href="#alert-emails" data-section="alertEmails" onclick="handleAlertEmailsNav(event)">Alert Emails</a>
+      <a href="#dns-lookup" data-section="dnsLookup" onclick="showDNSLookup(event)">DNS Lookup</a>
+      <a href="#docs" data-section="docs" onclick="showDocs(event)">Docs</a>
+      <a href="#" id="upgradeLink" onclick="handlePlansNav(event)">Upgrade plan</a>
+      <a href="/account.html" id="accountLink">Account</a>
+      <a href="mailto:support@sslalerts.info" id="supportLink">Support</a>
+      <a href="#" id="logoutLink">Log out</a>
+    </nav>
+    <div class="plan-widget" id="userPlanWidget">
+      <div class="name" id="planName">—</div>
+      <div class="usage" id="planUsage">— / —</div>
+      <div class="usage-bar"><div id="planUsageBar" style="width:0%"></div></div>
+    </div>
+    <div class="guest-auth-card" id="guestAuthWidget" style="display:none;">
+      <div class="guest-card-header">
+        <span class="guest-card-icon">🔐</span>
+        <span class="guest-card-title">Guest Mode</span>
+      </div>
+      <p>Sign in to monitor domain expiry &amp; save certificates.</p>
+      <div class="guest-auth-actions">
+        <button type="button" class="guest-btn-login" onclick="showAuthModal('login', 'Sign in to access your domain dashboard')">Log in</button>
+        <button type="button" class="guest-btn-register" onclick="showAuthModal('signup', 'Create a free account to monitor certificates')">Register</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-topbar">
+      <button id="hamburgerBtn" class="hamburger" aria-label="Menu">☰</button>
+      <a href="/dashboard" class="brand" onclick="handleBrandClick(event)">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+    </div>
+
+    <div class="main-head">
+      <h1 id="mainTitle">Monitor domains</h1>
+    </div>
+
+    <div id="billingPausedBanner" class="billing-paused-banner" style="display:none">
+      <span>⚠ Monitoring is paused — your subscription payment didn't go through. Renew to resume checks and alerts.</span>
+      <button class="btn btn-accent btn-sm" id="renewFromBannerBtn">Renew now</button>
+    </div>
+
+    <!-- Domains Section (Default) -->
+    <div id="domainsSection" class="dashboard-section" style="display:none">
+      <div class="stat-row">
+        <div class="stat-card" data-filter="all"><div class="n" id="statTotal">0</div><div class="l">Monitored</div></div>
+        <div class="stat-card" data-filter="valid"><div class="n" id="statValid">0</div><div class="l">Healthy</div></div>
+        <div class="stat-card" data-filter="warning"><div class="n" id="statWarning">0</div><div class="l">Expiring soon</div></div>
+        <div class="stat-card" data-filter="critical"><div class="n" id="statCritical">0</div><div class="l">Critical / expired</div></div>
+      </div>
+
+      <div id="activeFilterBar" class="active-filter-bar" style="display:none">
+        <span id="activeFilterLabel"></span>
+        <button class="btn btn-ghost btn-sm" id="clearFilterBtn">Clear filter ✕</button>
+      </div>
+
+      <div class="alert-recipients-manage-row" style="display:flex;align-items:center;justify-content:space-between;background:var(--card-bg, #ffffff);border:1px solid var(--border, #e2e8f0);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">📧</span>
+          <span style="font-weight:600;font-size:14px;color:#1e293b;">Alert Email Recipients</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="showAlertEmails()">Manage →</button>
+      </div>
+
+      <form class="add-domain-form" id="addDomainForm">
+        <input type="text" id="hostnameInput" placeholder="example.com" required>
+        <select id="groupSelect"></select>
+        <button type="button" class="btn btn-ghost" id="newGroupToggle">+ Group</button>
+        <button type="submit" class="btn btn-primary">Add domain</button>
+      </form>
+
+      <div class="new-group-row" id="newGroupRow" style="display:none">
+        <input type="text" id="newGroupInput" placeholder="New group name, e.g. Client Sites" maxlength="40">
+        <button type="button" class="btn btn-accent btn-sm" id="createGroupBtn">Create</button>
+      </div>
+
+      <div class="add-internal-row">
+        <button type="button" class="internal-cert-toggle-btn" id="internalCertToggle">
+          <span class="internal-cert-icon">🛡️</span> + Add internal certificate
+        </button>
+        <span class="add-internal-hint">— Track certificates on hosts unreachable from the public internet</span>
+      </div>
+
+      <div class="internal-cert-panel" id="internalCertPanel" style="display:none">
+        <div class="internal-panel-head">
+          <h4>🛡️ Monitor Internal Certificate or Root CA</h4>
+          <p>Paste any X.509 PEM certificate below. We'll parse its validity dates and track expiry without touching external DNS.</p>
+        </div>
+        <div class="internal-panel-body">
+          <label for="internalLabelInput">Certificate / Root CA Name</label>
+          <input type="text" id="internalLabelInput" placeholder="e.g. Corporate Internal Root CA, Staging Kubernetes Ingress" maxlength="80">
+          <label for="internalPemInput">Certificate Content (PEM)</label>
+          <textarea id="internalPemInput" rows="7" spellcheck="false"
+            placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDJzCCAg+gAwIBAgIUStUbUXUazdfWj65LmF4VpGr...&#10;-----END CERTIFICATE-----"></textarea>
+          <div class="internal-cert-actions">
+            <button type="button" class="btn btn-primary" id="saveInternalCertBtn">Save &amp; Monitor Certificate</button>
+            <button type="button" class="btn btn-ghost" id="cancelInternalCertBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="domainListWrap">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; flex-wrap:wrap; gap:8px;">
+          <h3 style="margin:0; font-size:15px; font-weight:600; color:var(--text);">Monitored Domains</h3>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label for="groupFilterSelect" style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Filter by group:</label>
+            <select id="groupFilterSelect" style="padding:5px 10px; font-size:13px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text);"></select>
+          </div>
+        </div>
+        <div class="domain-list" id="domainList"></div>
+      </div>
+    </div>
+
+    <!-- SSL Tools Section -->
+    <div id="sslToolsSection" class="dashboard-section" style="display:none">
+      <div class="dashboard-ssl-shell">
+        <aside class="ssl-tools-sidebar">
+          <div class="ssl-tools-sidebar-header">SSL Tools</div>
+          <nav class="ssl-tools-menu">
+            <button type="button" class="ssl-tool-link active" data-target="tool-cert-decoder">Certificate Decoder</button>
+            <button type="button" class="ssl-tool-link" data-target="tool-csr-decoder">CSR Decoder</button>
+            <button type="button" class="ssl-tool-link" data-target="tool-key-matcher">Certificate Key Matcher</button>
+            <button type="button" class="ssl-tool-link" data-target="tool-ssl-checker">SSL Installation Checker</button>
+            <button type="button" class="ssl-tool-link" data-target="tool-chain-validator">Certificate Chain Validator</button>
+            <button type="button" class="ssl-tool-link" data-target="tool-ssl-labs">SSL Labs Server Test</button>
+          </nav>
+        </aside>
+
+        <div class="ssl-tools-content">
+          <div class="tool-panel active" id="tool-cert-decoder">
+            <h2>Certificate Decoder</h2>
+            <p class="tool-description">Decode and view the contents of any X.509 certificate.</p>
+            <div class="info-banner compact-info">
+              <p>Paste your certificate in PEM format (the text between -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----)</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="certDecoderInput">Enter the text of your certificate:</label>
+              <textarea id="certDecoderInput" placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDXTCCAkWgAwIBAgIJAKZ...&#10;-----END CERTIFICATE-----"></textarea>
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="decodeCertificate()">Decode Certificate</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('certDecoderInput').value=''; document.getElementById('certDecoderResult').className='result-box';">Clear</button>
+            </div>
+            <div id="certDecoderResult" class="result-box"></div>
+          </div>
+
+          <div class="tool-panel" id="tool-csr-decoder">
+            <h2>CSR Decoder</h2>
+            <p class="tool-description">Decode a Certificate Signing Request (CSR).</p>
+            <div class="info-banner compact-info">
+              <p>Paste your CSR in PEM format (the text between -----BEGIN CERTIFICATE REQUEST----- and -----END CERTIFICATE REQUEST-----)</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="csrDecoderInput">Enter the text of your CSR:</label>
+              <textarea id="csrDecoderInput" placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;MIICijCCAXICAQAwRTEL...&#10;-----END CERTIFICATE REQUEST-----"></textarea>
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="decodeCSR()">Decode CSR</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('csrDecoderInput').value=''; document.getElementById('csrDecoderResult').className='result-box';">Clear</button>
+            </div>
+            <div id="csrDecoderResult" class="result-box"></div>
+          </div>
+
+          <div class="tool-panel" id="tool-key-matcher">
+            <h2>Certificate Key Matcher</h2>
+            <p class="tool-description">Verify that a certificate and private key match.</p>
+            <div class="info-banner compact-info">
+              <p>This tool compares the modulus of a certificate and private key to ensure they are a matching pair.</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="matchCertInput">Certificate (PEM format):</label>
+              <textarea id="matchCertInput" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"></textarea>
+            </div>
+            <div class="tool-form-group">
+              <label for="matchKeyInput">Private Key (PEM format):</label>
+              <textarea id="matchKeyInput" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="matchCertKey()">Check Match</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('matchCertInput').value=''; document.getElementById('matchKeyInput').value=''; document.getElementById('matchResult').className='result-box';">Clear</button>
+            </div>
+            <div id="matchResult" class="result-box"></div>
+          </div>
+
+          <div class="tool-panel" id="tool-ssl-checker">
+            <h2>SSL Installation Checker</h2>
+            <p class="tool-description">Check whether SSL is properly installed.</p>
+            <div class="info-banner compact-info">
+              <p>This tool validates the certificate installation, connection, and default chain status.</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="checkHostname">Hostname:</label>
+              <input type="text" id="checkHostname" placeholder="example.com">
+            </div>
+            <div class="tool-form-group">
+              <label for="checkPort">Port (default 443):</label>
+              <input type="number" id="checkPort" value="443" min="1" max="65535">
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="checkSSLInstallation()">Check SSL</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('checkHostname').value=''; document.getElementById('checkPort').value='443'; document.getElementById('checkResult').className='result-box';">Clear</button>
+            </div>
+            <div id="checkResult" class="result-box"></div>
+          </div>
+
+          <div class="tool-panel" id="tool-ssl-labs">
+            <h2>SSL Labs Server Test</h2>
+            <p class="tool-description">Run a full SSL/TLS analysis with Qualys SSL Labs.</p>
+            <div class="info-banner compact-info">
+              <p>This opens SSL Labs for a deep analysis of your server's SSL configuration and grade.</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="labsHostname">Hostname:</label>
+              <input type="text" id="labsHostname" placeholder="example.com">
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="testSSLLabs()">Test with SSL Labs</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('labsHostname').value=''; document.getElementById('labsResult').className='result-box';">Clear</button>
+            </div>
+            <div id="labsResult" class="result-box"></div>
+          </div>
+          <div class="tool-panel" id="tool-chain-validator">
+            <h2>Certificate Chain Validator</h2>
+            <p class="tool-description">Validate that your certificate chain is complete and correctly ordered.</p>
+            <div class="info-banner compact-info">
+              <p>Paste your full chain PEM (leaf first, then intermediates, optionally the root CA). Checks ordering and completeness.</p>
+            </div>
+            <div class="tool-form-group">
+              <label for="chainValidatorInput">Certificate Chain (PEM):</label>
+              <textarea id="chainValidatorInput" rows="10" placeholder="-----BEGIN CERTIFICATE-----&#10;(leaf certificate)&#10;-----END CERTIFICATE-----&#10;-----BEGIN CERTIFICATE-----&#10;(intermediate CA)&#10;-----END CERTIFICATE-----"></textarea>
+            </div>
+            <div class="tool-actions">
+              <button class="btn btn-primary" onclick="validateChain()">Validate Chain</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('chainValidatorInput').value=''; document.getElementById('chainResult').className='result-box';">Clear</button>
+            </div>
+            <div id="chainResult" class="result-box"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificate Management Section -->
+    <div id="certificatesSection" class="dashboard-section" style="display:none">
+      <div class="dashboard-ssl-shell cert-generator-shell">
+        <aside class="ssl-tools-sidebar">
+          <div class="ssl-tools-sidebar-header">Certificate Generator</div>
+          <nav class="ssl-tools-menu">
+            <button type="button" class="cert-mode-link active" data-target="cert-generator-letsencrypt">Let's Encrypt</button>
+            <button type="button" class="cert-mode-link" data-target="cert-generator-selfsigned">Self-Signed</button>
+            <button type="button" class="cert-mode-link" data-target="cert-generator-csr">Generate CSR</button>
+            <button type="button" class="cert-mode-link" data-target="cert-generated-certificates">Download Certificates</button>
+          </nav>
+        </aside>
+
+        <div class="ssl-tools-content">
+          <div class="certificate-panel active" id="cert-generator-letsencrypt">
+            <div id="letsencryptStep1">
+              <div class="generator-hero">
+                <h4>🔐 Let's Encrypt</h4>
+                <p>Use a public DNS record and internet-reachable host for the ACME challenge. This is required for real issuance.</p>
+              </div>
+              <form id="letsencryptForm" class="generator-form-grid">
+                <div class="field full">
+                  <label for="leDomain">Domain Name</label>
+                  <input type="text" id="leDomain" required placeholder="example.com">
+                </div>
+                <div class="field full">
+                  <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Start Certificate Generation</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div id="letsencryptStep2" style="display:none">
+              <div class="generator-hero">
+                <h4>📋 DNS Verification Required</h4>
+                <p>Add the following DNS TXT record to verify domain ownership, then click the button below.</p>
+              </div>
+              <div id="dnsInstructions" class="generator-form-grid" style="margin-top:16px"></div>
+              <div class="modal-actions" style="margin-top:16px">
+                <button type="button" class="btn btn-ghost" onclick="resetLetsEncrypt()">Start Over</button>
+                <button type="button" class="btn btn-primary" onclick="completeLetsEncrypt()">I've Added the DNS Record</button>
+              </div>
+            </div>
+
+            <div id="letsencryptStep3" style="display:none">
+              <div class="generator-hero">
+                <h4>✅ Certificate Ready</h4>
+                <p>Your certificate has been generated successfully.</p>
+              </div>
+              <div id="certificateFiles" style="margin-top:16px"></div>
+              <div class="modal-actions" style="margin-top:16px">
+                <button type="button" class="btn btn-ghost" onclick="resetLetsEncrypt()">Generate Another</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="certificate-panel" id="cert-generator-selfsigned">
+            <div id="selfsignedFormWrap">
+              <div class="generator-hero">
+                <h4>🔐 Self-Signed Certificate</h4>
+                <p>Generate a certificate for internal systems, development, testing, or private networks.</p>
+              </div>
+              <form id="selfsignedForm" class="generator-form-grid">
+                <div class="form-section-header">CERTIFICATE IDENTITY</div>
+
+                <div class="field full">
+                  <label for="ssDomain">Domain / Hostname *</label>
+                  <input type="text" id="ssDomain" required placeholder="internal.example.com">
+                </div>
+
+                <div class="field full">
+                  <label>Additional SANs</label>
+                  <div id="ssSansContainer" class="san-list-container"></div>
+                  <button type="button" class="add-san-btn" id="addSsSanBtn" onclick="addSelfSignedSanRow()">+ Add DNS name or IP address</button>
+                </div>
+
+                <div class="field">
+                  <label for="ssOrganization">Organization</label>
+                  <input type="text" id="ssOrganization" value="My Company Inc" placeholder="My Company Inc">
+                </div>
+                <div class="field">
+                  <label for="ssOU">Organizational Unit</label>
+                  <input type="text" id="ssOU" value="IT Department" placeholder="IT Department">
+                </div>
+                <div class="field">
+                  <label for="ssLocality">City / Locality</label>
+                  <input type="text" id="ssLocality" placeholder="">
+                </div>
+                <div class="field">
+                  <label for="ssState">State / Province</label>
+                  <input type="text" id="ssState" placeholder="">
+                </div>
+                <div class="field">
+                  <label for="ssCountry">Country Code</label>
+                  <input type="text" id="ssCountry" maxlength="2" value="IN" placeholder="IN">
+                </div>
+
+                <div class="form-section-header">CERTIFICATE SETTINGS</div>
+
+                <div class="field">
+                  <label for="ssValidityDays">Validity</label>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" id="ssValidityDays" value="365" min="1" max="3650" style="max-width:140px;">
+                    <span style="font-size:13px;color:#64748b;font-weight:500;">days</span>
+                  </div>
+                </div>
+
+                <div class="form-section-header">KEY SETTINGS</div>
+
+                <div class="field">
+                  <label for="ssKeyAlgorithm">Key Algorithm</label>
+                  <select id="ssKeyAlgorithm">
+                    <option value="RSA" selected>RSA</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="ssKeySize">Key Size</label>
+                  <select id="ssKeySize">
+                    <option value="2048" selected>2048 (RSA 2048-bit)</option>
+                    <option value="3072">3072 (RSA 3072-bit)</option>
+                    <option value="4096">4096 (RSA 4096-bit)</option>
+                  </select>
+                </div>
+
+                <div class="field full">
+                  <div class="modal-actions" style="margin-top:12px;">
+                    <button type="submit" class="btn btn-primary">Generate Self-Signed Certificate</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div id="selfsignedResultWrap" style="display:none">
+              <div class="generator-hero">
+                <h4>✅ Self-Signed Certificate &amp; Root CA Ready</h4>
+                <p id="selfsignedDomainSummary"></p>
+              </div>
+              <div class="modal-actions" style="margin-top:16px; margin-bottom:16px;">
+                <button type="button" class="btn btn-primary" id="downloadSelfSignedBtn">⬇ Download All Files (.tar.gz)</button>
+                <button type="button" class="btn btn-ghost" onclick="resetSelfSigned()">Generate Another</button>
+              </div>
+
+              <div class="tool-form-group" style="margin-top:16px;">
+                <label><strong>🏛 Root CA Certificate (ca.crt)</strong> — Install into your OS/Browser to trust this cert:</label>
+                <textarea id="selfsignedCaCertDisplay" rows="6" readonly style="font-family:monospace;font-size:11px;"></textarea>
+                <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="copyText('selfsignedCaCertDisplay', 'Root CA copied')">📋 Copy Root CA</button>
+              </div>
+
+              <div class="tool-form-group" style="margin-top:16px;">
+                <label><strong>📄 Domain Certificate (.crt):</strong></label>
+                <textarea id="selfsignedDomainCertDisplay" rows="6" readonly style="font-family:monospace;font-size:11px;"></textarea>
+                <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="copyText('selfsignedDomainCertDisplay', 'Certificate copied')">📋 Copy Certificate</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="certificate-panel" id="cert-generator-csr">
+            <div id="csrFormWrap">
+              <div class="generator-hero">
+                <h4>📝 Generate CSR</h4>
+                <p>Generate a Certificate Signing Request for an official Certificate Authority such as DigiCert, Sectigo, or Let's Encrypt.</p>
+              </div>
+              <form id="csrForm" class="generator-form-grid">
+                <div class="field full">
+                  <label for="csrDomain">Domain Name *</label>
+                  <input type="text" id="csrDomain" required placeholder="example.com">
+                </div>
+
+                <div class="field full">
+                  <label>Additional Domains / SANs</label>
+                  <div id="csrSansContainer" class="san-list-container"></div>
+                  <button type="button" class="add-san-btn" id="addCsrSanBtn" onclick="addCsrSanRow()">+ Add Domain</button>
+                </div>
+
+                <div class="field">
+                  <label for="csrOrganization">Organization</label>
+                  <input type="text" id="csrOrganization" placeholder="Optional">
+                </div>
+                <div class="field">
+                  <label for="csrOU">Organizational Unit</label>
+                  <input type="text" id="csrOU" placeholder="Optional">
+                </div>
+                <div class="field">
+                  <label for="csrLocality">City / Locality</label>
+                  <input type="text" id="csrLocality" placeholder="Optional">
+                </div>
+                <div class="field">
+                  <label for="csrState">State / Province</label>
+                  <input type="text" id="csrState" placeholder="Optional">
+                </div>
+                <div class="field">
+                  <label for="csrCountry">Country Code</label>
+                  <input type="text" id="csrCountry" maxlength="2" value="IN" placeholder="IN">
+                </div>
+                <div class="field">
+                  <label for="csrEmail">Email</label>
+                  <input type="email" id="csrEmail" placeholder="Optional">
+                </div>
+
+                <div class="field">
+                  <label for="csrKeySize">Key Size</label>
+                  <select id="csrKeySize">
+                    <option value="2048" selected>2048 (RSA 2048-bit)</option>
+                    <option value="3072">3072 (RSA 3072-bit)</option>
+                    <option value="4096">4096 (RSA 4096-bit)</option>
+                  </select>
+                </div>
+
+                <div class="field full">
+                  <div class="modal-actions" style="margin-top:12px;">
+                    <button type="submit" class="btn btn-primary">Generate CSR</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div id="csrResultWrap" style="display:none">
+              <div class="generator-hero">
+                <h4>✅ CSR &amp; Private Key Generated</h4>
+                <p id="csrDomainSummary"></p>
+              </div>
+              <div class="modal-actions" style="margin-top:16px; margin-bottom:16px;">
+                <button type="button" class="btn btn-primary" id="downloadCsrBtn">⬇ Download Files (.tar.gz)</button>
+                <button type="button" class="btn btn-ghost" onclick="resetCSR()">Generate Another</button>
+              </div>
+
+              <div class="tool-form-group" style="margin-top:16px;">
+                <label><strong>📝 CSR (Certificate Signing Request)</strong> — Submit this to your CA:</label>
+                <textarea id="csrTextDisplay" rows="6" readonly style="font-family:monospace;font-size:11px;"></textarea>
+                <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="copyText('csrTextDisplay', 'CSR copied')">📋 Copy CSR</button>
+              </div>
+
+              <div class="tool-form-group" style="margin-top:16px;">
+                <label><strong>🔑 Private Key</strong> — Keep this secure and confidential:</label>
+                <textarea id="csrKeyDisplay" rows="6" readonly style="font-family:monospace;font-size:11px;"></textarea>
+                <button type="button" class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="copyText('csrKeyDisplay', 'Private key copied')">📋 Copy Private Key</button>
+              </div>
+            </div>
+          </div>
+          <div class="certificate-panel" id="cert-generated-certificates">
+            <div class="generator-hero">
+              <h4>📥 Download Certificates</h4>
+              <p>All your generated certificates are listed below. Certificates are securely stored until their expiry date (CSRs for 1 year) and automatically deleted thereafter for zero-trace security.</p>
+            </div>
+            <!-- Certificate Type / Group Filter Tabs -->
+            <div class="cert-type-filter-bar" id="certTypeFilterBar" style="display:flex; gap:8px; margin:16px 0 12px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm cert-type-btn active" data-filter="all">All Certificates (<span id="countAllCerts">0</span>)</button>
+              <button type="button" class="btn btn-sm cert-type-btn btn-ghost" data-filter="letsencrypt">🔐 Let's Encrypt (<span id="countLeCerts">0</span>)</button>
+              <button type="button" class="btn btn-sm cert-type-btn btn-ghost" data-filter="csr">📝 CSR (<span id="countCsrCerts">0</span>)</button>
+              <button type="button" class="btn btn-sm cert-type-btn btn-ghost" data-filter="selfsigned">📜 Self-Signed (<span id="countSelfSignedCerts">0</span>)</button>
+            </div>
+            <div id="certificatesList" style="margin-top:12px">
+              <div class="loading">Loading certificates…</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Emails Section -->
+    <div id="alertEmailsSection" class="dashboard-section" style="display:none">
+      <div class="section-header">
+        <h2>Alert Email Recipients</h2>
+        <button class="btn btn-primary" onclick="showAddEmailModal()">➕ Add Email</button>
+      </div>
+
+      <div class="info-banner">
+        <h4>📧 Multi-Email Alerts</h4>
+        <p>Configure additional email addresses to receive SSL expiry alerts:</p>
+        <ul>
+          <li><strong>Global Emails:</strong> Receive alerts for all your domains</li>
+          <li><strong>Group Emails:</strong> Only receive alerts for specific groups</li>
+          <li><strong>Primary Email:</strong> Your account email always receives alerts</li>
+        </ul>
+      </div>
+
+      <div id="alertEmailsList" class="alert-emails-list">
+        <div class="loading">Loading alert emails...</div>
+      </div>
+    </div>
+
+    <!-- DNS Lookup Section -->
+    <div id="dnsLookupSection" class="dashboard-section" style="display:none">
+      <div class="section-header">
+        <div>
+          <h2>DNS Lookup</h2>
+          <p style="margin:4px 0 0; color:var(--text-muted); font-size:14px;">Instant DNS record lookup across A, AAAA, CNAME, CAA, MX, NS, PTR, SOA, SRV, and TXT records.</p>
+        </div>
+      </div>
+
+      <div class="lookup-panel" style="max-width:100%; margin: 20px 0 0;">
+        <form class="lookup-form" id="dashLookupForm">
+          <input type="text" id="dashDomainInput" placeholder="example.com or IP address" autocomplete="off" required>
+          <button type="submit" class="btn btn-accent">Look up</button>
+        </form>
+
+        <div class="lookup-types" id="dashLookupTypes">
+          <button type="button" class="type-pill active" data-type="ALL">ALL</button>
+          <button type="button" class="type-pill" data-type="A">A</button>
+          <button type="button" class="type-pill" data-type="AAAA">AAAA</button>
+          <button type="button" class="type-pill" data-type="CNAME">CNAME</button>
+          <button type="button" class="type-pill" data-type="CAA">CAA</button>
+          <button type="button" class="type-pill" data-type="MX">MX</button>
+          <button type="button" class="type-pill" data-type="NS">NS</button>
+          <button type="button" class="type-pill" data-type="PTR">PTR</button>
+          <button type="button" class="type-pill" data-type="SOA">SOA</button>
+          <button type="button" class="type-pill" data-type="SRV">SRV</button>
+          <button type="button" class="type-pill" data-type="TXT">TXT</button>
+        </div>
+
+        <div id="dashLookupResults" class="lookup-results"></div>
+      </div>
+    </div>
+
+    <!-- Documentation Section -->
+    <div id="docsSection" class="dashboard-section" style="display:none">
+      <div class="dashboard-docs-wrap">
+        <div class="docs-layout" style="padding:0; gap:36px;">
+          <aside class="docs-toc">
+            <div class="docs-toc-title">On this page</div>
+            <a href="#getting-started" onclick="scrollDocSection(event, 'getting-started')">Getting started</a>
+            <a href="#add-domain" onclick="scrollDocSection(event, 'add-domain')">Adding a public domain</a>
+            <a href="#add-internal" onclick="scrollDocSection(event, 'add-internal')">Adding an internal certificate</a>
+            <a href="#cert-generator" onclick="scrollDocSection(event, 'cert-generator')">Certificate Generator</a>
+            <a href="#ssl-tools" onclick="scrollDocSection(event, 'ssl-tools')">SSL Tools</a>
+            <a href="#groups" onclick="scrollDocSection(event, 'groups')">Groups — creating &amp; choosing</a>
+            <a href="#filtering" onclick="scrollDocSection(event, 'filtering')">Filtering your list</a>
+            <a href="#statuses" onclick="scrollDocSection(event, 'statuses')">Understanding statuses</a>
+            <a href="#alerts" onclick="scrollDocSection(event, 'alerts')">Alerts &amp; acknowledging</a>
+            <a href="#plans" onclick="scrollDocSection(event, 'plans')">Plans &amp; billing</a>
+            <a href="#account" onclick="scrollDocSection(event, 'account')">Your account</a>
+            <a href="#faq" onclick="scrollDocSection(event, 'faq')">FAQ</a>
+          </aside>
+
+          <div class="docs-content">
+            <h1 style="margin-top:0;">Documentation</h1>
+            <p class="docs-lede">Everything you need to know to get real use out of SSL Alerts — in plain language, no jargon.</p>
+
+            <section id="getting-started" class="docs-section">
+              <h2>Getting started</h2>
+              <p>Create a free account — no card required. Your free trial covers <strong>5 domains / certificates</strong>, which is enough to try the whole flow: add domains, watch them get checked, see what an alert looks like.</p>
+              <p>Once you're ready to monitor more than one certificate, see <a href="#plans" onclick="scrollDocSection(event, 'plans')">Plans &amp; billing</a> below.</p>
+            </section>
+
+            <section id="add-domain" class="docs-section">
+              <h2>Adding a public domain</h2>
+              <p>From your dashboard, type a hostname into the "example.com" field and click <strong>Add domain</strong>. Just the domain — no <code>https://</code>, no trailing slash.</p>
+              <ul class="docs-list">
+                <li>We immediately do a real TLS handshake against it, the same way a visitor's browser would, and show you the issuer, validity dates, and days remaining.</li>
+                <li>After that, it's checked automatically once a day.</li>
+                <li>You can trigger an extra check anytime with the <strong>Re-check</strong> button on that row.</li>
+              </ul>
+              <p>If a domain uses a non-standard HTTPS port, that's supported too — just make sure it's reachable from the internet, since this is a live connection, not a local scan.</p>
+            </section>
+
+            <section id="add-internal" class="docs-section">
+              <h2>Adding an internal certificate</h2>
+              <p>Some certificates aren't reachable from the public internet at all — an internal CA's root cert, something behind a VPN, an air-gapped service. For those, click <strong>+ Add internal certificate (paste PEM)</strong> instead.</p>
+              <ul class="docs-list">
+                <li>Paste the full certificate, including the <code>-----BEGIN CERTIFICATE-----</code> and <code>-----END CERTIFICATE-----</code> lines.</li>
+                <li>Give it a clear name — since there's no hostname to identify it by, the name is how you'll recognize it in your list later. Something like "Prod Internal Root CA" or "VPN Gateway Cert" works well.</li>
+                <li>We read the certificate's own validity dates directly — no network connection is made, so this works even for certificates with no public DNS record at all.</li>
+                <li><strong>Which group should you choose?</strong> Same guidance as below — if you're not sure yet, leave it in <strong>General</strong>. If this cert belongs to a specific client or environment you already track separately, put it in that group instead.</li>
+              </ul>
+              <p>One honest limitation: because there's no live handshake for internal certs, we can only track the certificate's expiry date — not whether it's been revoked or whether the chain is still trusted.</p>
+            </section>
+
+            <section id="cert-generator" class="docs-section">
+              <h2>Certificate Generator</h2>
+              <p>SSL Alerts provides a built-in cryptographic engine to generate production-ready SSL/TLS certificates and signing requests right from your browser or API without installing external command-line agents.</p>
+
+              <h3>1. Free Let's Encrypt Certificates (DNS-01 ACME)</h3>
+              <p>Issue globally trusted, publicly valid 90-day certificates from Let's Encrypt using automated DNS verification:</p>
+              <ul class="docs-list">
+                <li><strong>DNS-01 Challenge:</strong> Enter your domain name and start the order. SSL Alerts generates the ACME challenge and gives you the exact <code>_acme-challenge</code> TXT record name and value to publish in your DNS registrar (Cloudflare, Route53, Namecheap, GoDaddy, etc.).</li>
+                <li><strong>Instant Issuance:</strong> Once published, click <strong>Verify &amp; Issue</strong>. The ACME client verifies challenge propagation, finalizes the order, and outputs your complete certificate bundle (<code>cert.pem</code>, <code>privkey.pem</code>, <code>chain.pem</code>, and <code>fullchain.pem</code>).</li>
+              </ul>
+
+              <h3>2. Self-Signed PKI &amp; Internal Root CA</h3>
+              <p>Need HTTPS for internal microservices, private IP addresses, Docker containers, Kubernetes ingresses, or staging servers?</p>
+              <ul class="docs-list">
+                <li>Generates a dedicated custom <strong>Internal Root Certificate Authority (ca.crt / ca.key)</strong> alongside the leaf server certificate (<code>.crt</code> and <code>.key</code>).</li>
+                <li>Configurable validity period (from 30 up to 825+ days) and RSA key sizes (2048 or 4096-bit).</li>
+                <li>Includes ready-to-use <strong>Nginx</strong> and <strong>Apache</strong> configuration snippets to deploy HTTPS in seconds.</li>
+                <li>Once you install <code>ca.crt</code> into your OS or team browser trusted roots, green padlock HTTPS works seamlessly across all your internal infrastructure with zero browser warnings.</li>
+              </ul>
+
+              <h3>3. CSR &amp; Private Key Generator</h3>
+              <p>Generate cryptographic Certificate Signing Requests (CSRs) and matching RSA private keys when purchasing SSL certificates from commercial vendors like DigiCert, Sectigo, or GlobalSign:</p>
+              <ul class="docs-list">
+                <li>Supports Common Name (domain), Organization, Organizational Unit, City, State, Country, and Email fields.</li>
+                <li>Outputs standard PEM-encoded PKCS#10 CSR and PKCS#8 private key ready for CA submission.</li>
+              </ul>
+
+              <h3>🛡️ Lifetime Retention &amp; Zero-Trace Auto-Purge</h3>
+              <p>All generated certificates and CSRs are stored in your personal account under <strong>Download Certificates</strong>:</p>
+              <ul class="docs-list">
+                <li><strong>Let's Encrypt &amp; Self-Signed Certificates:</strong> Safely stored until their cryptographic expiry date (<code>validTo</code>), enabling you to re-download the bundles whenever needed. The moment a certificate expires, our background scheduler permanently deletes it from the database for zero-trace security and privacy.</li>
+                <li><strong>CSRs:</strong> Maintained for exactly <strong>1 full year</strong> so you can easily reuse the CSR and key during annual certificate renewals before automatic deletion.</li>
+              </ul>
+            </section>
+
+            <section id="ssl-tools" class="docs-section">
+              <h2>SSL Diagnostic Tools</h2>
+              <p>A suite of developer and sysadmin utilities to inspect, convert, and repair SSL/TLS configurations:</p>
+
+              <h3>1. SSL Certificate Health Checker</h3>
+              <p>Performs a live TLS handshake or parses pasted PEM certificates to detect configuration errors before browsers do:</p>
+              <ul class="docs-list">
+                <li>Inspects Common Name, Subject Alternative Names (SANs), signature algorithms, and key sizes.</li>
+                <li>Audits validity windows, days remaining, and issuer hierarchies.</li>
+                <li>Identifies vulnerabilities, broken chains, self-signed warnings, and mismatched hostnames.</li>
+              </ul>
+
+              <h3>2. CSR Decoder</h3>
+              <p>Decode and inspect any CSR file before submitting it to a Certificate Authority to ensure subject DN attributes, key strength, and domain spellings are 100% accurate.</p>
+
+              <h3>3. SSL Certificate Format Converter</h3>
+              <p>Seamlessly convert certificates and private keys between server formats without running OpenSSL commands in your terminal:</p>
+              <ul class="docs-list">
+                <li><strong>PEM (.crt, .pem):</strong> Standard base64 ASCII format used by Apache, Nginx, HAProxy, and Linux servers.</li>
+                <li><strong>DER (.der, .cer):</strong> Binary format commonly required by Java platforms and specific networking appliances.</li>
+                <li><strong>PKCS#12 (.pfx, .p12):</strong> Password-protected archive format combining certificate, private key, and intermediate chain for Microsoft IIS, Windows Server, and Tomcat.</li>
+              </ul>
+
+              <h3>4. Certificate Chain &amp; Root CA Resolver</h3>
+              <p>Diagnose incomplete certificate chains. The resolver inspects Authority Information Access (AIA) issuer extension URLs, fetches missing intermediate certificates, and constructs the complete chain back to trusted public root authorities.</p>
+            </section>
+
+            <section id="groups" class="docs-section">
+              <h2>Groups — creating &amp; choosing</h2>
+              <p>Groups let you organize certificates by client, environment, or team — useful once your list grows past a handful of entries.</p>
+              <ul class="docs-list">
+                <li>Every account starts with one group called <strong>General</strong>. Anything you add without picking a different group lands here.</li>
+                <li>To create a new group, use the group dropdown next to the add-domain field — pick a certificate's group at the same time you add it.</li>
+                <li>The dropdown at the top of your domain list also filters what you're looking at — pick a group to see only its certificates, or <strong>All</strong> to see everything.</li>
+              </ul>
+              <p><strong>Which group should you choose when adding a certificate?</strong> A simple rule that works for most people:</p>
+              <ul class="docs-list">
+                <li>Just starting out, or only have a few certs? Leave everything in <strong>General</strong> — there's no benefit to extra groups yet.</li>
+                <li>Managing certs for multiple clients? One group per client, so each client's status is easy to check at a glance.</li>
+                <li>Running multiple environments? Groups like <strong>Production</strong> and <strong>Staging</strong> keep the ones that actually matter for uptime separate from the ones that don't.</li>
+              </ul>
+            </section>
+
+            <section id="filtering" class="docs-section">
+              <h2>Filtering your list</h2>
+              <p>The four stat cards at the top of your dashboard — <strong>Monitored</strong>, <strong>Healthy</strong>, <strong>Expiring soon</strong>, <strong>Critical / expired</strong> — are clickable. Click one to filter your list down to just that status; click it again (or <strong>Monitored</strong>) to clear the filter.</p>
+            </section>
+
+            <section id="statuses" class="docs-section">
+              <h2>Understanding statuses</h2>
+              <ul class="docs-list">
+                <li><span class="pill pill-valid">Valid</span> — more than 30 days left. Nothing to do.</li>
+                <li><span class="pill pill-warning">Warning</span> — 30 days or fewer left. Time to plan a renewal.</li>
+                <li><span class="pill pill-critical">Critical</span> — 7 days or fewer left. Renew this soon.</li>
+                <li><span class="pill pill-expired">Expired</span> — already past its expiry date. Anything relying on it is likely broken right now.</li>
+                <li><span class="pill pill-error">Error</span> — we couldn't verify the certificate at all (connection failed, or it's not trusted). Worth checking manually.</li>
+              </ul>
+            </section>
+
+            <section id="alerts" class="docs-section">
+              <h2>Alerts &amp; acknowledging</h2>
+              <p>The moment a certificate enters Warning, Critical, or Expired, you get an email immediately. If it's still unresolved, you'll get another email <strong>every 30 minutes</strong> — deliberately persistent, so it can't quietly get lost in an inbox.</p>
+              <ul class="docs-list">
+                <li>Click <strong>Acknowledge</strong> on that certificate's row to pause the repeats while you deal with it.</li>
+                <li>Click <strong>Acknowledge</strong> on that certificate's row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside the alert email) to pause repeat reminders without logging in.</li>
+                <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your inbox.</li>
+                <li><strong>Warning vs Critical:</strong> Certificates in Warning (8–30 days) receive a calm daily reminder (every 24h). Critical certificates (&lt;7 days) trigger at your plan's rapid alert interval.</li>
+                <li><strong>Internal Certificate Updates:</strong> If an internal certificate is renewed, click <strong>Update Cert</strong> on its row to paste the new PEM and refresh its validity dates immediately.</li>
+                <li>If the status gets worse (Warning → Critical) or changes again after being acknowledged, alerts automatically resume — so acknowledging one problem can never accidentally silence a different, future one.</li>
+              </ul>
+            </section>
+
+            <section id="plans" class="docs-section">
+              <h2>Plans &amp; billing</h2>
+              <ul class="docs-list">
+                <li><strong>Free Trial (30 Days) ($0)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals, 30 days access.</li>
+                <li><strong>Micro ($1/month — Limited Time Offer, Reg. $2)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals.</li>
+                <li><strong>Starter ($5/month)</strong> — 20 domains / certificates, up to 3 alert recipients, 2-hour critical alert intervals.</li>
+                <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 5 alert recipients, 1-hour critical alert intervals.</li>
+                <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 10 alert recipients, 30-min critical alert intervals.</li>
+                <li><strong>Agency ($50/month)</strong> — 500 domains / certificates, up to 25 alert recipients, 10-min critical alert intervals.</li>
+                <li><strong>Enterprise Plan (&gt;500 domains)</strong> — Custom quotas, dedicated checking workers, 24/7 SLA, and invoice billing. Contact <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.</li>
+              </ul>
+              <p>Public domains and internal certificates count the same toward your plan's limit. Upgrading is instant from the <strong>Upgrade plan</strong> / <strong>Plans</strong> link in your dashboard.</p>
+            </section>
+
+            <section id="account" class="docs-section">
+              <h2>Your account</h2>
+              <p>From the <strong>Account</strong> page in your dashboard sidebar, you can update your display name, edit your primary default alert email, and change your password at any time.</p>
+            </section>
+
+            <section id="faq" class="docs-section">
+              <h2>FAQ</h2>
+              <div class="docs-faq-item">
+                <h3>Does adding a domain here change anything on my server?</h3>
+                <p>No. We only connect to it the same way a visitor's browser does, read the certificate that's already there, and disconnect. Nothing is installed on your server.</p>
+              </div>
+              <div class="docs-faq-item">
+                <h3>Will I get spammed with emails?</h3>
+                <p>No — you only hear from us once a certificate actually needs attention, and the repeat reminders stop the moment you acknowledge or renew it.</p>
+              </div>
+              <div class="docs-faq-item">
+                <h3>Can I monitor a certificate that isn't publicly accessible?</h3>
+                <p>Yes — that's exactly what internal certificates are for. Paste the PEM instead of a hostname.</p>
+              </div>
+              <div class="docs-faq-item">
+                <h3>What happens if I downgrade or my payment fails?</h3>
+                <p>Your account reverts to the free trial's 5-certificate limit, and monitoring pauses until you're back on a paid plan — your existing certificates and their history aren't deleted.</p>
+              </div>
+            </section>
+
+            <div class="docs-support" style="margin-top:40px;">
+              Still stuck? Email <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 48px; padding: 24px 0; border-top: 1px solid var(--line); font-size: 13px; color: #6E828C; text-align: center;">
+      <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+    </div>
+  </main>
+</div>
+
+<!-- Certificate Generation Modal -->
+<div class="modal-overlay" id="certModal">
+  <div class="modal large-modal">
+    <div class="modal-head">
+      <h2 id="certModalTitle">Generate Certificate</h2>
+      <button class="modal-close" onclick="closeCertModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="certModalBody">
+      <!-- Content will be dynamically loaded -->
+    </div>
+  </div>
+</div>
+
+<!-- Add Email Modal -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal email-modal">
+    <div class="modal-head">
+      <h2>Add Alert Email</h2>
+      <button class="modal-close" onclick="closeEmailModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="addEmailForm" class="generator-form-grid compact-form">
+        <div class="field full">
+          <label for="newAlertEmail">Email Address</label>
+          <input type="email" id="newAlertEmail" required placeholder="alerts@example.com">
+        </div>
+        <div class="field full" id="groupSelectWrapper">
+          <label for="emailGroupSelect">Choose Group</label>
+          <select id="emailGroupSelect"></select>
+        </div>
+        <div class="field full">
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeEmailModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Email</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Internal Certificate Modal -->
+<div class="modal-overlay" id="editInternalCertModal" style="display:none">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <h2 id="editInternalModalTitle">Update Internal Certificate</h2>
+      <button class="modal-close" onclick="closeEditInternalCertModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted); font-size:14px; margin-bottom:16px;">
+        Paste your renewed certificate in PEM format. We will re-calculate its validity dates and reset repeat alert timers immediately.
+      </p>
+      <input type="hidden" id="editInternalDomainId">
+      <div class="field" style="margin-bottom:14px;">
+        <label for="editInternalLabel">Certificate Label (optional)</label>
+        <input type="text" id="editInternalLabel" placeholder="e.g. Internal Kubernetes Ingress">
+      </div>
+      <div class="field">
+        <label for="editInternalPem">Renewed PEM Certificate</label>
+        <textarea id="editInternalPem" rows="8" placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" style="font-family:monospace; font-size:12px; width:100%; box-sizing:border-box; padding:10px; border:1px solid #CBD5E1; border-radius:6px; resize:vertical;"></textarea>
+      </div>
+      <div id="editInternalError" class="form-error" style="display:none; margin-top:12px;"></div>
+      <div class="modal-actions" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn btn-ghost" onclick="closeEditInternalCertModal()">Cancel</button>
+        <button type="button" class="btn btn-accent" id="saveRenewedCertBtn">Save &amp; Update Certificate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Primary Email Modal -->
+<div class="modal-overlay" id="editPrimaryEmailModal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Edit Primary / Default Email</h2>
+      <button class="modal-close" onclick="closeEditPrimaryEmailModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="editPrimaryEmailForm" class="generator-form-grid compact-form">
+        <div class="field full">
+          <label for="primaryEmailInput">Primary Email Address</label>
+          <input type="email" id="primaryEmailInput" required autocomplete="email">
+          <small style="color:var(--text-muted);display:block;margin-top:6px;font-size:12px;">This is your primary account login email and receives all domain expiry alerts and notifications.</small>
+        </div>
+        <div class="field full">
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeEditPrimaryEmailModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="savePrimaryEmailBtn">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Login / Register Modal for Guests -->
+<div class="modal-overlay" id="authModal" style="display:none">
+  <div class="modal auth-modal" style="max-width:440px;">
+    <div class="modal-head">
+      <h2 id="authModalTitle">Sign in to SSL Alerts</h2>
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" style="padding-top:8px;">
+      <div id="authModalContext" class="auth-context-banner" style="display:none;"></div>
+      
+      <div class="auth-modal-tabs">
+        <button type="button" class="auth-modal-tab active" id="authTabLogin" onclick="switchAuthModalTab('login')">Log in</button>
+        <button type="button" class="auth-modal-tab" id="authTabSignup" onclick="switchAuthModalTab('signup')">Create account</button>
+      </div>
+
+      <div class="form-error" id="authModalError" style="margin-bottom:14px;"></div>
+
+      <!-- Login Form -->
+      <form id="authModalLoginForm">
+        <div class="field full">
+          <label for="authLoginEmail">Email Address</label>
+          <input type="email" id="authLoginEmail" required autocomplete="email" placeholder="name@example.com">
+        </div>
+        <div class="field full" style="margin-top:12px;">
+          <label for="authLoginPassword">Password</label>
+          <input type="password" id="authLoginPassword" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div style="margin-top:20px;">
+          <button type="submit" class="btn btn-primary btn-block" id="authLoginSubmitBtn">Log in</button>
+        </div>
+        <div style="margin-top:14px; text-align:center; font-size:13px; color:var(--text-muted);">
+          New to SSL Alerts? <a href="#" onclick="switchAuthModalTab('signup'); return false;" style="color:var(--teal-dark); font-weight:600;">Create a free account</a>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="authModalSignupForm" style="display:none;">
+        <div class="field full">
+          <label for="authSignupName">Your Name</label>
+          <input type="text" id="authSignupName" required autocomplete="name" placeholder="Alex Taylor">
+        </div>
+        <div class="field full" style="margin-top:12px;">
+          <label for="authSignupEmail">Email Address</label>
+          <input type="email" id="authSignupEmail" required autocomplete="email" placeholder="name@example.com">
+        </div>
+        <div class="field full" style="margin-top:12px;">
+          <label for="authSignupPassword">Password</label>
+          <input type="password" id="authSignupPassword" required autocomplete="new-password" minlength="8" placeholder="••••••••">
+        </div>
+        <div class="field full" style="margin-top:12px;">
+          <label for="authSignupConfirmPassword">Confirm Password</label>
+          <input type="password" id="authSignupConfirmPassword" required autocomplete="new-password" minlength="8" placeholder="••••••••">
+        </div>
+        <div style="font-size:11px; color:#64748B; margin-top:6px; line-height:1.4;">
+          Must contain 8+ characters, with uppercase, lowercase, number & symbol.
+        </div>
+        <div style="margin-top:20px;">
+          <button type="submit" class="btn btn-primary btn-block" id="authSignupSubmitBtn">Create free account</button>
+        </div>
+        <div style="margin-top:14px; text-align:center; font-size:13px; color:var(--text-muted);">
+          Already have an account? <a href="#" onclick="switchAuthModalTab('login'); return false;" style="color:var(--teal-dark); font-weight:600;">Log in</a>
+        </div>
+      </form>
+
+      <!-- OTP Verification Form -->
+      <form id="authModalOtpForm" style="display:none;">
+        <div style="font-size:13px; color:var(--muted); margin-bottom:14px; text-align:center; line-height:1.5;">
+          We've sent a 6-digit verification code to<br><strong id="authModalOtpEmail" style="color:var(--navy);"></strong>
+        </div>
+        <div class="field full">
+          <label for="authModalOtpInput" style="text-align:center; display:block;">Verification Code</label>
+          <input type="text" id="authModalOtpInput" required maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" placeholder="123456" style="font-size:24px; letter-spacing:8px; text-align:center; font-weight:700; padding:10px;">
+        </div>
+        <div style="margin-top:18px;">
+          <button type="submit" class="btn btn-primary btn-block" id="authModalOtpSubmitBtn">Verify & Activate</button>
+        </div>
+        <div style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+          <button type="button" id="authModalResendOtpBtn" style="background:none; border:none; color:var(--teal-dark); font-weight:600; cursor:pointer; padding:0;">Resend code</button>
+          <button type="button" onclick="switchAuthModalTab('signup'); return false;" style="background:none; border:none; color:var(--muted); cursor:pointer; padding:0;">← Back</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Additional Styles for New Features */
+.dashboard-section {
+  width: 100%;
+}
+
+.email-modal {
+  max-width: 520px;
+}
+
+.compact-form {
+  display: grid;
+  gap: 18px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.dashboard-tool-shell {
+  background: rgba(255,255,255,0.38);
+  border: 1px solid rgba(15, 41, 67, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.generator-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.generator-hero {
+  background: #f7fbff;
+  border: 1px solid #dfeaf6;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.generator-hero h4 {
+  margin: 0 0 8px;
+  color: #0a2740;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.generator-hero p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.generator-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e5edf2;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.generator-form-grid .field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.generator-form-grid .field.full {
+  grid-column: 1 / -1;
+}
+
+.generator-form-grid label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a2740;
+}
+
+.generator-form-grid input,
+.generator-form-grid select,
+.generator-form-grid textarea {
+  width: 100%;
+  border: 1px solid #dfe7ec;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.generator-form-grid textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.modal-actions .btn {
+  min-width: 150px;
+}
+
+.modal.large-modal {
+  max-width: 760px;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(15, 41, 67, 0.16);
+}
+
+.modal-head {
+  border-bottom: 1px solid rgba(15, 41, 67, 0.08);
+  padding: 18px 22px 14px;
+}
+
+.modal-body {
+  padding: 18px 22px 22px;
+}
+
+@media (max-width: 720px) {
+  .generator-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal.large-modal {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+.dashboard-ssl-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.ssl-tools-sidebar {
+  align-self: start;
+  height: fit-content;
+  position: sticky;
+  top: 24px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(15, 41, 67, 0.08);
+  border-radius: 18px;
+  padding: 18px 14px;
+  box-shadow: 0 4px 14px rgba(15, 41, 67, 0.04);
+}
+
+.ssl-tools-sidebar-header {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5E6B77;
+  padding: 8px 10px 14px;
+}
+
+.ssl-tools-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ssl-tool-link,
+.cert-mode-link {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: left;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ssl-tool-link:hover,
+.ssl-tool-link.active,
+.cert-mode-link:hover,
+.cert-mode-link.active {
+  background: #0A2740;
+  color: #fff;
+  border-color: #0A2740;
+}
+
+.ssl-tools-content {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(15, 41, 67, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(15, 41, 67, 0.04);
+  padding: 28px 28px 20px;
+}
+
+.tool-panel,
+.certificate-panel {
+  display: none;
+}
+
+.tool-panel.active,
+.certificate-panel.active {
+  display: block;
+}
+
+.tool-panel h2 {
+  margin: 0 0 8px;
+  color: #0A2740;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.tool-description {
+  margin: 0 0 20px;
+  color: #4A5B66;
+  font-size: 15px;
+}
+
+.compact-info {
+  margin-bottom: 22px;
+  padding: 14px 16px;
+}
+
+.tool-form-group {
+  margin-bottom: 18px;
+}
+
+.tool-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #0A2740;
+  font-size: 14px;
+}
+
+.tool-form-group textarea,
+.tool-form-group input {
+  width: 100%;
+  border: 1px solid #dfe7ec;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+  font: 13px/1.5 'Courier New', monospace;
+  min-height: 140px;
+  resize: vertical;
+}
+
+.tool-form-group input {
+  min-height: auto;
+  font-family: inherit;
+}
+
+.tool-actions {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0 10px;
+  flex-wrap: wrap;
+}
+
+.result-box {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e3e9ea;
+  border-radius: 8px;
+  display: none;
+}
+
+.result-box.visible {
+  display: block;
+}
+
+.result-box.error {
+  background: #FFF5F5;
+  border-color: #FEB2B2;
+  color: #C53030;
+}
+
+.result-box.success {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #166534;
+}
+
+.result-box.info {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1E40AF;
+}
+
+.result-box pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-ssl-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .ssl-tools-sidebar {
+    padding: 14px;
+  }
+
+  .ssl-tools-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .ssl-tools-content {
+    padding: 20px 18px;
+  }
+
+  .tool-panel h2 {
+    font-size: 24px;
+  }
+}
+
+.result-box.visible {
+  display: block;
+}
+
+.result-box.error {
+  background: #FFF5F5;
+  border-color: #FEB2B2;
+  color: #C53030;
+}
+
+.result-box.success {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #166534;
+}
+
+.result-box pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 41, 67, 0.08);
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #0A2740;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.cert-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.info-banner {
+  background: linear-gradient(135deg, #edf6ff 0%, #eff8fb 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 14px;
+  padding: 22px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(15, 41, 67, 0.04);
+}
+
+.info-banner h4 {
+  margin: 0 0 12px;
+  color: #0A2740;
+  font-size: 16px;
+}
+
+.info-banner p {
+  margin: 0 0 12px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.info-banner ul {
+  margin: 0;
+  padding-left: 22px;
+  color: #334155;
+}
+
+.info-banner li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.certificates-list,
+.alert-emails-list {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(15, 41, 67, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 3px 12px rgba(15, 41, 67, 0.04);
+}
+
+.large-modal .modal {
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.cert-item,
+.email-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 18px;
+  border: 1px solid rgba(15, 41, 67, 0.08);
+  border-radius: 12px;
+  background: #fff;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 6px rgba(15, 41, 67, 0.02);
+}
+
+.cert-item:last-child,
+.email-item:last-child {
+  margin-bottom: 0;
+}
+
+.cert-info h4,
+.email-info h4 {
+  margin: 0 0 6px;
+  color: #0A2740;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cert-info p,
+.email-info p {
+  margin: 0;
+  color: #4A5B66;
+  font-size: 14px;
+}
+
+.cert-status {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cert-status.completed {
+  background: #d9f8ea;
+  color: #166534;
+}
+
+.cert-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.cert-status.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.email-scope {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.email-scope.global {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.email-scope.group {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #4A5B66;
+  font-style: italic;
+}
+
+/* Navigation active states */
+.sidebar nav a.active {
+  background: #0A2740;
+  color: white;
+}
+
+.sidebar nav a:hover:not(.active) {
+  background: rgba(10, 39, 64, 0.1);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .tools-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .cert-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .cert-item,
+  .email-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+}
+</style>
+
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Upgrade your plan</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-plans-wrapper">
+      <div class="modal-plans" id="modalPlans"><!-- plan cards injected by app.js --></div>
+      <div class="modal-carousel-nav" id="modalCarouselNav">
+        <button type="button" class="modal-carousel-nav-btn prev-btn" id="modalPlanPrevBtn" aria-label="Previous plans">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> Previous
+        </button>
+        <div class="modal-carousel-dots" id="modalNavDots">
+          <span class="modal-dot active" data-page="0"></span>
+          <span class="modal-dot" data-page="1"></span>
+        </div>
+        <button type="button" class="modal-carousel-nav-btn next-btn" id="modalPlanNextBtn" aria-label="Next plans">
+          Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+    <div id="modalEnterpriseCard" style="margin-top: 14px; padding: 14px 18px; background: #F8FAFC; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+      <div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 14px;">🏢 Have more than 500 domains?</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Need custom quotas, dedicated check intervals, or agency billing? We provide tailored enterprise packages.</div>
+      </div>
+      <a href="mailto:support@sslalerts.info?subject=Enterprise%20Plan%20Inquiry%20(500%2B%20domains)" class="btn btn-ghost btn-sm" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Contact Support →</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="/js/app.js?v=20261004-1"></script>
+<script src="/js/dashboard-features.js?v=20261004-1"></script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSL Tools — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+<style>
+  .tools-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  .tools-sidebar {
+    background: #f8f9fa;
+    border-right: 1px solid #e3e9ea;
+    padding: 32px 20px;
+  }
+  .tools-sidebar h3 {
+    color: #0A2740;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 16px;
+    padding-left: 12px;
+  }
+  .tools-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .tools-menu li {
+    margin-bottom: 4px;
+  }
+  .tools-menu a {
+    display: block;
+    padding: 8px 12px;
+    color: #4A5B66;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .tools-menu a:hover {
+    background: #ffffff;
+    color: #0A2740;
+  }
+  .tools-menu a.active {
+    background: #0A2740;
+    color: #ffffff;
+  }
+  .tools-content {
+    padding: 40px 60px;
+    max-width: 900px;
+  }
+  .tools-content h1 {
+    font-size: 32px;
+    color: #0A2740;
+    margin: 0 0 12px;
+  }
+  .tools-content .description {
+    color: #4A5B66;
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+  .tool-section {
+    display: none;
+  }
+  .tool-section.active {
+    display: block;
+  }
+  .form-group {
+    margin-bottom: 24px;
+  }
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #0A2740;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .form-group textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 1px solid #e3e9ea;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    resize: vertical;
+  }
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e3e9ea;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .result-box {
+    margin-top: 24px;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e3e9ea;
+    border-radius: 8px;
+    display: none;
+  }
+  .result-box.visible {
+    display: block;
+  }
+  .result-box.error {
+    background: #FFF5F5;
+    border-color: #FEB2B2;
+  }
+  .result-box.success {
+    background: #F0FDF4;
+    border-color: #86EFAC;
+  }
+  .result-box h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: #0A2740;
+  }
+  .result-box pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #4A5B66;
+    margin: 0;
+  }
+  .info-box {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .info-box p {
+    margin: 0;
+    color: #1E40AF;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="tools-layout">
+  <div class="tools-sidebar">
+    <h3>🔧 SSL Tools</h3>
+    <ul class="tools-menu">
+      <li><a href="#cert-decoder" class="tool-link active">Certificate Decoder</a></li>
+      <li><a href="#csr-decoder" class="tool-link">CSR Decoder</a></li>
+      <li><a href="#cert-key-matcher" class="tool-link">Certificate Key Matcher</a></li>
+      <li><a href="#ssl-checker" class="tool-link">SSL Installation Checker</a></li>
+      <li><a href="#chain-validator" class="tool-link">Certificate Chain Validator</a></li>
+      <li><a href="#ssl-labs" class="tool-link">SSL Labs Server Test</a></li>
+    </ul>
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e3e9ea;">
+      <a href="/dashboard" style="display: block; padding: 8px 12px; color: #4A5B66; text-decoration: none; font-size: 14px;">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="tools-content">
+    <!-- Certificate Decoder -->
+    <div class="tool-section active" id="cert-decoder">
+      <h1>Certificate Decoder</h1>
+      <p class="description">Decode and view the contents of any X.509 certificate.</p>
+
+      <div class="info-box">
+        <p>Paste your certificate in PEM format (the text between -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----)</p>
+      </div>
+
+      <div class="form-group">
+        <label for="certText">Enter the text of your Certificate:</label>
+        <textarea id="certText" placeholder="-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAKZ...
+-----END CERTIFICATE-----"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="decodeCertificate()">Decode Certificate</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('certText', 'certResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="certResult"></div>
+    </div>
+
+    <!-- CSR Decoder -->
+    <div class="tool-section" id="csr-decoder">
+      <h1>CSR Decoder</h1>
+      <p class="description">Decode and view the contents of a Certificate Signing Request (CSR).</p>
+
+      <div class="info-box">
+        <p>Paste your CSR in PEM format (the text between -----BEGIN CERTIFICATE REQUEST----- and -----END CERTIFICATE REQUEST-----)</p>
+      </div>
+
+      <div class="form-group">
+        <label for="csrText">Enter the text of your CSR:</label>
+        <textarea id="csrText" placeholder="-----BEGIN CERTIFICATE REQUEST-----
+MIICijCCAXICAQAwRTEL...
+-----END CERTIFICATE REQUEST-----"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="decodeCSR()">Decode CSR</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('csrText', 'csrResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="csrResult"></div>
+    </div>
+
+    <!-- Certificate Key Matcher -->
+    <div class="tool-section" id="cert-key-matcher">
+      <h1>Certificate Key Matcher</h1>
+      <p class="description">Verify that a certificate and private key match each other.</p>
+
+      <div class="info-box">
+        <p>This tool compares the modulus of a certificate and private key to ensure they are a matching pair.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="matchCertText">Certificate (PEM format):</label>
+        <textarea id="matchCertText" placeholder="-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="matchKeyText">Private Key (PEM format):</label>
+        <textarea id="matchKeyText" placeholder="-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="matchCertKey()">Check Match</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('matchCertText,matchKeyText', 'matchResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="matchResult"></div>
+    </div>
+
+    <!-- SSL Installation Checker -->
+    <div class="tool-section" id="ssl-checker">
+      <h1>SSL Installation Checker</h1>
+      <p class="description">Check if SSL is properly installed on your server.</p>
+
+      <div class="info-box">
+        <p>This tool connects to your server and validates the SSL certificate installation, checking for common issues.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="checkHostname">Hostname:</label>
+        <input type="text" id="checkHostname" placeholder="example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="checkPort">Port (default 443):</label>
+        <input type="number" id="checkPort" value="443">
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="checkSSLInstallation()">Check SSL</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('checkHostname,checkPort', 'checkResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="checkResult"></div>
+    </div>
+
+    <!-- SSL Labs Server Test -->
+    <div class="tool-section" id="ssl-labs">
+      <h1>SSL Labs Server Test</h1>
+      <p class="description">Perform a comprehensive SSL/TLS server test using Qualys SSL Labs.</p>
+
+      <div class="info-box">
+        <p>This will redirect you to SSL Labs for a deep analysis of your server's SSL configuration, including grade rating, protocol support, and vulnerability checks.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="labsHostname">Hostname:</label>
+        <input type="text" id="labsHostname" placeholder="example.com">
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="testSSLLabs()">Test with SSL Labs</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('labsHostname', 'labsResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="labsResult"></div>
+    </div>
+
+    <!-- Certificate Chain Validator -->
+    <div class="tool-section" id="chain-validator">
+      <h1>Certificate Chain Validator</h1>
+      <p class="description">Validate that your certificate chain is complete, correctly ordered, and terminates at a trusted Root CA.</p>
+
+      <div class="info-box">
+        <p>Paste your full certificate chain in PEM format (leaf certificate first, followed by intermediate CAs, and optionally the root CA).</p>
+      </div>
+
+      <div class="form-group">
+        <label for="chainText">Enter Certificate Chain (PEM):</label>
+        <textarea id="chainText" placeholder="-----BEGIN CERTIFICATE-----
+(leaf certificate)
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+(intermediate CA)
+-----END CERTIFICATE-----"></textarea>
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary" onclick="validateChainStandalone()">Validate Chain</button>
+        <button type="button" class="btn btn-secondary" onclick="clearForm('chainText', 'chainStandaloneResult')">Clear</button>
+      </div>
+
+      <div class="result-box" id="chainStandaloneResult"></div>
+    </div>
+    <div style="margin-top: 48px; padding: 24px 0; border-top: 1px solid #e3e9ea; font-size: 13px; color: #6E828C; text-align: center;">
+      <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Navigation
+document.querySelectorAll('.tool-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = link.getAttribute('href').substring(1);
+
+    // Update active states
+    document.querySelectorAll('.tool-link').forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+
+    document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+  });
+});
+
+// Helper functions
+function showResult(elementId, content, type = 'info') {
+  const resultBox = document.getElementById(elementId);
+  resultBox.innerHTML = content;
+  resultBox.className = 'result-box visible ' + type;
+}
+
+function clearForm(inputIds, resultId) {
+  inputIds.split(',').forEach(id => {
+    const el = document.getElementById(id.trim());
+    if (el) el.value = '';
+  });
+  document.getElementById(resultId).classList.remove('visible');
+}
+
+// Certificate Decoder
+async function decodeCertificate() {
+  const certText = document.getElementById('certText').value.trim();
+  if (!certText) {
+    showResult('certResult', '<h3>Error</h3><p>Please enter a certificate</p>', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/ssltools/decode-cert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ certText })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to decode certificate');
+    }
+
+    showResult('certResult', `<h3>Certificate Details</h3><pre>${data.decoded}</pre>`, 'success');
+  } catch (err) {
+    showResult('certResult', `<h3>Error</h3><p>${err.message}</p>`, 'error');
+  }
+}
+
+// CSR Decoder
+async function decodeCSR() {
+  const csrText = document.getElementById('csrText').value.trim();
+  if (!csrText) {
+    showResult('csrResult', '<h3>Error</h3><p>Please enter a CSR</p>', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/ssltools/decode-csr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csrText })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to decode CSR');
+    }
+
+    showResult('csrResult', `<h3>CSR Details</h3><pre>${data.decoded}</pre>`, 'success');
+  } catch (err) {
+    showResult('csrResult', `<h3>Error</h3><p>${err.message}</p>`, 'error');
+  }
+}
+
+// Certificate Key Matcher
+async function matchCertKey() {
+  const certText = document.getElementById('matchCertText').value.trim();
+  const keyText = document.getElementById('matchKeyText').value.trim();
+
+  if (!certText || !keyText) {
+    showResult('matchResult', '<h3>Error</h3><p>Please enter both certificate and private key</p>', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/ssltools/match-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ certText, keyText })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to match certificate and key');
+    }
+
+    const type = data.match ? 'success' : 'error';
+    const icon = data.match ? '✅' : '❌';
+    showResult('matchResult', `<h3>${icon} ${data.message}</h3>`, type);
+  } catch (err) {
+    showResult('matchResult', `<h3>Error</h3><p>${err.message}</p>`, 'error');
+  }
+}
+
+// SSL Installation Checker
+async function checkSSLInstallation() {
+  const hostname = document.getElementById('checkHostname').value.trim();
+  const port = document.getElementById('checkPort').value || 443;
+
+  if (!hostname) {
+    showResult('checkResult', '<h3>Error</h3><p>Please enter a hostname</p>', 'error');
+    return;
+  }
+
+  showResult('checkResult', '<h3>Checking...</h3><p>Please wait while we check your SSL installation.</p>', 'info');
+
+  try {
+    const res = await fetch('/api/ssltools/check-installation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hostname, port })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.installed) {
+      throw new Error(data.error || 'SSL check failed');
+    }
+
+    const cert = data.certificate;
+    const conn = data.connection;
+    const chainStatus = data.chainValid ? '✅ Valid' : '❌ Invalid';
+
+    const html = `
+      <h3>✅ SSL Installation Check Results</h3>
+      <pre><strong>Certificate Information:</strong>
+Common Name: ${cert.subject.CN || 'N/A'}
+Issuer: ${cert.issuer.CN || cert.issuer.O || 'N/A'}
+Valid From: ${cert.validFrom}
+Valid To: ${cert.validTo}
+Serial Number: ${cert.serialNumber}
+
+<strong>Connection Details:</strong>
+Protocol: ${conn.protocol}
+Cipher: ${conn.cipher}
+Bits: ${conn.bits}
+
+<strong>Certificate Chain:</strong>
+Status: ${chainStatus}
+${data.chainError ? 'Error: ' + data.chainError : ''}
+
+<strong>Fingerprints:</strong>
+SHA1: ${cert.fingerprint}
+SHA256: ${cert.fingerprint256}</pre>
+    `;
+
+    showResult('checkResult', html, data.chainValid ? 'success' : 'error');
+  } catch (err) {
+    showResult('checkResult', `<h3>Error</h3><p>${err.message}</p>`, 'error');
+  }
+}
+
+// SSL Labs Test
+function testSSLLabs() {
+  const hostname = document.getElementById('labsHostname').value.trim();
+
+  if (!hostname) {
+    showResult('labsResult', '<h3>Error</h3><p>Please enter a hostname</p>', 'error');
+    return;
+  }
+
+  const url = `https://www.ssllabs.com/ssltest/analyze.html?d=${encodeURIComponent(hostname)}`;
+  showResult('labsResult', `<h3>Redirecting to SSL Labs...</h3><p>Opening SSL Labs test in a new window. If it doesn't open automatically, <a href="${url}" target="_blank">click here</a>.</p>`, 'info');
+
+  window.open(url, '_blank');
+}
+
+// Certificate Chain Validator
+async function validateChainStandalone() {
+  const chainText = document.getElementById('chainText').value.trim();
+  if (!chainText) {
+    showResult('chainStandaloneResult', '<h3>Error</h3><p>Please paste a certificate chain first.</p>', 'error');
+    return;
+  }
+  showResult('chainStandaloneResult', '<p>Validating certificate chain...</p>', 'info');
+
+  try {
+    const res = await fetch('/api/ssltools/validate-chain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chainText })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showResult('chainStandaloneResult', `<h3>Error</h3><p>${data.error || 'Failed to validate chain'}</p>`, 'error');
+      return;
+    }
+
+    let html = `<h3>${data.summary}</h3>`;
+    if (data.issues && data.issues.length) {
+      html += `<div style="margin:12px 0; color:#dc2626;"><strong>Issues Found:</strong><ul>${data.issues.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+    }
+    if (data.certs && data.certs.length) {
+      html += `<div style="margin-top:16px;"><strong>Chain Certificates (${data.count}):</strong>`;
+      data.certs.forEach(c => {
+        html += `
+          <div style="background:#fff;border:1px solid #e3e9ea;border-radius:6px;padding:12px;margin-top:8px;">
+            <strong>Cert ${c.index}: ${c.index === 1 ? 'Leaf Certificate' : (c.index === data.count && data.selfSignedRoot ? 'Root CA' : 'Intermediate CA')}</strong><br>
+            <span style="color:#64748b">Subject:</span> ${c.subject.replace(/\n/g, ', ')}<br>
+            <span style="color:#64748b">Issuer:</span> ${c.issuer.replace(/\n/g, ', ')}<br>
+            <span style="color:#64748b">Valid:</span> ${c.notBefore} → ${c.notAfter}<br>
+            <span style="color:#64748b">SHA256:</span> <code style="font-size:11px;">${c.fingerprint}</code>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+    showResult('chainStandaloneResult', html, data.valid ? 'success' : 'error');
+  } catch (err) {
+    showResult('chainStandaloneResult', `<h3>Error</h3><p>${err.message}</p>`, 'error');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+</head>
+<body>
+
+<nav class="topnav-wrap" id="topnavWrap">
+  <div class="container">
+    <div class="topnav">
+      <a href="/" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="topnav-links">
+        <a href="/#generator" id="navCertGen">Cert Generator</a>
+        <a href="/#ssl-tools" id="navSSLTools">SSL Tools</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/tools.html">DNS Lookup</a>
+      </div>
+      <div style="display:flex; gap:10px;" id="navButtons">
+        <a href="/login.html" class="btn btn-ghost btn-sm">Log in</a>
+        <a href="/signup.html" class="btn btn-primary btn-sm">Start free</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container docs-layout">
+  <aside class="docs-toc">
+    <div class="docs-toc-title">On this page</div>
+    <a href="#getting-started">Getting started</a>
+    <a href="#add-domain">Adding a public domain</a>
+    <a href="#add-internal">Adding an internal certificate</a>
+    <a href="#cert-generator">Certificate Generator</a>
+    <a href="#ssl-tools">SSL Tools</a>
+    <a href="#groups">Groups — creating &amp; choosing</a>
+    <a href="#filtering">Filtering your list</a>
+    <a href="#statuses">Understanding statuses</a>
+    <a href="#alerts">Alerts &amp; acknowledging</a>
+    <a href="#plans">Plans &amp; billing</a>
+    <a href="#account">Your account</a>
+    <a href="#faq">FAQ</a>
+  </aside>
+
+  <div class="docs-content">
+    <h1>Documentation</h1>
+    <p class="docs-lede">Everything you need to know to get real use out of SSL Alerts — in plain language, no jargon.</p>
+
+    <section id="getting-started" class="docs-section">
+      <h2>Getting started</h2>
+      <p>Create a free account at <a href="/signup.html">sign up</a> — no card required. Your free trial covers <strong>5 domains / certificates</strong>, which is enough to try the whole flow: add domains, watch them get checked, see what an alert looks like.</p>
+      <p>Once you're ready to monitor more than one certificate, see <a href="#plans">Plans &amp; billing</a> below.</p>
+    </section>
+
+    <section id="add-domain" class="docs-section">
+      <h2>Adding a public domain</h2>
+      <p>From your dashboard, type a hostname into the "example.com" field and click <strong>Add domain</strong>. Just the domain — no <code>https://</code>, no trailing slash.</p>
+      <ul class="docs-list">
+        <li>We immediately do a real TLS handshake against it, the same way a visitor's browser would, and show you the issuer, validity dates, and days remaining.</li>
+        <li>After that, it's checked automatically once a day.</li>
+        <li>You can trigger an extra check anytime with the <strong>Re-check</strong> button on that row.</li>
+      </ul>
+      <p>If a domain uses a non-standard HTTPS port, that's supported too — just make sure it's reachable from the internet, since this is a live connection, not a local scan.</p>
+    </section>
+
+    <section id="add-internal" class="docs-section">
+      <h2>Adding an internal certificate</h2>
+      <p>Some certificates aren't reachable from the public internet at all — an internal CA's root cert, something behind a VPN, an air-gapped service. For those, click <strong>+ Add internal certificate (paste PEM)</strong> instead.</p>
+      <ul class="docs-list">
+        <li>Paste the full certificate, including the <code>-----BEGIN CERTIFICATE-----</code> and <code>-----END CERTIFICATE-----</code> lines.</li>
+        <li>Give it a clear name — since there's no hostname to identify it by, the name is how you'll recognize it in your list later. Something like "Prod Internal Root CA" or "VPN Gateway Cert" works well.</li>
+        <li>We read the certificate's own validity dates directly — no network connection is made, so this works even for certificates with no public DNS record at all.</li>
+        <li><strong>Which group should you choose?</strong> Same guidance as below — if you're not sure yet, leave it in <strong>General</strong>. If this cert belongs to a specific client or environment you already track separately, put it in that group instead.</li>
+      </ul>
+      <p>One honest limitation: because there's no live handshake for internal certs, we can only track the certificate's expiry date — not whether it's been revoked or whether the chain is still trusted.</p>
+    </section>
+
+    <section id="cert-generator" class="docs-section">
+      <h2>Certificate Generator</h2>
+      <p>SSL Alerts provides a built-in cryptographic engine to generate production-ready SSL/TLS certificates and signing requests right from your browser or API without installing external command-line agents.</p>
+
+      <h3>1. Free Let's Encrypt Certificates (DNS-01 ACME)</h3>
+      <p>Issue globally trusted, publicly valid 90-day certificates from Let's Encrypt using automated DNS verification:</p>
+      <ul class="docs-list">
+        <li><strong>DNS-01 Challenge:</strong> Enter your domain name and start the order. SSL Alerts generates the ACME challenge and gives you the exact <code>_acme-challenge</code> TXT record name and value to publish in your DNS registrar (Cloudflare, Route53, Namecheap, GoDaddy, etc.).</li>
+        <li><strong>Instant Issuance:</strong> Once published, click <strong>Verify &amp; Issue</strong>. The ACME client verifies challenge propagation, finalizes the order, and outputs your complete certificate bundle (<code>cert.pem</code>, <code>privkey.pem</code>, <code>chain.pem</code>, and <code>fullchain.pem</code>).</li>
+      </ul>
+
+      <h3>2. Self-Signed PKI &amp; Internal Root CA</h3>
+      <p>Need HTTPS for internal microservices, private IP addresses, Docker containers, Kubernetes ingresses, or staging servers?</p>
+      <ul class="docs-list">
+        <li>Generates a dedicated custom <strong>Internal Root Certificate Authority (ca.crt / ca.key)</strong> alongside the leaf server certificate (<code>.crt</code> and <code>.key</code>).</li>
+        <li>Configurable validity period (from 30 up to 825+ days) and RSA key sizes (2048 or 4096-bit).</li>
+        <li>Includes ready-to-use <strong>Nginx</strong> and <strong>Apache</strong> configuration snippets to deploy HTTPS in seconds.</li>
+        <li>Once you install <code>ca.crt</code> into your OS or team browser trusted roots, green padlock HTTPS works seamlessly across all your internal infrastructure with zero browser warnings.</li>
+      </ul>
+
+      <h3>3. CSR &amp; Private Key Generator</h3>
+      <p>Generate cryptographic Certificate Signing Requests (CSRs) and matching RSA private keys when purchasing SSL certificates from commercial vendors like DigiCert, Sectigo, or GlobalSign:</p>
+      <ul class="docs-list">
+        <li>Supports Common Name (domain), Organization, Organizational Unit, City, State, Country, and Email fields.</li>
+        <li>Outputs standard PEM-encoded PKCS#10 CSR and PKCS#8 private key ready for CA submission.</li>
+      </ul>
+
+      <h3>🛡️ Lifetime Retention &amp; Zero-Trace Auto-Purge</h3>
+      <p>All generated certificates and CSRs are stored in your personal account under <strong>Download Certificates</strong>:</p>
+      <ul class="docs-list">
+        <li><strong>Let's Encrypt &amp; Self-Signed Certificates:</strong> Safely stored until their cryptographic expiry date (<code>validTo</code>), enabling you to re-download the bundles whenever needed. The moment a certificate expires, our background scheduler permanently deletes it from the database for zero-trace security and privacy.</li>
+        <li><strong>CSRs:</strong> Maintained for exactly <strong>1 full year</strong> so you can easily reuse the CSR and key during annual certificate renewals before automatic deletion.</li>
+      </ul>
+    </section>
+
+    <section id="ssl-tools" class="docs-section">
+      <h2>SSL Diagnostic Tools</h2>
+      <p>A suite of developer and sysadmin utilities to inspect, convert, and repair SSL/TLS configurations:</p>
+
+      <h3>1. SSL Certificate Health Checker</h3>
+      <p>Performs a live TLS handshake or parses pasted PEM certificates to detect configuration errors before browsers do:</p>
+      <ul class="docs-list">
+        <li>Inspects Common Name, Subject Alternative Names (SANs), signature algorithms, and key sizes.</li>
+        <li>Audits validity windows, days remaining, and issuer hierarchies.</li>
+        <li>Identifies vulnerabilities, broken chains, self-signed warnings, and mismatched hostnames.</li>
+      </ul>
+
+      <h3>2. CSR Decoder</h3>
+      <p>Decode and inspect any CSR file before submitting it to a Certificate Authority to ensure subject DN attributes, key strength, and domain spellings are 100% accurate.</p>
+
+      <h3>3. SSL Certificate Format Converter</h3>
+      <p>Seamlessly convert certificates and private keys between server formats without running OpenSSL commands in your terminal:</p>
+      <ul class="docs-list">
+        <li><strong>PEM (.crt, .pem):</strong> Standard base64 ASCII format used by Apache, Nginx, HAProxy, and Linux servers.</li>
+        <li><strong>DER (.der, .cer):</strong> Binary format commonly required by Java platforms and specific networking appliances.</li>
+        <li><strong>PKCS#12 (.pfx, .p12):</strong> Password-protected archive format combining certificate, private key, and intermediate chain for Microsoft IIS, Windows Server, and Tomcat.</li>
+      </ul>
+
+      <h3>4. Certificate Chain &amp; Root CA Resolver</h3>
+      <p>Diagnose incomplete certificate chains. The resolver inspects Authority Information Access (AIA) issuer extension URLs, fetches missing intermediate certificates, and constructs the complete chain back to trusted public root authorities.</p>
+    </section>
+
+    <section id="groups" class="docs-section">
+      <h2>Groups — creating &amp; choosing</h2>
+      <p>Groups let you organize certificates by client, environment, or team — useful once your list grows past a handful of entries.</p>
+      <ul class="docs-list">
+        <li>Every account starts with one group called <strong>General</strong>. Anything you add without picking a different group lands here.</li>
+        <li>To create a new group, use the group dropdown next to the add-domain field — pick a certificate's group at the same time you add it.</li>
+        <li>The dropdown at the top of your domain list also filters what you're looking at — pick a group to see only its certificates, or <strong>All</strong> to see everything.</li>
+      </ul>
+      <p><strong>Which group should you choose when adding a certificate?</strong> A simple rule that works for most people:</p>
+      <ul class="docs-list">
+        <li>Just starting out, or only have a few certs? Leave everything in <strong>General</strong> — there's no benefit to extra groups yet.</li>
+        <li>Managing certs for multiple clients? One group per client, so each client's status is easy to check at a glance.</li>
+        <li>Running multiple environments? Groups like <strong>Production</strong> and <strong>Staging</strong> keep the ones that actually matter for uptime separate from the ones that don't.</li>
+      </ul>
+    </section>
+
+    <section id="filtering" class="docs-section">
+      <h2>Filtering your list</h2>
+      <p>The four stat cards at the top of your dashboard — <strong>Monitored</strong>, <strong>Healthy</strong>, <strong>Expiring soon</strong>, <strong>Critical / expired</strong> — are clickable. Click one to filter your list down to just that status; click it again (or <strong>Monitored</strong>) to clear the filter. Combine this with the group dropdown to answer questions like "what's critical in my Production group right now?" in two clicks.</p>
+    </section>
+
+    <section id="statuses" class="docs-section">
+      <h2>Understanding statuses</h2>
+      <ul class="docs-list">
+        <li><span class="pill pill-valid">Valid</span> — more than 30 days left. Nothing to do.</li>
+        <li><span class="pill pill-warning">Warning</span> — 30 days or fewer left. Time to plan a renewal.</li>
+        <li><span class="pill pill-critical">Critical</span> — 7 days or fewer left. Renew this soon.</li>
+        <li><span class="pill pill-expired">Expired</span> — already past its expiry date. Anything relying on it is likely broken right now.</li>
+        <li><span class="pill pill-error">Error</span> — we couldn't verify the certificate at all (connection failed, or it's not trusted). Worth checking manually.</li>
+      </ul>
+    </section>
+
+    <section id="alerts" class="docs-section">
+      <h2>Alerts &amp; acknowledging</h2>
+      <p>The moment a certificate enters Warning, Critical, or Expired, you get an email immediately. If it's still unresolved, you'll get another email <strong>every 30 minutes</strong> — deliberately persistent, so it can't quietly get lost in an inbox.</p>
+      <ul class="docs-list">
+        <li>Click <strong>Acknowledge</strong> on that certificate's row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside the alert email) to pause repeat reminders without logging in.</li>
+        <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your inbox.</li>
+        <li><strong>Warning vs Critical:</strong> Certificates in Warning (8–30 days) receive a calm daily reminder (every 24h). Critical certificates (&lt;7 days) trigger at your plan's rapid alert interval.</li>
+        <li><strong>Internal Certificate Updates:</strong> If an internal certificate is renewed, click <strong>Update Cert</strong> on its row to paste the new PEM and refresh its validity dates immediately.</li>
+        <li>If the status gets worse (Warning → Critical) or changes again after being acknowledged, alerts automatically resume — so acknowledging one problem can never accidentally silence a different, future one.</li>
+      </ul>
+    </section>
+
+    <section id="plans" class="docs-section">
+      <h2>Plans &amp; billing</h2>
+      <ul class="docs-list">
+        <li><strong>Free Trial (30 Days) ($0)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals, 30 days access.</li>
+        <li><strong>Micro ($1/month — Limited Time Offer, Reg. $2)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals.</li>
+        <li><strong>Starter ($5/month)</strong> — 20 domains / certificates, up to 3 alert recipients, 2-hour critical alert intervals.</li>
+        <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 5 alert recipients, 1-hour critical alert intervals.</li>
+        <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 10 alert recipients, 30-min critical alert intervals.</li>
+        <li><strong>Agency ($50/month)</strong> — 500 domains / certificates, up to 25 alert recipients, 10-min critical alert intervals.</li>
+        <li><strong>Enterprise Plan (&gt;500 domains)</strong> — Custom quotas, dedicated checking workers, 24/7 SLA, and invoice billing. Contact <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.</li>
+      </ul>
+      <p>Public domains and internal certificates count the same toward your plan's limit. Upgrading is instant from the <strong>Upgrade plan</strong> link in your dashboard, handled securely through Razorpay.</p>
+      <p>If a monthly payment fails, monitoring pauses on your account until it's resolved — you'll see this clearly noted on your dashboard, and everything resumes automatically as soon as payment goes through.</p>
+    </section>
+
+    <section id="account" class="docs-section">
+      <h2>Your account</h2>
+      <p>From the <strong>Account</strong> page in your dashboard sidebar, you can update your display name and change your password at any time. Your email address is also your login, so it can't be changed from there directly — contact support if you need it updated.</p>
+    </section>
+
+    <section id="faq" class="docs-section">
+      <h2>FAQ</h2>
+      <div class="docs-faq-item">
+        <h3>Does adding a domain here change anything on my server?</h3>
+        <p>No. We only connect to it the same way a visitor's browser does, read the certificate that's already there, and disconnect. Nothing is installed on your server.</p>
+      </div>
+      <div class="docs-faq-item">
+        <h3>Will I get spammed with emails?</h3>
+        <p>No — you only hear from us once a certificate actually needs attention, and the repeat reminders stop the moment you acknowledge or renew it.</p>
+      </div>
+      <div class="docs-faq-item">
+        <h3>Can I monitor a certificate that isn't publicly accessible?</h3>
+        <p>Yes — that's exactly what <a href="#add-internal">internal certificates</a> are for. Paste the PEM instead of a hostname.</p>
+      </div>
+      <div class="docs-faq-item">
+        <h3>What happens if I downgrade or my payment fails?</h3>
+        <p>Your account reverts to the free trial's 5-certificate limit, and monitoring pauses until you're back on a paid plan — your existing certificates and their history aren't deleted.</p>
+      </div>
+    </section>
+
+    <div class="docs-support">
+      Still stuck? Email <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer container">
+  <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+  <span>Need help? <a href="mailto:support@sslalerts.info">support@sslalerts.info</a></span>
+</footer>
+
+<script>
+const yr = document.getElementById('year');
+if (yr) yr.textContent = new Date().getFullYear();
+fetch('/api/auth/me').then(res => {
+  if (res.ok) {
+    document.getElementById('navButtons').innerHTML =
+      '<a href="/dashboard" class="btn btn-primary btn-sm">Go to dashboard</a>';
+    const genLink = document.getElementById('navCertGen');
+    if (genLink) genLink.href = '/dashboard#certificates';
+    const toolsLink = document.getElementById('navSSLTools');
+    if (toolsLink) toolsLink.href = '/dashboard#ssl-tools';
+  }
+}).catch(() => {});
+
+const topnavWrap = document.getElementById('topnavWrap');
+window.addEventListener('scroll', () => {
+  topnavWrap.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+</script>
+</body>
+</html>

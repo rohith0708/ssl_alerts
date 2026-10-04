@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account — SSL Alerts</title>
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="stylesheet" href="/css/style.css?v=24">
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand-wrapper">
+      <a href="/dashboard.html" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+      <div class="sidebar-plan-pill plan-pill-free" id="sidebarPlanBadge">
+        <span class="plan-pill-dot"></span>
+        <span id="sidebarPlanBadgeText">Free Plan</span>
+      </div>
+    </div>
+    <nav>
+      <a href="/dashboard.html#domains">Domains</a>
+      <a href="/dashboard.html#ssl-tools">SSL Tools</a>
+      <a href="/dashboard.html#certificates">Certificate Generator</a>
+      <a href="/dashboard.html#alert-emails">Alert Emails</a>
+      <a href="/account.html" class="active">Account</a>
+      <a href="/docs.html">Docs</a>
+      <a href="/tools.html">DNS Lookup</a>
+      <a href="#" id="upgradeLink">Upgrade plan</a>
+      <a href="mailto:support@sslalerts.info">Support</a>
+      <a href="#" id="logoutLink">Log out</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="mobile-topbar">
+      <button id="hamburgerBtn" class="hamburger" aria-label="Menu">☰</button>
+      <a href="/dashboard.html" class="brand">
+        <img src="/assets/mark.svg" alt="">
+        <span class="brand-word">SSL Alerts</span>
+      </a>
+    </div>
+
+    <div class="main-head">
+      <h1>Account</h1>
+    </div>
+
+    <div class="account-grid">
+      <div class="account-card">
+        <h2>Profile</h2>
+        <div class="form-error" id="profileError"></div>
+        <div class="field">
+          <label for="nameInput">Full Name</label>
+          <input type="text" id="nameInput" maxlength="80">
+        </div>
+        <button class="btn btn-primary btn-sm" id="saveProfileBtn">Save name</button>
+      </div>
+
+      <div class="account-card">
+        <h2>Primary Email</h2>
+        <div class="form-error" id="emailChangeError" style="display:none; margin-bottom:12px;"></div>
+        <div class="form-success" id="emailChangeSuccess" style="display:none; margin-bottom:12px;"></div>
+
+        <div class="field" style="margin-bottom:12px;">
+          <label>Current Primary Login Email</label>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:10px 14px;">
+            <span id="currentAccountEmailDisplay" style="font-weight:600; color:var(--navy); font-size:14px;">—</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnOpenChangeEmail" onclick="toggleChangeEmailForm()">Change Email</button>
+          </div>
+          <div class="field-hint" style="margin-top:6px; margin-bottom:0;">Used for login and receives all certificate expiry alerts.</div>
+        </div>
+
+        <!-- Collapsible Email Change Form -->
+        <div id="changeEmailFormWrap" style="display:none; margin-top:14px; padding:16px; background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px;">
+          <!-- Step 1: Request Email Change -->
+          <div id="userEmailStep1">
+            <div style="font-weight:700; color:#0f766e; font-size:13px; margin-bottom:6px;">UPDATE PRIMARY EMAIL</div>
+            <p style="font-size:12px; color:#134e4a; margin:0 0 14px; line-height:1.5;">
+              Enter your new email address and current password to verify your identity. A 6-digit verification code will be sent to the new email address. <strong>Your login password will remain the same as old.</strong>
+            </p>
+            <div class="field" style="margin-bottom:12px;">
+              <label for="newEmailInput" style="color:#0f766e; font-weight:600; font-size:12px;">New Email Address</label>
+              <input type="email" id="newEmailInput" placeholder="you@newdomain.com" required style="background:#fff;">
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label for="emailChangeCurrentPassword" style="color:#0f766e; font-weight:600; font-size:12px;">Current Password (to confirm identity)</label>
+              <input type="password" id="emailChangeCurrentPassword" placeholder="••••••••" required style="background:#fff;">
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="btn btn-primary btn-sm" id="btnSendUserEmailOtp" onclick="requestUserEmailChange()">Send 6-Digit Code</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleChangeEmailForm()">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Confirm OTP -->
+          <div id="userEmailStep2" style="display:none;">
+            <div style="font-weight:700; color:#0f766e; font-size:13px; margin-bottom:6px;">ENTER VERIFICATION CODE</div>
+            <p style="font-size:12px; color:#134e4a; margin:0 0 12px; line-height:1.5;">
+              We sent a 6-digit verification code to <strong id="userPendingEmailText">you@newdomain.com</strong>.
+            </p>
+            <div class="field" style="margin-bottom:14px;">
+              <input type="text" id="userEmailOtpInput" maxlength="6" placeholder="123456" style="width:140px; font-size:20px; font-family:monospace; letter-spacing:4px; text-align:center; padding:8px; border:2px solid #0d9488; border-radius:8px; background:#fff;">
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary btn-sm" id="btnConfirmUserEmailOtp" onclick="confirmUserEmailChange()">Verify &amp; Update Email</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnResendUserEmailOtp" onclick="resendUserEmailOtp()">Resend Code</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleChangeEmailForm()">Cancel</button>
+            </div>
+            <div style="margin-top:10px; font-size:11px; color:#0f766e;">
+              🔒 Note: Once verified, your login password will remain the same as old.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <h2>Plan</h2>
+        <div class="plan-summary">
+          <div>
+            <div class="plan-summary-name" id="planSummaryName">—</div>
+            <div class="plan-summary-detail" id="planSummaryDetail">—</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="accountUpgradeBtn">Change plan</button>
+        </div>
+      </div>
+
+      <div class="account-card">
+        <h2>Password</h2>
+        <div class="form-error" id="passwordError"></div>
+        <div class="form-success" id="passwordSuccess">Password updated.</div>
+        <div class="field">
+          <label for="currentPasswordInput">Current password</label>
+          <input type="password" id="currentPasswordInput" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label for="newPasswordInput">New password</label>
+          <input type="password" id="newPasswordInput" minlength="8" autocomplete="new-password">
+          <div class="field-hint">At least 8 characters.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="changePasswordBtn">Update password</button>
+      </div>
+      <div style="margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--line); font-size: 13px; color: #6E828C; text-align: center;">
+        <span>© Copyright 2026 HS technologies . All Rights Reserved</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="upgradeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Upgrade your plan</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-plans-wrapper">
+      <div class="modal-plans" id="modalPlans"></div>
+      <div class="modal-carousel-nav" id="modalCarouselNav">
+        <button type="button" class="modal-carousel-nav-btn prev-btn" id="modalPlanPrevBtn" aria-label="Previous plans">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> Previous
+        </button>
+        <div class="modal-carousel-dots" id="modalNavDots">
+          <span class="modal-dot active" data-page="0"></span>
+          <span class="modal-dot" data-page="1"></span>
+        </div>
+        <button type="button" class="modal-carousel-nav-btn next-btn" id="modalPlanNextBtn" aria-label="Next plans">
+          Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+    <div id="modalEnterpriseCard" style="margin-top: 14px; padding: 14px 18px; background: #F8FAFC; border: 1px solid var(--line); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+      <div>
+        <div style="font-weight: 700; color: var(--navy); font-size: 14px;">🏢 Have more than 500 domains?</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 3px;">Need custom quotas, dedicated check intervals, or agency billing? We provide tailored enterprise packages.</div>
+      </div>
+      <a href="mailto:support@sslalerts.info?subject=Enterprise%20Plan%20Inquiry%20(500%2B%20domains)" class="btn btn-ghost btn-sm" style="font-size: 13px; font-weight: 600; white-space: nowrap;">Contact Support →</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+const toastEl = document.getElementById('toast');
+function toast(msg, isError = false) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast visible' + (isError ? ' error' : '');
+  setTimeout(() => toastEl.classList.remove('visible'), 3500);
+}
+
+const PLAN_LABELS = { trial: 'Free Trial (30 Days)', micro: 'Micro', starter: 'Starter', growth: 'Growth', pro: 'Pro', agency: 'Agency', enterprise: 'Enterprise', unlimited: 'Enterprise' };
+let currentUser = null;
+let currentPlans = null;
+
+async function loadMe() {
+  const res = await fetch('/api/auth/me');
+  if (res.status === 401) { window.location.href = '/login.html'; return; }
+  const data = await res.json();
+  currentUser = data.user;
+  currentPlans = data.plans;
+
+  document.getElementById('nameInput').value = data.user.name;
+  const currentEmailDisplay = document.getElementById('currentAccountEmailDisplay');
+  if (currentEmailDisplay) currentEmailDisplay.textContent = data.user.email;
+  const adminLinkEl = document.getElementById('adminLink');
+  if (adminLinkEl && data.user.is_admin) adminLinkEl.style.display = '';
+
+  const rawPlan = data.user.plan || 'trial';
+  const planLabel = (data.plans && data.plans[rawPlan] && data.plans[rawPlan].label) || PLAN_LABELS[rawPlan] || rawPlan;
+  document.getElementById('planSummaryName').textContent = planLabel;
+
+  const sidebarBadge = document.getElementById('sidebarPlanBadge');
+  const sidebarBadgeText = document.getElementById('sidebarPlanBadgeText');
+  if (sidebarBadge && sidebarBadgeText) {
+    sidebarBadgeText.textContent = planLabel;
+    const planClass = (rawPlan === 'trial') ? 'plan-pill-free' : `plan-pill-${rawPlan}`;
+    sidebarBadge.className = `sidebar-plan-pill ${planClass}`;
+    sidebarBadge.style.display = 'inline-flex';
+  }
+
+  const limitText = (data.user.plan === 'enterprise' || data.user.domain_limit >= 100000)
+    ? `Enterprise (${data.user.domain_limit} certificates)`
+    : `Up to ${data.user.domain_limit} certificates`;
+  const billingNote = data.user.plan !== 'trial'
+    ? (data.user.billing_status === 'halted' ? ' · payment issue, monitoring paused' : ' · billing active')
+    : '';
+  document.getElementById('planSummaryDetail').textContent = limitText + billingNote;
+}
+
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+  const errBox = document.getElementById('profileError');
+  errBox.classList.remove('visible');
+  const name = document.getElementById('nameInput').value.trim();
+  try {
+    const res = await fetch('/api/auth/profile', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('Profile updated.');
+  } catch (err) {
+    errBox.textContent = err.message;
+    errBox.classList.add('visible');
+  }
+});
+
+// Primary Email Change with OTP
+let isChangingEmail = false;
+
+function toggleChangeEmailForm() {
+  const wrap = document.getElementById('changeEmailFormWrap');
+  isChangingEmail = !isChangingEmail;
+  wrap.style.display = isChangingEmail ? 'block' : 'none';
+  const errBox = document.getElementById('emailChangeError');
+  const okBox = document.getElementById('emailChangeSuccess');
+  if (errBox) errBox.style.display = 'none';
+  if (okBox) okBox.style.display = 'none';
+
+  if (isChangingEmail) {
+    document.getElementById('userEmailStep1').style.display = 'block';
+    document.getElementById('userEmailStep2').style.display = 'none';
+    document.getElementById('newEmailInput').value = '';
+    document.getElementById('emailChangeCurrentPassword').value = '';
+    document.getElementById('newEmailInput').focus();
+  }
+}
+
+async function requestUserEmailChange() {
+  const errBox = document.getElementById('emailChangeError');
+  errBox.style.display = 'none';
+  const newEmail = document.getElementById('newEmailInput').value.trim();
+  const currentPassword = document.getElementById('emailChangeCurrentPassword').value;
+
+  if (!newEmail) {
+    errBox.textContent = 'Please enter a valid new email address.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!currentPassword) {
+    errBox.textContent = 'Please enter your current password to confirm your identity.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('btnSendUserEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Sending Code…';
+
+  try {
+    const res = await fetch('/api/auth/request-email-change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_email: newEmail, current_password: currentPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to request email change');
+
+    document.getElementById('userPendingEmailText').textContent = newEmail;
+    document.getElementById('userEmailStep1').style.display = 'none';
+    document.getElementById('userEmailStep2').style.display = 'block';
+    document.getElementById('userEmailOtpInput').value = '';
+    document.getElementById('userEmailOtpInput').focus();
+    toast(`Verification code dispatched to ${newEmail}!`);
+    if (data.devOtp) {
+      console.log('DEV User Email Change OTP:', data.devOtp);
+    }
+  } catch (err) {
+    errBox.textContent = err.message;
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send 6-Digit Code';
+  }
+}
+
+async function confirmUserEmailChange() {
+  const errBox = document.getElementById('emailChangeError');
+  const okBox = document.getElementById('emailChangeSuccess');
+  errBox.style.display = 'none';
+  okBox.style.display = 'none';
+
+  const otp = document.getElementById('userEmailOtpInput').value.trim();
+  if (!otp || otp.length !== 6) {
+    errBox.textContent = 'Please enter the 6-digit verification code.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('btnConfirmUserEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  try {
+    const res = await fetch('/api/auth/confirm-email-change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to verify email code');
+
+    document.getElementById('currentAccountEmailDisplay').textContent = data.user.email;
+    currentUser.email = data.user.email;
+    okBox.textContent = `✓ Primary email updated to ${data.user.email}! Your login password remains unchanged.`;
+    okBox.style.display = 'block';
+    document.getElementById('changeEmailFormWrap').style.display = 'none';
+    isChangingEmail = false;
+    toast('Primary email updated. Password remains unchanged.');
+  } catch (err) {
+    errBox.textContent = err.message;
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify & Update Email';
+  }
+}
+
+async function resendUserEmailOtp() {
+  const btn = document.getElementById('btnResendUserEmailOtp');
+  btn.disabled = true;
+  btn.textContent = 'Resending…';
+  try {
+    const res = await fetch('/api/auth/resend-email-otp', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to resend code');
+    toast('A fresh verification code has been dispatched!');
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Resend Code';
+  }
+}
+
+document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+  const errBox = document.getElementById('passwordError');
+  const okBox = document.getElementById('passwordSuccess');
+  errBox.classList.remove('visible');
+  okBox.classList.remove('visible');
+  const currentPassword = document.getElementById('currentPasswordInput').value;
+  const newPassword = document.getElementById('newPasswordInput').value;
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    document.getElementById('currentPasswordInput').value = '';
+    document.getElementById('newPasswordInput').value = '';
+    okBox.classList.add('visible');
+    toast('Password updated.');
+  } catch (err) {
+    errBox.textContent = err.message;
+    errBox.classList.add('visible');
+  }
+});
+
+// ---------------- Upgrade modal (shared pattern with dashboard) ----------------
+const upgradeModal = document.getElementById('upgradeModal');
+function openUpgradeModal() {
+  const plansEl = document.getElementById('modalPlans');
+  const entries = Object.entries(currentPlans || {}).filter(([id]) => id !== 'enterprise' && id !== 'unlimited');
+
+  const tierRanks = { trial: 1, micro: 2, starter: 3, growth: 4, pro: 5, agency: 6, enterprise: 7, unlimited: 7 };
+  const userRank = currentUser ? (tierRanks[currentUser.plan] || 1) : 0;
+
+  const plansHtml = entries.map(([id, plan]) => {
+    const isCurrentPlan = currentUser && (currentUser.plan === id || (id === 'trial' && (!currentUser.plan || currentUser.plan === 'trial')));
+    const isCurrentAndPaid = isCurrentPlan && (id === 'trial' || currentUser.billing_status === 'active');
+    const isCurrentButHalted = isCurrentPlan && currentUser.billing_status !== 'active' && id !== 'trial';
+    const thisRank = tierRanks[id] || 1;
+    const isLowerTier = currentUser && (userRank > thisRank);
+
+    let badgeHtml = '';
+    if (id === 'micro' || plan.badge) {
+      const badgeText = plan.badge || 'LIMITED TIME OFFER';
+      badgeHtml = `<span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">${badgeText}</span>`;
+    } else if (id === 'trial') {
+      badgeHtml = `<span class="tag" style="background:#0284C7; color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">30-DAY TRIAL</span>`;
+    }
+
+    let priceDisplay = '';
+    if (id === 'trial') {
+      priceDisplay = `
+        <div class="mp-price">
+          <div class="price-active-container">
+            <span class="price-current">$0</span><span class="mp-period">/30 days</span>
+          </div>
+        </div>`;
+    } else if (id === 'micro' || plan.originalPrice) {
+      const orig = plan.originalPrice || 2;
+      const curr = plan.price || 1;
+      const discountPct = Math.round((1 - curr / orig) * 100);
+      priceDisplay = `
+        <div class="mp-price">
+          <div class="price-cross-container">
+            <span class="price-original-cross">$${orig}</span>
+            <span class="discount-badge-pill" style="background:#FEF3C7; color:#B45309; border:1px solid #FCD34D;">SAVE ${discountPct}%</span>
+          </div>
+          <div class="price-active-container">
+            <span class="price-current">$${curr}</span><span class="mp-period">/month</span>
+          </div>
+        </div>`;
+    } else {
+      priceDisplay = `
+        <div class="mp-price">
+          <div class="price-active-container">
+            <span class="price-current">$${plan.price}</span><span class="mp-period">/month</span>
+          </div>
+        </div>`;
+    }
+
+    let actionCta = '';
+    if (isCurrentPlan) {
+      if (isCurrentButHalted) {
+        actionCta = `<button class="btn btn-accent btn-block" data-plan="${id}">Renew ${plan.label}</button>`;
+      } else {
+        actionCta = `<div class="mp-current-badge">✓ Your current plan</div>`;
+      }
+    } else if (isLowerTier) {
+      actionCta = `<div class="mp-included-badge">Included with account</div>`;
+    } else {
+      actionCta = `<button class="btn btn-accent btn-block" data-plan="${id}">Choose ${plan.label}</button>`;
+    }
+
+    const detailCopy = id === 'trial'
+      ? `<strong>5</strong> domains monitored · <strong>1</strong> recipient<br>30-day trial · Alerts every <strong>3h</strong> (critical)`
+      : `<strong>${plan.domainLimit}</strong> domain${plan.domainLimit === 1 ? '' : 's'} · <strong>${plan.recipientLimit || 1}</strong> recipient${(plan.recipientLimit || 1) === 1 ? '' : 's'}<br>Alerts every <strong>${plan.criticalIntervalMinutes >= 60 ? (plan.criticalIntervalMinutes / 60) + 'h' : plan.criticalIntervalMinutes + 'm'}</strong> (critical)`;
+
+    const subtitleHtml = plan.subtitle ? `<div class="mp-subtitle">(${plan.subtitle})</div>` : '';
+    const featuresHtml = (plan.features && plan.features.length)
+      ? `<ul>${plan.features.map(f => `<li>${f}</li>`).join('')}</ul>`
+      : `<div class="mp-detail">${detailCopy}</div>`;
+
+    return `
+      <div class="modal-plan ${isCurrentPlan ? 'current' : ''}">
+        ${badgeHtml}
+        <div class="mp-name">${plan.label}</div>
+        ${subtitleHtml}
+        ${priceDisplay}
+        ${featuresHtml}
+        ${actionCta}
+      </div>`;
+  }).join('');
+
+  plansEl.innerHTML = plansHtml;
+
+  // Modal carousel navigation controls
+  const modalTrack = document.getElementById('modalPlans');
+  const modalPrevBtn = document.getElementById('modalPlanPrevBtn');
+  const modalNextBtn = document.getElementById('modalPlanNextBtn');
+  const modalDots = document.querySelectorAll('#modalNavDots .modal-dot');
+
+  function updateModalCarousel() {
+    if (!modalTrack) return;
+    const maxScroll = Math.max(0, modalTrack.scrollWidth - modalTrack.clientWidth);
+    const scrollLeft = modalTrack.scrollLeft;
+    if (modalPrevBtn) modalPrevBtn.disabled = scrollLeft <= 10;
+    if (modalNextBtn) modalNextBtn.disabled = scrollLeft >= maxScroll - 10;
+    if (modalDots.length >= 2) {
+      const pageIdx = (maxScroll > 0 && scrollLeft > maxScroll * 0.4) ? 1 : 0;
+      modalDots.forEach((dot, idx) => dot.classList.toggle('active', idx === pageIdx));
+    }
+  }
+
+  if (modalPrevBtn && !modalPrevBtn._wired) {
+    modalPrevBtn._wired = true;
+    modalPrevBtn.addEventListener('click', () => {
+      const card = modalTrack.querySelector('.modal-plan');
+      const scrollAmount = card ? (card.offsetWidth + 16) * 3 : modalTrack.clientWidth;
+      modalTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+  }
+  if (modalNextBtn && !modalNextBtn._wired) {
+    modalNextBtn._wired = true;
+    modalNextBtn.addEventListener('click', () => {
+      const card = modalTrack.querySelector('.modal-plan');
+      const scrollAmount = card ? (card.offsetWidth + 16) * 3 : modalTrack.clientWidth;
+      modalTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+  }
+  if (modalTrack && !modalTrack._wired) {
+    modalTrack._wired = true;
+    modalTrack.addEventListener('scroll', updateModalCarousel, { passive: true });
+  }
+  modalDots.forEach(dot => {
+    if (!dot._wired) {
+      dot._wired = true;
+      dot.addEventListener('click', () => {
+        const page = parseInt(dot.dataset.page, 10);
+        const maxScroll = Math.max(0, modalTrack.scrollWidth - modalTrack.clientWidth);
+        modalTrack.scrollTo({ left: page === 0 ? 0 : maxScroll, behavior: 'smooth' });
+      });
+    }
+  });
+
+  upgradeModal.classList.add('visible');
+  setTimeout(updateModalCarousel, 80);
+}
+function closeUpgradeModal() { upgradeModal.classList.remove('visible'); }
+document.getElementById('upgradeLink').addEventListener('click', (e) => { e.preventDefault(); openUpgradeModal(); });
+document.getElementById('accountUpgradeBtn').addEventListener('click', openUpgradeModal);
+document.getElementById('modalClose').addEventListener('click', closeUpgradeModal);
+upgradeModal.addEventListener('click', (e) => { if (e.target === upgradeModal) closeUpgradeModal(); });
+
+document.getElementById('modalPlans').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-plan]');
+  if (!btn) return;
+  const plan = btn.dataset.plan;
+  btn.disabled = true;
+  btn.textContent = 'Opening checkout…';
+  try {
+    const subRes = await fetch('/api/billing/razorpay/subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan })
+    });
+    if (subRes.status === 401) { window.location.href = '/login.html'; return; }
+    const subData = await subRes.json();
+    if (!subRes.ok) throw new Error(subData.error);
+
+    if (typeof Razorpay === 'undefined') {
+      throw new Error('Payment widget failed to load — check your internet connection and try again.');
+    }
+
+    const rzp = new Razorpay({
+      key: subData.key,
+      subscription_id: subData.subscription_id,
+      name: 'SSL Alerts',
+      description: `${currentPlans[plan].label} plan — monthly`,
+      theme: { color: '#0A2740' },
+      handler: function () {
+        toast('Payment successful — plan upgraded!');
+        closeUpgradeModal();
+        loadMe();
+      },
+      modal: {
+        ondismiss: function () {
+          btn.disabled = false;
+          btn.textContent = `Choose ${currentPlans[plan].label}`;
+        }
+      }
+    });
+    rzp.on('payment.failed', function () {
+      toast('Payment failed — please try again.', true);
+      btn.disabled = false;
+      btn.textContent = `Choose ${currentPlans[plan].label}`;
+    });
+    rzp.open();
+  } catch (err) {
+    toast(err.message, true);
+    btn.disabled = false;
+    btn.textContent = `Choose ${currentPlans[plan].label}`;
+  }
+});
+
+document.getElementById('logoutLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+});
+
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('visible'); }
+function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('visible'); }
+document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
+sidebarOverlay.addEventListener('click', closeSidebar);
+sidebar.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeSidebar));
+
+loadMe();
+</script>
+</body>
+</html>

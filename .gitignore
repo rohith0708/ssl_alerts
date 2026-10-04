@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Local databases & persistent runtime storage
+data/
+*.sqlite
+*.sqlite3
+
+# Environment variables & secrets (NEVER commit secrets!)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Keys and certificates (keep private)
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+le-service/
+hhsp.key

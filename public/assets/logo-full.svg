@@ -1,0 +1,92 @@
+<svg viewBox="0 0 480 520" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wingLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1BC7B5"/>
+      <stop offset="100%" stop-color="#0E3A56"/>
+    </linearGradient>
+    <linearGradient id="wingRight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1BC7B5"/>
+      <stop offset="100%" stop-color="#0E3A56"/>
+    </linearGradient>
+    <linearGradient id="wingLeftLower" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E3A56"/>
+      <stop offset="100%" stop-color="#0A2740"/>
+    </linearGradient>
+    <linearGradient id="wingRightLower" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0E3A56"/>
+      <stop offset="100%" stop-color="#0A2740"/>
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0A2740"/>
+      <stop offset="100%" stop-color="#071B2E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ BUTTERFLY MARK ============ -->
+  <g transform="translate(240,200)">
+
+    <!-- Upper wings: shield silhouette (rounded crown, pointed base) mirrored -->
+    <!-- Left upper wing -->
+    <path d="M -8,-58
+             C -60,-96 -132,-96 -158,-48
+             C -178,-10 -168,42 -122,72
+             C -90,93 -46,86 -8,54
+             Z"
+          fill="url(#wingLeft)"/>
+    <!-- Right upper wing -->
+    <path d="M 8,-58
+             C 60,-96 132,-96 158,-48
+             C 178,-10 168,42 122,72
+             C 90,93 46,86 8,54
+             Z"
+          fill="url(#wingRight)"/>
+
+    <!-- Lower wings: smaller shield echo -->
+    <path d="M -6,50
+             C -40,68 -84,72 -104,102
+             C -118,124 -110,152 -80,160
+             C -52,167 -22,150 -4,118
+             Z"
+          fill="url(#wingLeftLower)"/>
+    <path d="M 6,50
+             C 40,68 84,72 104,102
+             C 118,124 110,152 80,160
+             C 52,167 22,150 4,118
+             Z"
+          fill="url(#wingRightLower)"/>
+
+    <!-- Wing vein / shield-line accents (the "SSL shield" detail on each upper wing) -->
+    <path d="M -34,-58 C -70,-40 -92,-4 -84,34" fill="none" stroke="#EAF7F5" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+    <path d="M 34,-58 C 70,-40 92,-4 84,34" fill="none" stroke="#EAF7F5" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- Body: padlock silhouette forms the butterfly's body -->
+    <g>
+      <!-- shackle -->
+      <path d="M -17,-70 C -17,-92 17,-92 17,-70 L 17,-52 L 8,-52 L 8,-70 C 8,-82 -8,-82 -8,-70 L -8,-52 L -17,-52 Z"
+            fill="url(#bodyGrad)"/>
+      <!-- lock body -->
+      <rect x="-24" y="-54" width="48" height="150" rx="18" fill="url(#bodyGrad)"/>
+      <!-- keyhole -->
+      <circle cx="0" cy="8" r="7" fill="#1BC7B5"/>
+      <path d="M -4,14 L 4,14 L 6,34 L -6,34 Z" fill="#1BC7B5"/>
+    </g>
+
+    <!-- Antennae, tipped with small "verified" pulses -->
+    <path d="M -6,-72 C -22,-96 -34,-108 -30,-126" fill="none" stroke="#0A2740" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 6,-72 C 22,-96 34,-108 30,-126" fill="none" stroke="#0A2740" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-30" cy="-126" r="6" fill="#FF6F5E"/>
+    <circle cx="30" cy="-126" r="6" fill="#FF6F5E"/>
+
+  </g>
+
+  <!-- ============ WORDMARK ============ -->
+  <text x="240" y="410" text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#0A2740" font-weight="600">
+    harisree
+  </text>
+  <text x="240" y="446" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="20" letter-spacing="6" fill="#1BC7B5" font-weight="600">
+    SSL ALERTS
+  </text>
+
+</svg>
