@@ -1081,14 +1081,29 @@ body.landing-page-3d .plan-card .plan-subtitle {
   height: 7px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 .plan-pill-free {
   background: rgba(255, 255, 255, 0.08);
   color: #C9D6DC;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  text-transform: none;
+  letter-spacing: 0.2px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .plan-pill-free .plan-pill-dot {
-  background: #94A3B8;
+  background: #2DD4BF;
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.4);
+}
+.plan-pill-free.trial-expired {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.plan-pill-free.trial-expired .plan-pill-dot {
+  background: #EF4444;
+  box-shadow: 0 0 6px #EF4444;
 }
 .plan-pill-starter {
   background: rgba(0, 168, 150, 0.18);

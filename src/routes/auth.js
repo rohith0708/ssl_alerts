@@ -39,6 +39,43 @@ function generateOtp() {
   return crypto.randomInt(100000, 999999).toString();
 }
 
+function attachTrialInfo(user) {
+  if (!user) return user;
+  if (user.plan === 'trial') {
+    let trialEndMs = null;
+    if (user.current_period_end) {
+      trialEndMs = new Date(user.current_period_end).getTime();
+    } else if (user.created_at) {
+      trialEndMs = new Date(user.created_at).getTime() + 30 * 24 * 60 * 60 * 1000;
+    } else {
+      trialEndMs = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    }
+
+    const nowMs = Date.now();
+    const diffMs = trialEndMs - nowMs;
+    const daysLeft = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+
+    user.trial_days_left = daysLeft;
+    user.trial_end_date = new Date(trialEndMs).toISOString();
+
+    if (diffMs <= 0 || daysLeft <= 0) {
+      user.trial_expires_text = 'Free trial expired';
+      user.is_trial_expired = true;
+    } else if (daysLeft === 1) {
+      user.trial_expires_text = 'Free trial expires in 1 day';
+      user.is_trial_expired = false;
+    } else {
+      user.trial_expires_text = `Free trial expires in ${daysLeft} days`;
+      user.is_trial_expired = false;
+    }
+  } else {
+    user.trial_days_left = null;
+    user.trial_expires_text = null;
+    user.is_trial_expired = false;
+  }
+  return user;
+}
+
 const resendRateLimits = new Map();
 
 router.post('/register', async (req, res) => {
@@ -127,7 +164,7 @@ router.post('/verify-otp', async (req, res) => {
     const token = issueToken(user);
     setAuthCookie(res, token);
     const safeUser = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [user.id]);
-    return res.json({ success: true, user: safeUser, message: 'Email is already verified.' });
+    return res.json({ success: true, user: attachTrialInfo(safeUser), message: 'Email is already verified.' });
   }
 
   if (!user.otp_code || !user.otp_expires_at) {
@@ -151,7 +188,7 @@ router.post('/verify-otp', async (req, res) => {
   setAuthCookie(res, token);
 
   const safeUser = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [user.id]);
-  res.json({ success: true, user: safeUser });
+  res.json({ success: true, user: attachTrialInfo(safeUser) });
 });
 
 router.post('/resend-otp', async (req, res) => {
@@ -227,7 +264,7 @@ router.post('/login', async (req, res) => {
   const token = issueToken(user);
   setAuthCookie(res, token);
   const safeUser = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [user.id]);
-  res.json({ user: safeUser });
+  res.json({ user: attachTrialInfo(safeUser) });
 });
 
 router.post('/logout', (req, res) => {
@@ -238,7 +275,7 @@ router.post('/logout', (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const user = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [req.userId]);
   if (!user) return res.status(404).json({ error: 'User not found.' });
-  res.json({ user, plans: PLANS });
+  res.json({ user: attachTrialInfo(user), plans: PLANS });
 });
 
 router.patch('/profile', requireAuth, async (req, res) => {
@@ -248,7 +285,7 @@ router.patch('/profile', requireAuth, async (req, res) => {
 
   await db.execute('UPDATE users SET name = ? WHERE id = ?', [name, req.userId]);
   const user = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [req.userId]);
-  res.json({ user });
+  res.json({ user: attachTrialInfo(user) });
 });
 
 router.post('/change-password', requireAuth, async (req, res) => {
@@ -293,7 +330,7 @@ router.patch('/email', requireAuth, async (req, res) => {
   const updatedUser = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [req.userId]);
   const token = issueToken(updatedUser);
   setAuthCookie(res, token);
-  res.json({ user: updatedUser });
+  res.json({ user: attachTrialInfo(updatedUser) });
 });
 
 // User self-service: request primary email change with OTP
@@ -423,7 +460,7 @@ router.post('/confirm-email-change', requireAuth, async (req, res) => {
 
     res.json({
       success: true,
-      user: updatedUser,
+      user: attachTrialInfo(updatedUser),
       message: `Primary email updated to ${newEmail}. Your password remains unchanged.`
     });
   } catch (err) {

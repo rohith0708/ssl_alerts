@@ -18,7 +18,7 @@
       </a>
       <div class="sidebar-plan-pill plan-pill-free" id="sidebarPlanBadge">
         <span class="plan-pill-dot"></span>
-        <span id="sidebarPlanBadgeText">Free Trial (30 Days)</span>
+        <span id="sidebarPlanBadgeText">Free Trial</span>
       </div>
     </div>
     <nav>
@@ -37,6 +37,7 @@
       <div class="name" id="planName">—</div>
       <div class="usage" id="planUsage">— / —</div>
       <div class="usage-bar"><div id="planUsageBar" style="width:0%"></div></div>
+      <div class="plan-trial-expiry" id="planTrialExpiry" style="display:none; font-size:12px; margin-top:8px; color:#2DD4BF; font-weight:600;"></div>
     </div>
     <div class="guest-auth-card" id="guestAuthWidget" style="display:none;">
       <div class="guest-card-header">
@@ -67,6 +68,11 @@
     <div id="billingPausedBanner" class="billing-paused-banner" style="display:none">
       <span>⚠ Monitoring is paused — your subscription payment didn't go through. Renew to resume checks and alerts.</span>
       <button class="btn btn-accent btn-sm" id="renewFromBannerBtn">Renew now</button>
+    </div>
+
+    <div id="trialExpiredBanner" class="billing-paused-banner" style="display:none; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.35); color:#FCA5A5;">
+      <span>⚠ Your free trial has expired. Upgrade your plan to continue automated monitoring and email alerts.</span>
+      <button class="btn btn-accent btn-sm" onclick="openUpgradeModal()">Upgrade now</button>
     </div>
 
     <!-- Domains Section (Default) -->

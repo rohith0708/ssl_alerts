@@ -10,7 +10,7 @@ router.use(requireAuth, requireAdmin);
 router.get('/stats', async (req, res) => {
   try {
     const users = await db.getAll(`
-      SELECT u.id, u.name, u.email, u.plan, u.domain_limit, u.billing_status, u.is_verified, u.payment_reference, u.admin_notes, u.created_at,
+      SELECT u.id, u.name, u.email, u.plan, u.domain_limit, u.billing_status, u.is_verified, u.current_period_end, u.payment_reference, u.admin_notes, u.created_at,
              COUNT(DISTINCT d.id) AS domain_count,
              COUNT(DISTINCT g.id) AS group_count
       FROM users u
@@ -85,7 +85,7 @@ router.get('/users/:id/details', async (req, res) => {
   try {
     const user = await db.getOne(`
       SELECT id, name, email, plan, domain_limit, billing_status, is_admin, is_verified,
-             pending_email, payment_reference, admin_notes, created_at
+             pending_email, payment_reference, admin_notes, current_period_end, created_at
       FROM users WHERE id = ?
     `, [userId]);
 

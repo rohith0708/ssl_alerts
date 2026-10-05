@@ -147,6 +147,10 @@ async function initSchema() {
     await pool.query('UPDATE users SET is_verified = 1 WHERE is_verified = 0 AND created_at < NOW()');
   } catch (_) {}
   try {
+    // Backfill current_period_end for trial users if NULL
+    await pool.query("UPDATE users SET current_period_end = DATE_ADD(created_at, INTERVAL 30 DAY) WHERE plan = 'trial' AND current_period_end IS NULL");
+  } catch (_) {}
+  try {
     await pool.query('ALTER TABLE domains ADD COLUMN consecutive_alerts INT NOT NULL DEFAULT 0');
   } catch (_) {}
 

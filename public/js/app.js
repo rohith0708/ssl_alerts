@@ -405,6 +405,12 @@ function setupGuestUI(plans) {
 
   const banner = document.getElementById('billingPausedBanner');
   if (banner) banner.style.display = 'none';
+
+  const planTrialExpiry = document.getElementById('planTrialExpiry');
+  if (planTrialExpiry) planTrialExpiry.style.display = 'none';
+
+  const trialExpiredBanner = document.getElementById('trialExpiredBanner');
+  if (trialExpiredBanner) trialExpiredBanner.style.display = 'none';
 }
 
 function setupAuthenticatedUI(data) {
@@ -433,22 +439,52 @@ function setupAuthenticatedUI(data) {
   if (guestAuthWidget) guestAuthWidget.style.display = 'none';
 
   const rawPlan = data.user.plan || 'trial';
-  const planLabel = (data.plans && data.plans[rawPlan] && data.plans[rawPlan].label) || (rawPlan === 'trial' ? 'Free Trial (30 Days)' : rawPlan);
+  const planLabel = (data.plans && data.plans[rawPlan] && data.plans[rawPlan].label) || (rawPlan === 'trial' ? 'Free Trial' : rawPlan);
+  const isTrial = rawPlan === 'trial';
+  const isTrialExpired = isTrial && (data.user.is_trial_expired || (data.user.trial_days_left !== null && data.user.trial_days_left <= 0));
 
   const sidebarPlanBadge = document.getElementById('sidebarPlanBadge');
   const sidebarPlanBadgeText = document.getElementById('sidebarPlanBadgeText');
   if (sidebarPlanBadge && sidebarPlanBadgeText) {
-    sidebarPlanBadgeText.textContent = planLabel;
-    const planClass = (rawPlan === 'trial') ? 'plan-pill-free' : `plan-pill-${rawPlan}`;
-    sidebarPlanBadge.className = `sidebar-plan-pill ${planClass}`;
+    if (isTrial) {
+      const trialText = data.user.trial_expires_text || (data.user.trial_days_left != null ? `Free trial expires in ${data.user.trial_days_left} days` : 'Free Trial');
+      sidebarPlanBadgeText.textContent = trialText;
+      sidebarPlanBadge.className = `sidebar-plan-pill plan-pill-free${isTrialExpired ? ' trial-expired' : ''}`;
+      sidebarPlanBadge.title = trialText;
+    } else {
+      sidebarPlanBadgeText.textContent = planLabel;
+      const planClass = `plan-pill-${rawPlan}`;
+      sidebarPlanBadge.className = `sidebar-plan-pill ${planClass}`;
+      sidebarPlanBadge.title = planLabel;
+    }
     sidebarPlanBadge.style.display = 'inline-flex';
   }
 
-  document.getElementById('planName').textContent = planLabel;
+  document.getElementById('planName').textContent = isTrial ? 'Free Trial' : planLabel;
+
+  const planTrialExpiry = document.getElementById('planTrialExpiry');
+  if (planTrialExpiry) {
+    if (isTrial && data.user.trial_expires_text) {
+      planTrialExpiry.textContent = data.user.trial_expires_text;
+      planTrialExpiry.style.display = 'block';
+      if (isTrialExpired) {
+        planTrialExpiry.style.color = '#F87171';
+      } else {
+        planTrialExpiry.style.color = '#2DD4BF';
+      }
+    } else {
+      planTrialExpiry.style.display = 'none';
+    }
+  }
 
   const banner = document.getElementById('billingPausedBanner');
   const isPausedPaidPlan = data.user.plan !== 'trial' && data.user.billing_status !== 'active';
   if (banner) banner.style.display = isPausedPaidPlan ? 'flex' : 'none';
+
+  const trialExpiredBanner = document.getElementById('trialExpiredBanner');
+  if (trialExpiredBanner) {
+    trialExpiredBanner.style.display = isTrialExpired ? 'flex' : 'none';
+  }
 }
 
 // ---------------- Data loading ----------------
@@ -864,7 +900,10 @@ function openUpgradeModal() {
       if (isCurrentButHalted) {
         actionCta = `<button class="btn btn-accent btn-block" data-plan="${id}">Renew ${plan.label}</button>`;
       } else {
-        actionCta = `<div class="mp-current-badge">✓ Your current plan</div>`;
+        const trialExpiryNote = (id === 'trial' && currentUser && currentUser.trial_expires_text)
+          ? `<div style="font-size:11px; margin-top:4px; opacity:0.85;">${currentUser.trial_expires_text}</div>`
+          : '';
+        actionCta = `<div class="mp-current-badge">✓ Your current plan${trialExpiryNote}</div>`;
       }
     } else if (isLowerTier) {
       actionCta = `<div class="mp-included-badge">Included with account</div>`;
