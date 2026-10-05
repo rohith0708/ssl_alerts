@@ -2252,6 +2252,11 @@ footer.site-footer {
    Scoped to body.landing-page-3d so dashboard/admin remain untouched.
    ============================================================ */
 
+html {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+}
+
 body.landing-page-3d {
   background-color: #06121E !important;
   background-image: 
@@ -2261,19 +2266,28 @@ body.landing-page-3d {
     radial-gradient(circle 800px at 50% 100%, rgba(14, 58, 86, 0.25), transparent 75%) !important;
   background-attachment: fixed;
   color: #E2E8F0 !important;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
+  max-width: 100vw;
 }
 
-/* Expansive container width for immersive layout (balanced on monitors and spacious on laptops) */
+/* Centered container width with generous left/right breathing room on both monitors and laptops */
 body.landing-page-3d .container {
-  max-width: 1480px !important;
-  padding: 0 44px !important;
+  max-width: 1220px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
   width: 100% !important;
+  box-sizing: border-box !important;
 }
 body.landing-page-3d .topnav-wrap .container {
-  max-width: 1480px !important;
-  padding: 0 44px !important;
+  max-width: 1220px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
   width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 body.landing-page-3d .site-glow {
@@ -2462,33 +2476,44 @@ body.landing-page-3d .hero-trust-badge .badge-icon {
    3D HERO STAGE & BUTTERFLY PADLOCK CENTERPIECE
    ============================================================ */
 body.landing-page-3d .hero-section {
-  padding-top: 48px !important;
-  padding-bottom: 64px !important;
+  padding-top: 36px !important;
+  padding-bottom: 56px !important;
   position: relative !important;
+  width: 100% !important;
+  overflow: hidden !important;
 }
 
 body.landing-page-3d .hero {
-  grid-template-columns: 1.12fr 0.88fr !important;
-  gap: 52px !important;
+  display: grid !important;
+  grid-template-columns: 1.1fr 0.9fr !important;
+  gap: 40px !important;
   align-items: center !important;
-  padding: 0 !important;
+  max-width: 1220px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 32px !important;
+  padding-right: 32px !important;
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
 }
 
 /* Tasteful, balanced vertical spacing across landing page sections */
 body.landing-page-3d .section {
-  padding: 68px 0 !important;
+  padding: 64px 0 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 body.landing-page-3d .section-head {
-  margin-bottom: 38px !important;
+  margin-bottom: 36px !important;
 }
 
 body.landing-page-3d .hero-stage {
   position: relative;
-  height: 505px;
+  height: 485px;
   perspective: 1400px;
   width: 100%;
-  max-width: 660px;
+  max-width: 530px;
   margin: 0 auto;
 }
 body.landing-page-3d .hero-scene {
@@ -2503,11 +2528,11 @@ body.landing-page-3d .hero-scene {
 .butterfly-3d-centerpiece {
   position: absolute;
   left: 50%;
-  top: 49%;
-  width: 250px;
-  height: 250px;
-  margin-left: -125px;
-  margin-top: -125px;
+  top: 48%;
+  width: 236px;
+  height: 236px;
+  margin-left: -118px;
+  margin-top: -118px;
   transform-style: preserve-3d;
   perspective: 900px;
   pointer-events: none;
@@ -2700,40 +2725,40 @@ body.landing-page-3d .cert-card-3d {
 }
 
 body.landing-page-3d .cert-card-3d.depth-tl {
-  left: -8px;
-  top: 20px;
-  width: 236px;
+  left: 0;
+  top: 14px;
+  width: 224px;
   margin: 0 !important;
   transform: translateZ(-10px) rotateY(-5deg) rotateX(4deg) scale(0.98);
   z-index: 3;
 }
 
 body.landing-page-3d .cert-card-3d.depth-tr {
-  right: -8px;
+  right: 0;
   left: auto;
-  top: 20px;
-  width: 236px;
+  top: 14px;
+  width: 224px;
   margin: 0 !important;
   transform: translateZ(-10px) rotateY(5deg) rotateX(4deg) scale(0.98);
   z-index: 3;
 }
 
 body.landing-page-3d .cert-card-3d.depth-bl {
-  left: -8px;
-  top: 405px;
+  left: 0;
+  top: 376px;
   bottom: auto !important;
-  width: 242px;
+  width: 228px;
   margin: 0 !important;
   transform: translateZ(15px) rotateY(-4deg) rotateX(-3deg) scale(1.0);
   z-index: 4;
 }
 
 body.landing-page-3d .cert-card-3d.depth-br {
-  right: -8px;
+  right: 0;
   left: auto;
-  top: 405px;
+  top: 376px;
   bottom: auto !important;
-  width: 242px;
+  width: 228px;
   margin: 0 !important;
   transform: translateZ(15px) rotateY(4deg) rotateX(-3deg) scale(1.0);
   z-index: 5;
@@ -3029,6 +3054,49 @@ body.landing-page-3d .social-icon:hover {
 }
 
 /* ============================================================
+   TABLET & MEDIUM LAPTOPS (861px - 1120px)
+   ============================================================ */
+@media (max-width: 1120px) and (min-width: 861px) {
+  body.landing-page-3d .container {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  body.landing-page-3d .topnav-wrap .container {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  body.landing-page-3d .hero {
+    grid-template-columns: 1.05fr 0.95fr !important;
+    gap: 28px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  body.landing-page-3d .hero h1 {
+    font-size: 38px !important;
+  }
+  body.landing-page-3d .hero-stage {
+    max-width: 480px !important;
+    height: 460px !important;
+  }
+  body.landing-page-3d .cert-card-3d.depth-tl,
+  body.landing-page-3d .cert-card-3d.depth-tr {
+    width: 206px !important;
+    top: 10px !important;
+  }
+  body.landing-page-3d .cert-card-3d.depth-bl,
+  body.landing-page-3d .cert-card-3d.depth-br {
+    width: 210px !important;
+    top: 362px !important;
+  }
+  body.landing-page-3d .butterfly-3d-centerpiece {
+    width: 210px !important;
+    height: 210px !important;
+    margin-left: -105px !important;
+    margin-top: -105px !important;
+  }
+}
+
+/* ============================================================
    MOBILE RESPONSIVE DESIGN (Flawless UX on all phones & tablets)
    ============================================================ */
 @media (max-width: 860px) {
@@ -3097,7 +3165,7 @@ body.landing-page-3d .social-icon:hover {
     grid-template-columns: 1fr !important;
     text-align: center !important;
     gap: 28px !important;
-    padding: 0 !important;
+    padding: 0 16px !important;
   }
   body.landing-page-3d .hero-copy {
     text-align: center !important;
