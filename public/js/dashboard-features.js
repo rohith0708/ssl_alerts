@@ -1196,10 +1196,10 @@ function renderCertificates(certificates) {
         <div class="cert-actions">
           <span class="cert-status ${cert.status}">${cert.status}</span>
           ${cert.status === 'completed' ?
-            `<button class="btn btn-primary btn-sm" onclick="downloadCertificate(${cert.id})">Download</button>` :
+            `<button class="btn btn-primary btn-sm" onclick="downloadCertificate('${cert.id}')">Download</button>` :
             ''
           }
-          <button class="btn btn-danger btn-sm" onclick="deleteCertificate(${cert.id})">Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCertificate('${cert.id}')">Delete</button>
         </div>
       </div>
     `;
@@ -1263,8 +1263,12 @@ async function downloadCertificate(id) {
     }
     return;
   }
+  if (!id) {
+    toast('Invalid certificate ID', true);
+    return;
+  }
   try {
-    const res = await fetch(`/api/certificates/download/${id}`);
+    const res = await fetch(`/api/certificates/download/${encodeURIComponent(id)}`);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -1281,8 +1285,10 @@ async function downloadCertificate(id) {
     link.download = filename;
     document.body.appendChild(link);
     link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, 2000);
     toast('Certificate file downloaded');
   } catch (err) {
     toast('Failed to download certificate: ' + err.message, true);
@@ -1515,7 +1521,7 @@ async function completeLetsEncrypt() {
   if (!currentCertificateId) {
     const stored = sessionStorage.getItem('leCertId');
     if (stored) {
-      currentCertificateId = Number(stored);
+      currentCertificateId = stored;
     }
   }
 
@@ -1532,7 +1538,7 @@ async function completeLetsEncrypt() {
   }
 
   try {
-    const res = await fetch(`/api/certificates/letsencrypt/complete/${currentCertificateId}`, {
+    const res = await fetch(`/api/certificates/letsencrypt/complete/${encodeURIComponent(currentCertificateId)}`, {
       method: 'POST'
     });
 
@@ -1545,25 +1551,38 @@ async function completeLetsEncrypt() {
     // Show success in-page
     document.getElementById('letsencryptStep2').style.display = 'none';
     document.getElementById('letsencryptStep3').style.display = 'block';
-    document.getElementById('certificateFiles').innerHTML = `
-      <div class="generator-hero">
-        <h4>✅ Certificate Generated</h4>
-        <p>Your certificate files were created successfully.</p>
-      </div>
-      <div class="generator-form-grid" style="margin-top:16px">
-        <div class="field full">
-          <label>Files Included</label>
-          <ul style="margin:8px 0 0 18px; color:#334155; line-height:1.8;">
-            ${data.files.map(file => `<li>${file}</li>`).join('')}
-          </ul>
+    currentCertificateId = data.id;
+    sessionStorage.removeItem('leCertId');
+
+    const certFilesEl = document.getElementById('certificateFiles');
+    if (certFilesEl) {
+      const escapeFn = typeof escapeHtml === 'function' ? escapeHtml : (s => String(s || ''));
+      certFilesEl.innerHTML = `
+        <div class="generator-hero">
+          <h4>✅ Certificate Generated</h4>
+          <p>Your certificate files were created successfully.</p>
         </div>
-        <div class="field full">
-          <div class="modal-actions">
-            <button type="button" class="btn btn-primary" onclick="downloadCertificate(${currentCertificateId})">Download Files</button>
+        <div class="generator-form-grid" style="margin-top:16px">
+          <div class="field full">
+            <label>Files Included</label>
+            <ul style="margin:8px 0 0 18px; color:#334155; line-height:1.8;">
+              ${(data.files || []).map(file => `<li>${escapeFn(file)}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="field full">
+            <div class="modal-actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" id="downloadLeFilesBtn">Download Files</button>
+              <button type="button" class="btn btn-ghost" onclick="resetLetsEncrypt()">Generate Another</button>
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
+
+      const dlBtn = document.getElementById('downloadLeFilesBtn');
+      if (dlBtn) {
+        dlBtn.onclick = () => downloadCertificate(data.id);
+      }
+    }
 
     loadCertificates();
 
