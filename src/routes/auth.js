@@ -43,12 +43,22 @@ function attachTrialInfo(user) {
   if (!user) return user;
   if (user.plan === 'trial') {
     let trialEndMs = null;
-    if (user.current_period_end) {
+    const trialDays = (PLANS && PLANS.trial && PLANS.trial.trialDays) || 30;
+    const maxTrialDurationMs = trialDays * 24 * 60 * 60 * 1000;
+
+    if (user.created_at) {
+      const createdMs = new Date(user.created_at).getTime();
+      const calculatedEndMs = createdMs + maxTrialDurationMs;
+      if (user.current_period_end) {
+        const periodEndMs = new Date(user.current_period_end).getTime();
+        trialEndMs = Math.min(periodEndMs, calculatedEndMs);
+      } else {
+        trialEndMs = calculatedEndMs;
+      }
+    } else if (user.current_period_end) {
       trialEndMs = new Date(user.current_period_end).getTime();
-    } else if (user.created_at) {
-      trialEndMs = new Date(user.created_at).getTime() + 30 * 24 * 60 * 60 * 1000;
     } else {
-      trialEndMs = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      trialEndMs = Date.now() + maxTrialDurationMs;
     }
 
     const nowMs = Date.now();
