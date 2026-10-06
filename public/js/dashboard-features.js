@@ -695,7 +695,8 @@ function getCertModalContent(type) {
         <div id="letsencryptStep2" style="display:none">
           <div class="generator-hero">
             <h4>📋 DNS Verification Required</h4>
-            <p>Add the following DNS TXT record to verify domain ownership.</p>
+            <p>Add the following DNS TXT record to verify domain ownership, then click the button below.</p>
+            <p style="margin-top:8px;">You can check <a href="/dashboard.html#dns-lookup" target="_blank" style="color:#00A896; font-weight:600; text-decoration:underline;">DNS Lookup</a> to verify whether the TXT record is resolving before clicking "I've Added the DNS Record".</p>
           </div>
           <div id="dnsInstructions" class="generator-form-grid" style="margin-top:16px"></div>
           <div class="modal-actions" style="margin-top:16px">
