@@ -477,6 +477,28 @@ function setupAuthenticatedUI(data) {
     }
   }
 
+  const planWidgetUpgradeBtn = document.getElementById('planWidgetUpgradeBtn');
+  const planWidgetUpgradeLabel = document.getElementById('planWidgetUpgradeLabel');
+  if (planWidgetUpgradeBtn) {
+    if (isTrial) {
+      planWidgetUpgradeBtn.style.display = 'inline-flex';
+      if (planWidgetUpgradeLabel) {
+        planWidgetUpgradeLabel.textContent = isTrialExpired ? 'Upgrade to Reactivate' : 'Upgrade Plan';
+      }
+      if (isTrialExpired) {
+        planWidgetUpgradeBtn.classList.add('is-urgent');
+      } else {
+        planWidgetUpgradeBtn.classList.remove('is-urgent');
+      }
+    } else if (rawPlan === 'unlimited' || rawPlan === 'enterprise') {
+      planWidgetUpgradeBtn.style.display = 'none';
+    } else {
+      planWidgetUpgradeBtn.style.display = 'inline-flex';
+      if (planWidgetUpgradeLabel) planWidgetUpgradeLabel.textContent = 'Upgrade Plan';
+      planWidgetUpgradeBtn.classList.remove('is-urgent');
+    }
+  }
+
   const banner = document.getElementById('billingPausedBanner');
   const isPausedPaidPlan = data.user.plan !== 'trial' && data.user.billing_status !== 'active';
   if (banner) banner.style.display = isPausedPaidPlan ? 'flex' : 'none';
@@ -988,6 +1010,7 @@ function openUpgradeModal() {
 function closeUpgradeModal() { upgradeModal.classList.remove('visible'); }
 
 document.getElementById('upgradeLink').addEventListener('click', (e) => { e.preventDefault(); openUpgradeModal(); });
+document.getElementById('planWidgetUpgradeBtn')?.addEventListener('click', (e) => { e.preventDefault(); openUpgradeModal(); });
 document.getElementById('renewFromBannerBtn')?.addEventListener('click', openUpgradeModal);
 document.getElementById('modalClose').addEventListener('click', closeUpgradeModal);
 upgradeModal.addEventListener('click', (e) => { if (e.target === upgradeModal) closeUpgradeModal(); });
