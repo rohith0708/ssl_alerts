@@ -221,7 +221,7 @@ router.post('/:id/check-now', async (req, res) => {
 });
 
 router.post('/:id/acknowledge', async (req, res) => {
-  const info = await db.execute('UPDATE domains SET alert_acknowledged = 1 WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+  const info = await db.execute('UPDATE domains SET alert_acknowledged = 1, consecutive_alerts = 0 WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
   if (info.affectedRows === 0) return res.status(404).json({ error: 'Domain not found.' });
   const domain = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
   res.json({ domain });

@@ -150,10 +150,6 @@ async function initSchema() {
     // Ensure all trial users have current_period_end capped at 30 days from creation
     await pool.query("UPDATE users SET current_period_end = DATE_ADD(created_at, INTERVAL 30 DAY) WHERE plan = 'trial' AND (current_period_end IS NULL OR current_period_end > DATE_ADD(created_at, INTERVAL 30 DAY))");
   } catch (_) {}
-  try {
-    await pool.query('ALTER TABLE domains ADD COLUMN consecutive_alerts INT NOT NULL DEFAULT 0');
-  } catch (_) {}
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS \`groups\` (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -185,12 +181,17 @@ async function initSchema() {
       alert_acknowledged TINYINT(1) NOT NULL DEFAULT 0,
       last_alert_sent_at DATETIME NULL,
       status_since DATETIME NULL,
+      consecutive_alerts INT NOT NULL DEFAULT 0,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uq_user_domain_port (user_id, hostname, port),
       CONSTRAINT fk_domains_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       CONSTRAINT fk_domains_group FOREIGN KEY (group_id) REFERENCES \`groups\`(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  try {
+    await pool.query('ALTER TABLE domains ADD COLUMN consecutive_alerts INT NOT NULL DEFAULT 0');
+  } catch (_) {}
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS alerts_sent (
