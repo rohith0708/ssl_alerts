@@ -61,6 +61,17 @@ const groupNameById = (id) => {
 const generalGroup = () => allGroups.find(g => g.name === 'General');
 
 // ---------------- Rendering ----------------
+function getRealertIntervalLabel() {
+  const plan = currentUser?.plan || 'trial';
+  const planObj = currentPlans ? currentPlans[plan] : null;
+  const mins = planObj?.criticalIntervalMinutes;
+  if (mins) {
+    return mins >= 60 ? `${mins / 60} hr` : `${mins} min`;
+  }
+  const map = { pro: '30 min', agency: '10 min', enterprise: '10 min', growth: '1 hr', starter: '2 hrs', micro: '3 hrs', trial: '3 hrs' };
+  return map[plan] || '30 min';
+}
+
 function domainRowHTML(d) {
   const status = d.status || 'pending';
   const isAlertable = ['warning', 'critical', 'expired'].includes(status);
@@ -75,7 +86,7 @@ function domainRowHTML(d) {
   const ackHint = isAlertable
     ? (d.alert_acknowledged
         ? `<div class="group-tag" style="background:#EAF2F5;color:var(--muted);">Alerts paused</div>`
-        : `<div class="group-tag" style="background:#FDE9E3;color:var(--coral);">Re-alerting every 30 min</div>`)
+        : `<div class="group-tag" style="background:#FDE9E3;color:var(--coral);">Re-alerting every ${getRealertIntervalLabel()}</div>`)
     : '';
 
   const isInternal = d.source === 'internal';

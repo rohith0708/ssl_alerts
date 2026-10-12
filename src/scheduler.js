@@ -110,23 +110,17 @@ async function applyCheckResult(row, result) {
   let isThrottled = false;
   let intervalText = '';
 
-  if (newStatus === 'warning') {
-    // Warnings are sent at most once every 24 hours (1440 mins)
-    intervalMinutes = planConfig.warningIntervalMinutes || 1440;
-    intervalText = 'This is a daily reminder (sent once every 24 hours) until you renew or acknowledge this alert.';
+  const consecutive = Number(state.consecutive_alerts || 0);
+  if (consecutive >= 5) {
+    // Auto-snooze kicks in: throttle to 4 hours (240 minutes)
+    intervalMinutes = 240;
+    isThrottled = true;
+    intervalText = 'This alert has triggered 5+ times without acknowledgment. Repeat notifications are auto-throttled to every 4 hours until renewed or acknowledged.';
   } else {
-    // Critical / Expired: Check auto-snooze
-    const consecutive = Number(state.consecutive_alerts || 0);
-    if (consecutive >= 5) {
-      // Auto-snooze kicks in: throttle to 4 hours (240 minutes)
-      intervalMinutes = 240;
-      isThrottled = true;
-      intervalText = 'This alert has triggered 5+ times without acknowledgment. Repeat notifications are auto-throttled to every 4 hours until renewed or acknowledged.';
-    } else {
-      intervalMinutes = planConfig.criticalIntervalMinutes || 180;
-      const intervalLabel = intervalMinutes >= 60 ? `${intervalMinutes / 60} hour(s)` : `${intervalMinutes} minutes`;
-      intervalText = `This is an urgent reminder — it will arrive every ${intervalLabel} until you renew the certificate or acknowledge this alert.`;
-    }
+    // Uses the plan's alert interval (e.g. Pro = 30m, Agency/Enterprise = 10m, Growth = 60m, Starter = 120m, Trial/Micro = 180m)
+    intervalMinutes = planConfig.criticalIntervalMinutes || 30;
+    const intervalLabel = intervalMinutes >= 60 ? `${intervalMinutes / 60} hour(s)` : `${intervalMinutes} minutes`;
+    intervalText = `This is an alert reminder — arriving every ${intervalLabel} according to your ${planConfig.label} plan until renewed or acknowledged.`;
   }
 
   const minutesSinceLast = state.minutes_since_last_alert !== null && state.minutes_since_last_alert !== undefined
@@ -138,10 +132,16 @@ async function applyCheckResult(row, result) {
     minutesSinceLast === null ||
     minutesSinceLast >= intervalMinutes;
 
-  if (!dueForAlert) return;
+  if (!dueForAlert) {
+    console.log(`[alerts] Domain ${row.hostname} (${newStatus}) waiting for next alert: last sent ${minutesSinceLast ?? 0}m ago, interval is ${intervalMinutes}m (due in ${Math.max(0, intervalMinutes - (minutesSinceLast ?? 0))}m)`);
+    return;
+  }
 
   const recipients = await resolveRecipients(row);
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) {
+    console.warn(`[alerts] No recipients found for ${row.hostname} (user #${row.user_id})`);
+    return;
+  }
 
   // 1-Click Acknowledge token
   const ackSecret = process.env.JWT_SECRET || 'harisree-ssl-jwt-secret';
@@ -200,7 +200,11 @@ async function runAlertSweep() {
       AND (u.billing_status = 'active' OR u.billing_status IS NULL OR u.plan = 'trial' OR u.is_admin = 1)
       AND (u.billing_status IS NULL OR u.billing_status NOT IN ('halted', 'cancelled'))
   `);
-  if (rows.length === 0) return { checked: 0 };
+  if (rows.length === 0) {
+    console.log('[scheduler] alert sweep: 0 alertable unacknowledged domains found.');
+    return { checked: 0 };
+  }
+  console.log(`[scheduler] alert sweep: evaluating ${rows.length} alertable domain(s)...`);
   await checkMany(rows, Number(process.env.CHECK_CONCURRENCY || 10), async (row, result) => {
     await applyCheckResult(row, result);
   });
