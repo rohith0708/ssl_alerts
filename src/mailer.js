@@ -24,20 +24,20 @@ async function sendViaMailjet({ to, subject, html }) {
   const recipients = (Array.isArray(to) ? to : String(to).split(',')).map(s => s.trim()).filter(Boolean);
   if (recipients.length === 0) return;
 
+  const messages = recipients.map(email => ({
+    From: { Email: from.email, Name: from.name },
+    To: [{ Email: email }],
+    Subject: subject,
+    HTMLPart: html
+  }));
+
   const res = await fetch('https://api.mailjet.com/v3.1/send', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Basic ${auth}`
     },
-    body: JSON.stringify({
-      Messages: [{
-        From: { Email: from.email, Name: from.name },
-        To: recipients.map(email => ({ Email: email })),
-        Subject: subject,
-        HTMLPart: html
-      }]
-    })
+    body: JSON.stringify({ Messages: messages })
   });
 
   if (!res.ok) {
@@ -50,8 +50,7 @@ async function sendViaMailjet({ to, subject, html }) {
     for (const msg of resData.Messages) {
       if (msg.Status === 'error') {
         const errDetail = (msg.Errors || []).map(e => e.ErrorMessage).join('; ');
-        console.error(`[mailer:mailjet] Send error for ${recipients.join(', ')}: ${errDetail}`);
-        throw new Error(`Mailjet delivery failed: ${errDetail}`);
+        console.error(`[mailer:mailjet] Send error: ${errDetail}`);
       }
     }
   }
@@ -72,10 +71,17 @@ function getSmtpTransport() {
 
 async function sendViaSmtp({ to, subject, html }) {
   const transport = getSmtpTransport();
+  if (!transport) return;
   const from = parseFrom();
   const recipients = (Array.isArray(to) ? to : String(to).split(',')).map(s => s.trim()).filter(Boolean);
   if (recipients.length === 0) return;
-  await transport.sendMail({ from: `"${from.name}" <${from.email}>`, to: recipients.join(', '), subject, html });
+  for (const email of recipients) {
+    try {
+      await transport.sendMail({ from: `"${from.name}" <${from.email}>`, to: email, subject, html });
+    } catch (err) {
+      console.error(`[mailer:smtp] Send error for ${email}:`, err.message);
+    }
+  }
 }
 
 const STATUS_COPY = {

@@ -7,6 +7,15 @@ const { sendExpiryAlert } = require('./mailer');
 const ALERTABLE = new Set(['warning', 'critical', 'expired']);
 
 async function resolveRecipients(row) {
+  const recipients = new Set();
+
+  // 1. Always include the primary account email
+  const user = await db.getOne('SELECT email FROM users WHERE id = ?', [row.user_id]);
+  if (user && user.email) {
+    recipients.add(user.email.toLowerCase().trim());
+  }
+
+  // 2. Include group-specific notification emails if assigned to a group
   let groupId = row.group_id;
   if (!groupId) {
     const general = await db.getOne("SELECT id FROM `groups` WHERE user_id = ? AND name = 'General' LIMIT 1", [row.user_id]);
@@ -14,20 +23,29 @@ async function resolveRecipients(row) {
   }
 
   if (groupId) {
-    const groupEmails = (await db.getAll(`
+    const groupEmails = await db.getAll(`
       SELECT ne.email
       FROM group_notification_emails gne
       JOIN notification_emails ne ON ne.id = gne.notification_email_id
       WHERE gne.group_id = ?
-    `, [groupId])).map(r => r.email);
-    if (groupEmails.length > 0) return groupEmails;
+    `, [groupId]);
+    for (const r of groupEmails) {
+      if (r.email) recipients.add(r.email.toLowerCase().trim());
+    }
   }
 
-  const userAlertEmails = (await db.getAll('SELECT email FROM notification_emails WHERE user_id = ?', [row.user_id])).map(r => r.email);
-  if (userAlertEmails.length > 0) return userAlertEmails;
+  // 3. Include global notification emails (emails not restricted to a specific group)
+  const globalEmails = await db.getAll(`
+    SELECT ne.email
+    FROM notification_emails ne
+    LEFT JOIN group_notification_emails gne ON gne.notification_email_id = ne.id
+    WHERE ne.user_id = ? AND gne.group_id IS NULL
+  `, [row.user_id]);
+  for (const r of globalEmails) {
+    if (r.email) recipients.add(r.email.toLowerCase().trim());
+  }
 
-  const user = await db.getOne('SELECT email FROM users WHERE id = ?', [row.user_id]);
-  return user ? [user.email] : [];
+  return Array.from(recipients);
 }
 
 /**
@@ -77,7 +95,8 @@ async function applyCheckResult(row, result) {
   }
 
   const state = await db.getOne(`
-    SELECT d.alert_acknowledged, d.last_alert_sent_at, d.consecutive_alerts, u.plan
+    SELECT d.alert_acknowledged, d.last_alert_sent_at, d.consecutive_alerts, u.plan,
+           TIMESTAMPDIFF(MINUTE, d.last_alert_sent_at, NOW()) AS minutes_since_last_alert
     FROM domains d
     JOIN users u ON u.id = d.user_id
     WHERE d.id = ?
@@ -110,11 +129,15 @@ async function applyCheckResult(row, result) {
     }
   }
 
-  const lastSentTime = state.last_alert_sent_at
-    ? new Date(String(state.last_alert_sent_at).replace(' ', 'T') + 'Z').getTime()
+  const minutesSinceLast = state.minutes_since_last_alert !== null && state.minutes_since_last_alert !== undefined
+    ? Number(state.minutes_since_last_alert)
     : null;
-  const dueForAlert = statusChanged || !lastSentTime ||
-    (Date.now() - lastSentTime) >= intervalMinutes * 60 * 1000;
+
+  const dueForAlert = statusChanged ||
+    !state.last_alert_sent_at ||
+    minutesSinceLast === null ||
+    minutesSinceLast >= intervalMinutes;
+
   if (!dueForAlert) return;
 
   const recipients = await resolveRecipients(row);
@@ -145,6 +168,7 @@ async function applyCheckResult(row, result) {
       WHERE id = ?
     `, [row.id]);
     await db.execute('INSERT INTO alert_log (domain_id, user_id, status) VALUES (?, ?, ?)', [row.id, row.user_id, newStatus]);
+    console.log(`[alerts] Sent ${newStatus} alert for ${row.hostname} to ${recipients.length} recipient(s): ${recipients.join(', ')}`);
   } catch (err) {
     console.error('[alerts] send failed for', row.hostname, err.message);
   }
@@ -154,7 +178,8 @@ async function runFullSweep() {
   const domains = await db.getAll(`
     SELECT d.* FROM domains d
     JOIN users u ON u.id = d.user_id
-    WHERE u.plan = 'trial' OR u.billing_status = 'active'
+    WHERE (u.billing_status = 'active' OR u.billing_status IS NULL OR u.plan = 'trial' OR u.is_admin = 1)
+      AND (u.billing_status IS NULL OR u.billing_status NOT IN ('halted', 'cancelled'))
   `);
   if (domains.length === 0) return { checked: 0 };
   const concurrency = Number(process.env.CHECK_CONCURRENCY || 10);
@@ -172,7 +197,8 @@ async function runAlertSweep() {
     SELECT d.* FROM domains d
     JOIN users u ON u.id = d.user_id
     WHERE d.status IN ('warning','critical','expired') AND d.alert_acknowledged = 0
-      AND (u.plan = 'trial' OR u.billing_status = 'active')
+      AND (u.billing_status = 'active' OR u.billing_status IS NULL OR u.plan = 'trial' OR u.is_admin = 1)
+      AND (u.billing_status IS NULL OR u.billing_status NOT IN ('halted', 'cancelled'))
   `);
   if (rows.length === 0) return { checked: 0 };
   await checkMany(rows, Number(process.env.CHECK_CONCURRENCY || 10), async (row, result) => {

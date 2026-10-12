@@ -595,5 +595,11 @@ router.post('/run-sweep', async (req, res) => {
   res.json(result);
 });
 
+router.post('/run-alert-sweep', async (req, res) => {
+  const { runAlertSweep } = require('../scheduler');
+  const result = await runAlertSweep();
+  res.json(result);
+});
+
 module.exports = router;
 
