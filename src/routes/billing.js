@@ -289,6 +289,16 @@ router.post('/dodo/checkout', requireAuth, async (req, res) => {
   const user = await db.getOne('SELECT * FROM users WHERE id = ?', [req.userId]);
   if (!user) return res.status(401).json({ error: 'Session no longer valid, please sign in again.' });
 
+  // Check if user has more domains than the new plan allows
+  const domainCountRow = await db.getOne('SELECT COUNT(*) AS count FROM domains WHERE user_id = ?', [user.id]);
+  const currentDomainCount = domainCountRow ? domainCountRow.count : 0;
+  if (currentDomainCount > PLANS[plan].domainLimit) {
+    const diff = currentDomainCount - PLANS[plan].domainLimit;
+    return res.status(400).json({
+      error: `You currently have ${currentDomainCount} domains monitored, but the ${PLANS[plan].label} plan allows up to ${PLANS[plan].domainLimit}. Please remove ${diff} domain(s) before downgrading.`
+    });
+  }
+
   const env = (process.env.DODO_PAYMENTS_ENVIRONMENT || 'test_mode').toLowerCase();
   const dodoBase = (env === 'live_mode' || env === 'live' || env === 'production')
     ? 'https://live.dodopayments.com'

@@ -939,7 +939,11 @@ function openUpgradeModal() {
         actionCta = `<div class="mp-current-badge">✓ Your current plan${trialExpiryNote}</div>`;
       }
     } else if (isLowerTier) {
-      actionCta = `<div class="mp-included-badge">Included with account</div>`;
+      if (id === 'trial') {
+        actionCta = `<div class="mp-included-badge">Free trial completed</div>`;
+      } else {
+        actionCta = `<button class="btn btn-ghost btn-block" data-plan="${id}">Downgrade to ${plan.label}</button>`;
+      }
     } else {
       actionCta = `<button class="btn btn-accent btn-block" data-plan="${id}">Choose ${plan.label}</button>`;
     }
