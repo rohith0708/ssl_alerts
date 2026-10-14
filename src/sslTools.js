@@ -235,14 +235,18 @@ async function matchKeyAndCert(inputA, inputB) {
 /**
  * Performs a live TLS handshake against hostname:port and extracts the full certificate chain,
  * TLS protocol version, cipher suite, and trust status.
+ * Protected against SSRF and internal port scanning via validatePublicHost.
  */
 function checkLiveInstallation(hostname, port = 443) {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     let settled = false;
+    let socket = null;
     const finish = (res) => {
       if (settled) return;
       settled = true;
-      try { socket.destroy(); } catch (_) {}
+      if (socket) {
+        try { socket.destroy(); } catch (_) {}
+      }
       resolve(res);
     };
 
@@ -253,7 +257,22 @@ function checkLiveInstallation(hostname, port = 443) {
       return finish({ error: 'Please enter a domain to check.' });
     }
 
-    const socket = tls.connect(
+    if (targetPort < 1 || targetPort > 65535) {
+      return finish({ error: 'Invalid port number.' });
+    }
+
+    // SSRF Guard: reject private IP ranges, loopback, and cloud metadata
+    try {
+      const { validatePublicHost } = require('./security');
+      const hostCheck = await validatePublicHost(host);
+      if (!hostCheck.valid) {
+        return finish({ error: hostCheck.error });
+      }
+    } catch (e) {
+      return finish({ error: `Host validation failed: ${e.message}` });
+    }
+
+    socket = tls.connect(
       {
         host,
         port: targetPort,

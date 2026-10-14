@@ -5,8 +5,16 @@ const {
   matchKeyAndCert,
   checkLiveInstallation
 } = require('../sslTools');
+const { createRateLimiter } = require('../security');
 
 const router = express.Router();
+
+// Rate limit public SSL diagnostic tools (60 requests per minute per IP)
+router.use(createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: 'Too many diagnostic requests. Please wait a minute before trying again.'
+}));
 
 // POST /api/ssltools/decode-cert
 router.post('/decode-cert', (req, res) => {

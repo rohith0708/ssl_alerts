@@ -7,9 +7,11 @@ const authRoutes = require('./src/routes/auth');
 const adminRoutes = require('./src/routes/admin');
 const { COOKIE_NAME, JWT_SECRET } = require('./src/auth');
 const { db } = require('./src/db');
+const { securityHeadersMiddleware } = require('./src/security');
 
 const app = express();
 app.disable('x-powered-by');
+app.use(securityHeadersMiddleware);
 
 const PORT = parseInt(process.env.PORT, 10) || 3005;
 

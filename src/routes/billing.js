@@ -682,5 +682,11 @@ async function handleDodoWebhook(req, res) {
   res.json({ received: true });
 }
 
-module.exports = { router, handleWebhook, handleRazorpayWebhook, handleDodoWebhook };
+module.exports = {
+  router,
+  handleWebhook,
+  handleRazorpayWebhook,
+  handleDodoWebhook,
+  verifyStandardWebhook
+};
 

@@ -88,7 +88,38 @@ function attachTrialInfo(user) {
 
 const resendRateLimits = new Map();
 
-router.post('/register', async (req, res) => {
+const {
+  createRateLimiter,
+  recordFailedOtpAttempt,
+  clearFailedOtpAttempts,
+  isOtpLocked,
+  MAX_OTP_ATTEMPTS
+} = require('../security');
+
+// Defensive rate limiters against brute force and automated scraping
+const loginLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 15,
+  message: 'Too many login attempts. Please wait 15 minutes before trying again.'
+});
+
+const registerLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  message: 'Too many registration attempts. Please try again later.'
+});
+
+const otpRequestLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 10,
+  message: 'Too many verification code requests. Please wait before requesting another code.'
+});
+
+function isDevOtpAllowed() {
+  return process.env.ALLOW_DEV_OTP === 'true' && process.env.NODE_ENV === 'test';
+}
+
+router.post('/register', registerLimiter, async (req, res) => {
   const { name, email, password, confirmPassword } = req.body || {};
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email, and password are all required.' });
@@ -150,7 +181,7 @@ router.post('/register', async (req, res) => {
     email: normalizedEmail,
     message: `A 6-digit verification code has been sent to ${normalizedEmail}.`
   };
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevOtpAllowed()) {
     responsePayload.devOtp = otp;
   }
 
@@ -164,6 +195,14 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+
+  // Check brute force lockout
+  if (isOtpLocked(normalizedEmail)) {
+    return res.status(429).json({
+      error: 'Too many incorrect attempts. For security, this verification code has been cancelled. Please request a new code.'
+    });
+  }
+
   const user = await db.getOne('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
   if (!user) {
@@ -171,6 +210,7 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   if (user.is_verified) {
+    clearFailedOtpAttempts(normalizedEmail);
     const token = issueToken(user);
     setAuthCookie(res, token);
     const safeUser = await db.getOne('SELECT id, name, email, plan, domain_limit, is_admin, billing_status, current_period_end, created_at FROM users WHERE id = ?', [user.id]);
@@ -188,9 +228,20 @@ router.post('/verify-otp', async (req, res) => {
   }
 
   if (String(user.otp_code).trim() !== String(otp).trim()) {
-    return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+    const attempts = recordFailedOtpAttempt(normalizedEmail);
+    if (attempts >= MAX_OTP_ATTEMPTS) {
+      await db.execute('UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
+      return res.status(429).json({
+        error: 'Too many incorrect attempts. For security, this verification code has been cancelled. Please request a new code.'
+      });
+    }
+    const remaining = MAX_OTP_ATTEMPTS - attempts;
+    return res.status(400).json({
+      error: `Invalid verification code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+    });
   }
 
+  clearFailedOtpAttempts(normalizedEmail);
   await db.execute('UPDATE users SET is_verified = 1, otp_code = NULL, otp_expires_at = NULL WHERE id = ?', [user.id]);
 
   const verifiedUser = await db.getOne('SELECT * FROM users WHERE id = ?', [user.id]);
@@ -201,7 +252,7 @@ router.post('/verify-otp', async (req, res) => {
   res.json({ success: true, user: attachTrialInfo(safeUser) });
 });
 
-router.post('/resend-otp', async (req, res) => {
+router.post('/resend-otp', otpRequestLimiter, async (req, res) => {
   const { email } = req.body || {};
   if (!email) {
     return res.status(400).json({ error: 'Email is required.' });
@@ -225,6 +276,7 @@ router.post('/resend-otp', async (req, res) => {
   }
 
   resendRateLimits.set(normalizedEmail, Date.now());
+  clearFailedOtpAttempts(normalizedEmail);
 
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
@@ -236,14 +288,14 @@ router.post('/resend-otp', async (req, res) => {
     success: true,
     message: `A new verification code has been sent to ${normalizedEmail}.`
   };
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDevOtpAllowed()) {
     payload.devOtp = otp;
   }
 
   res.json(payload);
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   const normalizedEmail = (email || '').trim().toLowerCase();
   const user = await db.getOne('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
@@ -262,7 +314,7 @@ router.post('/login', async (req, res) => {
       requireOtp: true,
       email: normalizedEmail
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevOtpAllowed()) {
       payload.devOtp = otp;
     }
     return res.status(403).json(payload);
@@ -400,7 +452,7 @@ router.post('/request-email-change', requireAuth, async (req, res) => {
       pending_email: normalizedEmail,
       message: `A 6-digit verification code has been dispatched to ${normalizedEmail}.`
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevOtpAllowed()) {
       responseData.devOtp = otp;
     }
     res.json(responseData);
@@ -416,6 +468,13 @@ router.post('/confirm-email-change', requireAuth, async (req, res) => {
     const { otp } = req.body || {};
     if (!otp) {
       return res.status(400).json({ error: 'Verification code is required.' });
+    }
+
+    const lockKey = `change_${req.userId}`;
+    if (isOtpLocked(lockKey)) {
+      return res.status(429).json({
+        error: 'Too many incorrect attempts. For security, this verification code has been cancelled. Please request a new code.'
+      });
     }
 
     const user = await db.getOne('SELECT id, name, email, password_hash, pending_email, pending_email_otp, pending_email_expires_at FROM users WHERE id = ?', [req.userId]);
@@ -434,8 +493,20 @@ router.post('/confirm-email-change', requireAuth, async (req, res) => {
     }
 
     if (String(user.pending_email_otp).trim() !== String(otp).trim()) {
-      return res.status(400).json({ error: 'Invalid verification code. Please check the code and try again.' });
+      const attempts = recordFailedOtpAttempt(lockKey);
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await db.execute('UPDATE users SET pending_email_otp = NULL, pending_email_expires_at = NULL WHERE id = ?', [req.userId]);
+        return res.status(429).json({
+          error: 'Too many incorrect attempts. For security, this verification code has been cancelled. Please request a new code.'
+        });
+      }
+      const remaining = MAX_OTP_ATTEMPTS - attempts;
+      return res.status(400).json({
+        error: `Invalid verification code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+      });
     }
+
+    clearFailedOtpAttempts(lockKey);
 
     const collision = await db.getOne('SELECT id FROM users WHERE email = ? AND id != ?', [user.pending_email, req.userId]);
     if (collision) {
@@ -480,12 +551,14 @@ router.post('/confirm-email-change', requireAuth, async (req, res) => {
 });
 
 // User self-service: resend email change OTP
-router.post('/resend-email-otp', requireAuth, async (req, res) => {
+router.post('/resend-email-otp', requireAuth, otpRequestLimiter, async (req, res) => {
   try {
     const user = await db.getOne('SELECT id, name, email, pending_email FROM users WHERE id = ?', [req.userId]);
     if (!user || !user.pending_email) {
       return res.status(400).json({ error: 'No pending email change to resend code for.' });
     }
+
+    clearFailedOtpAttempts(`change_${req.userId}`);
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
@@ -506,7 +579,7 @@ router.post('/resend-email-otp', requireAuth, async (req, res) => {
       pending_email: user.pending_email,
       message: `A fresh 6-digit verification code has been dispatched to ${user.pending_email}.`
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDevOtpAllowed()) {
       responseData.devOtp = otp;
     }
     res.json(responseData);
@@ -517,7 +590,7 @@ router.post('/resend-email-otp', requireAuth, async (req, res) => {
 });
 
 // ---------------- Forgot & Reset Password ----------------
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', otpRequestLimiter, async (req, res) => {
   try {
     const normalizedEmail = String(req.body?.email || '').trim().toLowerCase();
     if (!normalizedEmail || !EMAIL_RE.test(normalizedEmail)) {
@@ -538,6 +611,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     resendRateLimits.set('fp_' + normalizedEmail, Date.now());
+    clearFailedOtpAttempts('reset_' + normalizedEmail);
 
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
@@ -570,6 +644,13 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Email, verification code, and new password are all required.' });
     }
 
+    const lockKey = `reset_${email}`;
+    if (isOtpLocked(lockKey)) {
+      return res.status(429).json({
+        error: 'Too many incorrect attempts. For security, this reset code has been cancelled. Please request a new code.'
+      });
+    }
+
     if (confirmPassword !== undefined && newPassword !== confirmPassword) {
       return res.status(400).json({ error: 'Passwords do not match.' });
     }
@@ -589,8 +670,20 @@ router.post('/reset-password', async (req, res) => {
     }
 
     if (String(user.reset_otp_code).trim() !== otp) {
-      return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+      const attempts = recordFailedOtpAttempt(lockKey);
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await db.execute('UPDATE users SET reset_otp_code = NULL, reset_otp_expires_at = NULL WHERE id = ?', [user.id]);
+        return res.status(429).json({
+          error: 'Too many incorrect attempts. For security, this reset code has been cancelled. Please request a new code.'
+        });
+      }
+      const remaining = MAX_OTP_ATTEMPTS - attempts;
+      return res.status(400).json({
+        error: `Invalid verification code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`
+      });
     }
+
+    clearFailedOtpAttempts(lockKey);
 
     await db.execute(`
       UPDATE users SET password_hash = ?, reset_otp_code = NULL, reset_otp_expires_at = NULL WHERE id = ?

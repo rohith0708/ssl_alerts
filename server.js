@@ -15,9 +15,11 @@ const { router: billingRoutes, handleWebhook, handleRazorpayWebhook, handleDodoW
 const jwt = require('jsonwebtoken');
 const { COOKIE_NAME, JWT_SECRET } = require('./src/auth');
 const { db } = require('./src/db');
+const { securityHeadersMiddleware } = require('./src/security');
 
 const app = express();
 app.disable('x-powered-by');
+app.use(securityHeadersMiddleware);
 
 // Payment webhooks need the raw body for signature verification — must be
 // registered BEFORE express.json().

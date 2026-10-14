@@ -262,7 +262,7 @@ router.post('/users/:id/request-email-change', async (req, res) => {
       pending_email: normalizedEmail,
       message: `A 6-digit verification code has been dispatched to ${normalizedEmail}.`
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.ALLOW_DEV_OTP === 'true' && process.env.NODE_ENV === 'test') {
       responseData.devOtp = otp;
     }
     res.json(responseData);
@@ -363,7 +363,7 @@ router.post('/users/:id/resend-email-otp', async (req, res) => {
       pending_email: user.pending_email,
       message: `A fresh 6-digit verification code has been dispatched to ${user.pending_email}.`
     };
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.ALLOW_DEV_OTP === 'true' && process.env.NODE_ENV === 'test') {
       responseData.devOtp = otp;
     }
     res.json(responseData);
