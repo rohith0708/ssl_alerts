@@ -466,7 +466,7 @@
         <div class="admin-filter-group">
           <button type="button" class="filter-chip active" data-filter="all" onclick="setUserPlanFilter('all', this)">All Plans</button>
           <button type="button" class="filter-chip" data-filter="trial" onclick="setUserPlanFilter('trial', this)">Free (5)</button>
-          <button type="button" class="filter-chip" data-filter="micro" onclick="setUserPlanFilter('micro', this)">Micro ($1)</button>
+          <button type="button" class="filter-chip" data-filter="micro" onclick="setUserPlanFilter('micro', this)">Micro ($2)</button>
           <button type="button" class="filter-chip" data-filter="starter" onclick="setUserPlanFilter('starter', this)">Starter ($5)</button>
           <button type="button" class="filter-chip" data-filter="growth" onclick="setUserPlanFilter('growth', this)">Growth ($10)</button>
           <button type="button" class="filter-chip" data-filter="pro" onclick="setUserPlanFilter('pro', this)">Pro ($20)</button>
@@ -744,7 +744,7 @@
             <label style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:4px;">Plan Tier</label>
             <select id="modalPlanSelect" onchange="toggleEnterpriseLimitInput()" style="width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; font-size:13px; background:#fff;">
               <option value="trial">Free Trial (5 domains)</option>
-              <option value="micro">Micro — $1/mo (5 domains)</option>
+              <option value="micro">Micro — $2/mo (5 domains)</option>
               <option value="starter">Starter — $5/mo (20 domains)</option>
               <option value="growth">Growth — $10/mo (50 domains)</option>
               <option value="pro">Pro — $20/mo (100 domains)</option>
@@ -856,7 +856,7 @@ function toast(msg, isError = false) {
 
 const PLAN_LABELS = {
   trial: 'Free Trial (5)',
-  micro: 'Micro ($1/mo)',
+  micro: 'Micro ($2/mo)',
   starter: 'Starter ($5/mo)',
   growth: 'Growth ($10/mo)',
   pro: 'Pro ($20/mo)',

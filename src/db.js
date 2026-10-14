@@ -306,8 +306,8 @@ const PLANS = {
   micro: {
     label: 'Micro',
     subtitle: 'Good for personal projects & portfolios',
-    price: 1,
-    originalPrice: 2,
+    price: 2,
+    originalPrice: 4,
     badge: 'LIMITED TIME OFFER',
     domainLimit: 5,
     recipientLimit: 1,

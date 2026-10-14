@@ -444,8 +444,8 @@ function openUpgradeModal() {
           </div>
         </div>`;
     } else if (id === 'micro' || plan.originalPrice) {
-      const orig = plan.originalPrice || 2;
-      const curr = plan.price || 1;
+      const orig = plan.originalPrice || 4;
+      const curr = plan.price || 2;
       const discountPct = Math.round((1 - curr / orig) * 100);
       priceDisplay = `
         <div class="mp-price">

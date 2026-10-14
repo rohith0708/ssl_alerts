@@ -3012,12 +3012,22 @@ body.landing-page-3d .mp-period,
 body.landing-page-3d .plan-card .price .mp-period {
   color: #94A3B8 !important;
 }
+body.landing-page-3d .plan-card .plan-subtitle {
+  color: #94A3B8 !important;
+}
 body.landing-page-3d .plan-card ul li {
-  color: #CBD5E1 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #F8FAFC !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 13.5px !important;
 }
 body.landing-page-3d .plan-card ul li::before {
   color: #2DD4BF !important;
+  font-weight: 800 !important;
+}
+body.landing-page-3d .plan-card ul li strong {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 body.landing-page-3d .enterprise-cta-card {
   background: linear-gradient(135deg, rgba(14, 42, 70, 0.75) 0%, rgba(9, 27, 46, 0.85) 100%) !important;

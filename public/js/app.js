@@ -300,7 +300,7 @@ function setupGuestUI(plans) {
     micro: {
       label: 'Micro',
       subtitle: 'Good for personal projects & portfolios',
-      price: 1, originalPrice: 2, domainLimit: 5, recipientLimit: 1, criticalIntervalMinutes: 180, badge: 'LIMITED TIME OFFER',
+      price: 2, originalPrice: 4, domainLimit: 5, recipientLimit: 1, criticalIntervalMinutes: 180, badge: 'LIMITED TIME OFFER',
       features: [
         '<strong>5</strong> domains monitored',
         'Daily SSL expiry checks',
@@ -903,8 +903,8 @@ function openUpgradeModal() {
           </div>
         </div>`;
     } else if (id === 'micro' || plan.originalPrice) {
-      const orig = plan.originalPrice || 2;
-      const curr = plan.price || 1;
+      const orig = plan.originalPrice || 4;
+      const curr = plan.price || 2;
       const discountPct = Math.round((1 - curr / orig) * 100);
       priceDisplay = `
         <div class="mp-price">
