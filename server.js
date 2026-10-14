@@ -11,7 +11,7 @@ const toolsRoutes = require('./src/routes/tools');
 const alertEmailsRoutes = require('./src/routes/alertEmails');
 const certificatesRoutes = require('./src/routes/certificates');
 const ssltoolsRoutes = require('./src/routes/ssltools');
-const { router: billingRoutes, handleWebhook, handleRazorpayWebhook } = require('./src/routes/billing');
+const { router: billingRoutes, handleWebhook, handleRazorpayWebhook, handleDodoWebhook } = require('./src/routes/billing');
 const jwt = require('jsonwebtoken');
 const { COOKIE_NAME, JWT_SECRET } = require('./src/auth');
 const { db } = require('./src/db');
@@ -23,6 +23,7 @@ app.disable('x-powered-by');
 // registered BEFORE express.json().
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 app.post('/api/billing/razorpay/webhook', express.raw({ type: 'application/json' }), handleRazorpayWebhook);
+app.post('/api/billing/dodo/webhook', express.raw({ type: 'application/json' }), handleDodoWebhook);
 
 app.use(express.json());
 app.use(cookieParser());

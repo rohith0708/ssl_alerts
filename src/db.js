@@ -143,6 +143,15 @@ async function initSchema() {
     await pool.query('ALTER TABLE users ADD COLUMN admin_notes TEXT NULL');
   } catch (_) {}
   try {
+    await pool.query('ALTER TABLE users ADD COLUMN dodo_customer_id VARCHAR(255) NULL');
+  } catch (_) {}
+  try {
+    await pool.query('ALTER TABLE users ADD COLUMN dodo_subscription_id VARCHAR(255) NULL');
+  } catch (_) {}
+  try {
+    await pool.query('ALTER TABLE users ADD COLUMN dodo_payment_id VARCHAR(255) NULL');
+  } catch (_) {}
+  try {
     // Preserve existing accounts as verified
     await pool.query('UPDATE users SET is_verified = 1 WHERE is_verified = 0 AND created_at < NOW()');
   } catch (_) {}

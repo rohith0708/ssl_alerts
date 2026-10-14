@@ -1045,52 +1045,74 @@ document.getElementById('modalPlans').addEventListener('click', async (e) => {
   btn.textContent = 'Starting checkout…';
 
   try {
-    const subRes = await fetch('/api/billing/razorpay/subscribe', {
+    // 1. Try Dodo Payments first
+    const dodoRes = await fetch('/api/billing/dodo/checkout', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan })
+      body: JSON.stringify({ plan, return_path: window.location.pathname })
     });
-    const subData = await subRes.json();
-    if (subRes.status === 401) {
-      // Session died (expired, or the account no longer exists) — show auth modal
+    if (dodoRes.status === 401) {
       showAuthModal('login', 'Your session expired. Please sign in again.');
+      btn.disabled = false;
+      btn.textContent = originalLabel;
       return;
     }
-    if (!subRes.ok) throw new Error(subData.error);
-
-    if (typeof Razorpay === 'undefined') {
-      throw new Error('Payment widget failed to load — check your internet connection and try again.');
+    const dodoData = await dodoRes.json().catch(() => ({}));
+    if (dodoRes.ok && dodoData.url) {
+      window.location.href = dodoData.url;
+      return;
     }
 
-    const rzp = new Razorpay({
-      key: subData.key,
-      subscription_id: subData.subscription_id,
-      name: 'HariSree SSL Alerts',
-      description: `${currentPlans[plan].label} plan — $${currentPlans[plan].price}/month`,
-      theme: { color: '#0A2740' },
-      handler: async function (response) {
-        try {
-          const verifyRes = await fetch('/api/billing/razorpay/verify', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...response, plan })
-          });
-          const verifyData = await verifyRes.json();
-          if (!verifyRes.ok) throw new Error(verifyData.error);
-          toast('Payment successful — plan upgraded!');
-          closeUpgradeModal();
-          loadMe();
-          loadDomains();
-        } catch (err) {
-          toast(err.message, true);
-        }
-      },
-      modal: {
-        ondismiss: function () {
-          btn.disabled = false;
-          btn.textContent = originalLabel;
-        }
+    // 2. If Dodo is not configured (501), fallback to Razorpay
+    if (dodoRes.status === 501) {
+      const subRes = await fetch('/api/billing/razorpay/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      const subData = await subRes.json();
+      if (subRes.status === 401) {
+        // Session died (expired, or the account no longer exists) — show auth modal
+        showAuthModal('login', 'Your session expired. Please sign in again.');
+        return;
       }
-    });
-    rzp.open();
+      if (!subRes.ok) throw new Error(subData.error);
+
+      if (typeof Razorpay === 'undefined') {
+        throw new Error('Payment widget failed to load — check your internet connection and try again.');
+      }
+
+      const rzp = new Razorpay({
+        key: subData.key,
+        subscription_id: subData.subscription_id,
+        name: 'HariSree SSL Alerts',
+        description: `${currentPlans[plan].label} plan — $${currentPlans[plan].price}/month`,
+        theme: { color: '#0A2740' },
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch('/api/billing/razorpay/verify', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...response, plan })
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok) throw new Error(verifyData.error);
+            toast('Payment successful — plan upgraded!');
+            closeUpgradeModal();
+            loadMe();
+            loadDomains();
+          } catch (err) {
+            toast(err.message, true);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+          }
+        }
+      });
+      rzp.open();
+    } else {
+      throw new Error(dodoData.error || 'Failed to start checkout');
+    }
   } catch (err) {
     toast(err.message, true);
     btn.disabled = false;
@@ -1412,6 +1434,28 @@ sidebarOverlay.addEventListener('click', closeSidebar);
 sidebar.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeSidebar));
 
 // ---------------- Init ----------------
+// Check for redirect from payment provider (Dodo Payments / Stripe)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('payment') === 'success') {
+  const planParam = urlParams.get('plan');
+  const subIdParam = urlParams.get('subscription_id');
+  const planName = planParam ? (currentPlans?.[planParam]?.label || planParam) : '';
+
+  if (subIdParam) {
+    fetch('/api/billing/dodo/sync-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription_id: subIdParam, plan: planParam })
+    }).finally(() => {
+      loadMe();
+      loadDomains();
+    });
+  }
+
+  toast(planName ? `Payment successful! Upgraded to ${planName} plan.` : 'Payment successful — plan upgraded!');
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
 loadMe();
 loadGroups();
 loadDomains();
