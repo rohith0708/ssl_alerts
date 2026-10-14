@@ -328,7 +328,7 @@ function setupGuestUI(plans) {
     growth: {
       label: 'Growth',
       subtitle: 'Good for growing companies with multiple subdomains',
-      price: 10, originalPrice: 20, domainLimit: 50, recipientLimit: 5, criticalIntervalMinutes: 60,
+      price: 10, originalPrice: 0, domainLimit: 50, recipientLimit: 5, criticalIntervalMinutes: 60,
       features: [
         '<strong>50</strong> domains monitored',
         'Daily SSL expiry checks',
@@ -342,7 +342,7 @@ function setupGuestUI(plans) {
     pro: {
       label: 'Pro',
       subtitle: 'Good for businesses with large web infrastructure',
-      price: 20, originalPrice: 40, domainLimit: 100, recipientLimit: 10, criticalIntervalMinutes: 30,
+      price: 20, originalPrice: 0, domainLimit: 100, recipientLimit: 10, criticalIntervalMinutes: 30,
       features: [
         '<strong>100</strong> domains monitored',
         'Daily SSL expiry checks',
@@ -356,7 +356,7 @@ function setupGuestUI(plans) {
     agency: {
       label: 'Agency',
       subtitle: 'Good for digital agencies & IT consultancies',
-      price: 50, originalPrice: 99, domainLimit: 500, recipientLimit: 25, criticalIntervalMinutes: 10,
+      price: 50, originalPrice: 0, domainLimit: 500, recipientLimit: 25, criticalIntervalMinutes: 10,
       features: [
         '<strong>500</strong> domains monitored',
         'Daily SSL expiry checks',
