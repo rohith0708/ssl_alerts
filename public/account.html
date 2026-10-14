@@ -428,7 +428,7 @@ function openUpgradeModal() {
     const isLowerTier = currentUser && (userRank > thisRank);
 
     let badgeHtml = '';
-    if (id === 'micro' || plan.badge) {
+    if (id === 'micro' || id === 'starter' || plan.badge) {
       const badgeText = plan.badge || 'LIMITED TIME OFFER';
       badgeHtml = `<span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">${badgeText}</span>`;
     } else if (id === 'trial') {

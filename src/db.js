@@ -329,6 +329,7 @@ const PLANS = {
     subtitle: 'Good for early-stage startups & individual developers',
     price: 5,
     originalPrice: 10,
+    badge: 'LIMITED TIME OFFER',
     domainLimit: 20,
     recipientLimit: 3,
     criticalIntervalMinutes: 120,

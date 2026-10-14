@@ -314,7 +314,7 @@ function setupGuestUI(plans) {
     starter: {
       label: 'Starter',
       subtitle: 'Good for early-stage startups & individual developers',
-      price: 5, originalPrice: 10, domainLimit: 20, recipientLimit: 3, criticalIntervalMinutes: 120,
+      price: 5, originalPrice: 10, domainLimit: 20, recipientLimit: 3, criticalIntervalMinutes: 120, badge: 'LIMITED TIME OFFER',
       features: [
         '<strong>20</strong> domains monitored',
         'Daily SSL expiry checks',
@@ -887,7 +887,7 @@ function openUpgradeModal() {
     const isLowerTier = currentUser && !isGuest && (userRank > thisRank);
 
     let badgeHtml = '';
-    if (id === 'micro' || plan.badge) {
+    if (id === 'micro' || id === 'starter' || plan.badge) {
       const badgeText = plan.badge || 'LIMITED TIME OFFER';
       badgeHtml = `<span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">${badgeText}</span>`;
     } else if (id === 'trial') {
