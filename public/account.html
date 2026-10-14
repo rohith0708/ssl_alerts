@@ -589,8 +589,8 @@ document.getElementById('modalPlans').addEventListener('click', async (e) => {
         body: JSON.stringify({ plan })
       });
       if (subRes.status === 401) { window.location.href = '/login.html'; return; }
-      const subData = await subRes.json();
-      if (!subRes.ok) throw new Error(subData.error);
+      const subData = await subRes.json().catch(() => ({}));
+      if (!subRes.ok) throw new Error(subData.error || `Payment gateway unavailable (${subRes.status})`);
 
       if (typeof Razorpay === 'undefined') {
         throw new Error('Payment widget failed to load — check your internet connection and try again.');

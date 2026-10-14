@@ -1068,13 +1068,13 @@ document.getElementById('modalPlans').addEventListener('click', async (e) => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan })
       });
-      const subData = await subRes.json();
+      const subData = await subRes.json().catch(() => ({}));
       if (subRes.status === 401) {
         // Session died (expired, or the account no longer exists) — show auth modal
         showAuthModal('login', 'Your session expired. Please sign in again.');
         return;
       }
-      if (!subRes.ok) throw new Error(subData.error);
+      if (!subRes.ok) throw new Error(subData.error || `Payment gateway unavailable (${subRes.status})`);
 
       if (typeof Razorpay === 'undefined') {
         throw new Error('Payment widget failed to load — check your internet connection and try again.');
