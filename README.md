@@ -111,24 +111,30 @@ Then set up nginx + certbot exactly as in the Docker section above.
 
 ---
 
-## 4. Enabling card payments (Stripe)
+## 4. Enabling subscription billing (Dodo Payments)
 
-The app runs fine without Stripe — the upgrade button will just say
-payments aren't configured yet. To turn it on:
+Subscriptions, automated upgrades, plan downgrades, and customer billing are powered by **Dodo Payments** (Merchant of Record):
 
-1. Create a [Stripe](https://dashboard.stripe.com) account.
-2. Create two **recurring Prices**: $1/month ("Starter") and $5/month ("Pro").
-3. Copy the price IDs into `.env` as `STRIPE_PRICE_STARTER` / `STRIPE_PRICE_PRO`.
-4. Copy your secret key into `STRIPE_SECRET_KEY`.
-5. Add a webhook endpoint in Stripe pointing to `https://yourdomain.com/api/billing/webhook`,
-   listening for `checkout.session.completed` and `customer.subscription.deleted`.
-   Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
-6. Restart the app.
+1. Get your API Key, Webhook Secret, and Product IDs from your [Dodo Payments Dashboard](https://test.dodopayments.com).
+2. Set the following environment variables in `.env`:
+   ```ini
+   DODO_PAYMENTS_API_KEY=your_api_key
+   DODO_PAYMENTS_WEBHOOK_KEY=whsec_your_webhook_secret
+   DODO_PAYMENTS_ENVIRONMENT=test_mode # or live_mode
 
-Given the fee structure on $1 charges (~30% goes to card fees), consider
-nudging new signups toward annual billing or the $5 tier where the
-percentage lost to fees is much smaller — this is a Stripe Price
-setting, not a code change.
+   DODO_PRODUCT_MICRO=pdt_xxxxxx
+   DODO_PRODUCT_STARTER=pdt_xxxxxx
+   DODO_PRODUCT_GROWTH=pdt_xxxxxx
+   DODO_PRODUCT_PRO=pdt_xxxxxx
+   DODO_PRODUCT_AGENCY=pdt_xxxxxx
+   ```
+3. Register your webhook URL in the Dodo Payments dashboard:
+   `https://yourdomain.com/api/billing/dodo/webhook`
+   Subscribed events: `subscription.active`, `subscription.renewed`, `subscription.cancelled`, `subscription.failed`, `payment.succeeded`.
+4. **Features Included**:
+   - **Instant Upgrades**: Higher quotas apply immediately; previous lower plans are automatically cancelled in Dodo to prevent double billing.
+   - **Self-Service Downgrades**: Customers can downgrade to lower paid tiers right from the modal with built-in domain quota validation.
+   - **Cancellation**: Subscriptions can be cancelled via support email or the self-service Customer Portal link on receipt emails. Monitoring automatically pauses when a subscription ends.
 
 ---
 
