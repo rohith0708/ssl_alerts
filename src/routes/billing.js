@@ -412,6 +412,77 @@ router.post('/dodo/sync-subscription', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/dodo/portal', requireAuth, async (req, res) => {
+  if (!isDodoConfigured()) return res.status(501).json({ error: 'Dodo Payments not configured.' });
+  const user = await db.getOne('SELECT * FROM users WHERE id = ?', [req.userId]);
+  if (!user || !user.dodo_customer_id) {
+    return res.status(400).json({ error: 'No active billing customer found for this account.' });
+  }
+
+  const env = (process.env.DODO_PAYMENTS_ENVIRONMENT || 'test_mode').toLowerCase();
+  const dodoBase = (env === 'live_mode' || env === 'live' || env === 'production')
+    ? 'https://live.dodopayments.com'
+    : 'https://test.dodopayments.com';
+
+  const appUrl = (process.env.APP_URL || 'https://sslalerts.info').replace(/\/+$/, '');
+
+  try {
+    const resp = await fetch(`${dodoBase}/customers/${encodeURIComponent(user.dodo_customer_id)}/customer-portal/session`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        return_url: `${appUrl}/account`
+      })
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error('[billing:dodo] portal session failed:', resp.status, data);
+      return res.status(502).json({ error: data.message || 'Could not open billing portal.' });
+    }
+    res.json({ url: data.link || data.url });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
+router.post('/dodo/cancel', requireAuth, async (req, res) => {
+  if (!isDodoConfigured()) return res.status(501).json({ error: 'Dodo Payments not configured.' });
+  const user = await db.getOne('SELECT * FROM users WHERE id = ?', [req.userId]);
+  if (!user || !user.dodo_subscription_id) {
+    return res.status(400).json({ error: 'No active Dodo subscription found to cancel.' });
+  }
+
+  const env = (process.env.DODO_PAYMENTS_ENVIRONMENT || 'test_mode').toLowerCase();
+  const dodoBase = (env === 'live_mode' || env === 'live' || env === 'production')
+    ? 'https://live.dodopayments.com'
+    : 'https://test.dodopayments.com';
+
+  try {
+    const resp = await fetch(`${dodoBase}/subscriptions/${encodeURIComponent(user.dodo_subscription_id)}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        cancel_at_next_billing_date: true
+      })
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      console.error('[billing:dodo] cancel error:', resp.status, data);
+      return res.status(502).json({ error: data.message || 'Failed to cancel subscription.' });
+    }
+
+    res.json({ success: true, message: 'Subscription set to cancel at the end of the current billing cycle.' });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
 function verifyStandardWebhook(rawBody, headers, secretWithPrefix) {
   const msgId = headers['webhook-id'];
   const msgTimestamp = headers['webhook-timestamp'];
