@@ -337,6 +337,34 @@ router.post('/dodo/checkout', requireAuth, async (req, res) => {
   }
 });
 
+async function cancelPriorDodoSubscription(oldSubId) {
+  if (!oldSubId || !isDodoConfigured()) return;
+  const env = (process.env.DODO_PAYMENTS_ENVIRONMENT || 'test_mode').toLowerCase();
+  const dodoBase = (env === 'live_mode' || env === 'live' || env === 'production')
+    ? 'https://live.dodopayments.com'
+    : 'https://test.dodopayments.com';
+
+  try {
+    console.log(`[billing:dodo] auto-cancelling prior subscription ${oldSubId} after plan upgrade`);
+    const resp = await fetch(`${dodoBase}/subscriptions/${encodeURIComponent(oldSubId)}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status: 'cancelled' })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      console.warn(`[billing:dodo] could not cancel prior subscription ${oldSubId}:`, err);
+    } else {
+      console.log(`[billing:dodo] successfully cancelled prior subscription ${oldSubId}`);
+    }
+  } catch (err) {
+    console.warn(`[billing:dodo] failed to cancel prior subscription ${oldSubId}:`, err.message);
+  }
+}
+
 router.post('/dodo/sync-subscription', requireAuth, async (req, res) => {
   const { subscription_id, plan } = req.body || {};
   if (!subscription_id) {
@@ -390,6 +418,12 @@ router.post('/dodo/sync-subscription', requireAuth, async (req, res) => {
       }
 
       const custId = data.customer?.customer_id || data.customer_id;
+
+      // Auto-cancel previous subscription if this is an upgrade/downgrade to avoid double billing
+      if (user.dodo_subscription_id && user.dodo_subscription_id !== subscription_id) {
+        await cancelPriorDodoSubscription(user.dodo_subscription_id);
+      }
+
       await db.execute(`
         UPDATE users SET
           plan = ?,
@@ -575,6 +609,11 @@ async function handleDodoWebhook(req, res) {
         }
 
         if (targetUser) {
+          // If this is an upgrade/downgrade to a new subscription, auto-cancel the previous one in Dodo
+          if (subId && targetUser.dodo_subscription_id && targetUser.dodo_subscription_id !== subId) {
+            await cancelPriorDodoSubscription(targetUser.dodo_subscription_id);
+          }
+
           const targetPlan = (plan && PLANS[plan]) ? plan : (targetUser.plan !== 'trial' ? targetUser.plan : 'starter');
           const planLimit = PLANS[targetPlan] ? PLANS[targetPlan].domainLimit : targetUser.domain_limit;
 
