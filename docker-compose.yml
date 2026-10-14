@@ -12,6 +12,7 @@ services:
       - ./public:/app/public
       - ./src:/app/src
       - ./server.js:/app/server.js
+      - ./.env:/app/.env:ro
     networks:
       - harisree-network
 
@@ -32,6 +33,7 @@ services:
       - ./src:/app/src
       - ./admin-server.js:/app/admin-server.js
       - ./server.js:/app/server.js
+      - ./.env:/app/.env:ro
     networks:
       - harisree-network
 
