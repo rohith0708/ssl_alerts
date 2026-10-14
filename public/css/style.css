@@ -157,7 +157,7 @@ img, svg { display: block; max-width: 100%; }
   display: block;
   font-size: 34px;
   font-weight: 800;
-  color: var(--navy);
+  color: #FFFFFF !important;
   margin-bottom: 3px;
 }
 .hero-title-sub1 {
@@ -2449,7 +2449,8 @@ body.landing-page-3d .site-glow {
 body.landing-page-3d h1,
 body.landing-page-3d h2,
 body.landing-page-3d h3,
-body.landing-page-3d .display {
+body.landing-page-3d .display,
+body.landing-page-3d .hero-title-main {
   color: #FFFFFF !important;
   letter-spacing: -0.02em;
 }
