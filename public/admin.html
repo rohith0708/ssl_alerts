@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Command Center — SSL Alerts</title>
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-<link rel="stylesheet" href="/css/style.css?v=24">
+<link rel="stylesheet" href="/css/style.css?v=30">
 <style>
 /* Futuristic Command Center Styling */
 :root {
@@ -407,7 +407,7 @@
 
   <main class="main">
     <div class="mobile-topbar">
-      <button id="hamburgerBtn" class="hamburger" aria-label="Menu">☰</button>
+      <button id="hamburgerBtn" class="hamburger" aria-label="Menu" type="button">☰</button>
       <a href="/admin" class="brand">
         <img src="/assets/mark.svg" alt="">
         <span class="brand-word">SSL Alerts</span>
@@ -1701,17 +1701,58 @@ document.getElementById('logoutLink')?.addEventListener('click', async (e) => {
   window.location.href = '/admin';
 });
 
-// Mobile menu toggle
+// Mobile menu toggle & scroll lock
+let bodyScrollLocks = 0;
+let savedScrollY = 0;
+function lockBodyScroll() {
+  if (bodyScrollLocks === 0) {
+    savedScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+  bodyScrollLocks++;
+}
+function unlockBodyScroll() {
+  bodyScrollLocks = Math.max(0, bodyScrollLocks - 1);
+  if (bodyScrollLocks === 0) {
+    const scrollY = savedScrollY;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    window.scrollTo(0, scrollY);
+  }
+}
+
 const sidebar = document.getElementById('sidebar');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
-document.getElementById('hamburgerBtn')?.addEventListener('click', () => {
+function openAdminSidebar() {
   sidebar?.classList.add('open');
   sidebarOverlay?.classList.add('visible');
-});
-sidebarOverlay?.addEventListener('click', () => {
+  document.body.classList.add('nav-open');
+  lockBodyScroll();
+}
+function closeAdminSidebar() {
   sidebar?.classList.remove('open');
   sidebarOverlay?.classList.remove('visible');
+  document.body.classList.remove('nav-open');
+  unlockBodyScroll();
+}
+document.getElementById('hamburgerBtn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  openAdminSidebar();
 });
+sidebarOverlay?.addEventListener('click', closeAdminSidebar);
+sidebarOverlay?.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive: false });
+sidebar?.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeAdminSidebar));
 
 // Initial boot
 checkAdminAuth();

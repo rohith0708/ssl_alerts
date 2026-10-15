@@ -866,9 +866,42 @@ document.getElementById('logoutLink').addEventListener('click', async (e) => {
   window.location.href = '/login.html';
 });
 
+// Body scroll locking helper to prevent background scroll bleeding on mobile/desktop
+let bodyScrollLocks = 0;
+let savedScrollY = 0;
+
+function lockBodyScroll() {
+  if (bodyScrollLocks === 0) {
+    savedScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+  bodyScrollLocks++;
+}
+
+function unlockBodyScroll() {
+  bodyScrollLocks = Math.max(0, bodyScrollLocks - 1);
+  if (bodyScrollLocks === 0) {
+    const scrollY = savedScrollY;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    window.scrollTo(0, scrollY);
+  }
+}
+
 const upgradeModal = document.getElementById('upgradeModal');
 
 function openUpgradeModal() {
+  lockBodyScroll();
   const plansEl = document.getElementById('modalPlans');
   const headTitle = document.querySelector('#upgradeModal .modal-head h2');
   if (headTitle) {
@@ -974,25 +1007,67 @@ function openUpgradeModal() {
   const modalTrack = document.getElementById('modalPlans');
   const modalPrevBtn = document.getElementById('modalPlanPrevBtn');
   const modalNextBtn = document.getElementById('modalPlanNextBtn');
-  const modalDots = document.querySelectorAll('#modalNavDots .modal-dot');
+  const modalDotsContainer = document.getElementById('modalNavDots');
+
+  function getCardsPerView() {
+    if (window.innerWidth <= 580) return 1;
+    if (window.innerWidth <= 860) return 2;
+    return 3;
+  }
+
+  function renderCarouselDots() {
+    if (!modalDotsContainer || !modalTrack) return;
+    const cards = modalTrack.querySelectorAll('.modal-plan');
+    if (!cards.length) return;
+    const cardW = cards[0].offsetWidth + 14;
+    const perView = getCardsPerView();
+    const totalPages = Math.ceil(cards.length / perView);
+
+    let html = '';
+    for (let i = 0; i < totalPages; i++) {
+      html += `<span class="modal-dot ${i === 0 ? 'active' : ''}" data-page="${i}" title="Page ${i + 1}"></span>`;
+    }
+    modalDotsContainer.innerHTML = html;
+
+    modalDotsContainer.querySelectorAll('.modal-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const page = parseInt(dot.dataset.page, 10);
+        modalTrack.scrollTo({ left: page * cardW * perView, behavior: 'smooth' });
+      });
+    });
+  }
 
   function updateModalCarousel() {
     if (!modalTrack) return;
+    const cards = modalTrack.querySelectorAll('.modal-plan');
+    if (!cards.length) return;
+    const cardW = cards[0].offsetWidth + 14;
+    const perView = getCardsPerView();
+    const totalPages = Math.ceil(cards.length / perView);
     const maxScroll = Math.max(0, modalTrack.scrollWidth - modalTrack.clientWidth);
     const scrollLeft = modalTrack.scrollLeft;
-    if (modalPrevBtn) modalPrevBtn.disabled = scrollLeft <= 10;
-    if (modalNextBtn) modalNextBtn.disabled = scrollLeft >= maxScroll - 10;
-    if (modalDots.length >= 2) {
-      const pageIdx = (maxScroll > 0 && scrollLeft > maxScroll * 0.4) ? 1 : 0;
-      modalDots.forEach((dot, idx) => dot.classList.toggle('active', idx === pageIdx));
-    }
+
+    if (modalPrevBtn) modalPrevBtn.disabled = scrollLeft <= 6;
+    if (modalNextBtn) modalNextBtn.disabled = scrollLeft >= maxScroll - 6;
+
+    const pageIdx = Math.min(
+      Math.max(0, Math.round(scrollLeft / (cardW * perView))),
+      totalPages - 1
+    );
+
+    const dots = modalDotsContainer?.querySelectorAll('.modal-dot');
+    dots?.forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === pageIdx);
+    });
   }
 
   if (modalPrevBtn && !modalPrevBtn._wired) {
     modalPrevBtn._wired = true;
     modalPrevBtn.addEventListener('click', () => {
       const card = modalTrack.querySelector('.modal-plan');
-      const scrollAmount = card ? (card.offsetWidth + 16) * 3 : modalTrack.clientWidth;
+      if (!card) return;
+      const perView = getCardsPerView();
+      const scrollAmount = (card.offsetWidth + 14) * perView;
       modalTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
     });
   }
@@ -1000,7 +1075,9 @@ function openUpgradeModal() {
     modalNextBtn._wired = true;
     modalNextBtn.addEventListener('click', () => {
       const card = modalTrack.querySelector('.modal-plan');
-      const scrollAmount = card ? (card.offsetWidth + 16) * 3 : modalTrack.clientWidth;
+      if (!card) return;
+      const perView = getCardsPerView();
+      const scrollAmount = (card.offsetWidth + 14) * perView;
       modalTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     });
   }
@@ -1008,21 +1085,27 @@ function openUpgradeModal() {
     modalTrack._wired = true;
     modalTrack.addEventListener('scroll', updateModalCarousel, { passive: true });
   }
-  modalDots.forEach(dot => {
-    if (!dot._wired) {
-      dot._wired = true;
-      dot.addEventListener('click', () => {
-        const page = parseInt(dot.dataset.page, 10);
-        const maxScroll = Math.max(0, modalTrack.scrollWidth - modalTrack.clientWidth);
-        modalTrack.scrollTo({ left: page === 0 ? 0 : maxScroll, behavior: 'smooth' });
-      });
-    }
-  });
 
+  if (!window._modalResizeWired) {
+    window._modalResizeWired = true;
+    window.addEventListener('resize', () => {
+      if (upgradeModal.classList.contains('visible')) {
+        renderCarouselDots();
+        updateModalCarousel();
+      }
+    });
+  }
+
+  document.body.classList.add('modal-open');
   upgradeModal.classList.add('visible');
-  setTimeout(updateModalCarousel, 80);
+  renderCarouselDots();
+  setTimeout(updateModalCarousel, 60);
 }
-function closeUpgradeModal() { upgradeModal.classList.remove('visible'); }
+function closeUpgradeModal() {
+  upgradeModal.classList.remove('visible');
+  document.body.classList.remove('modal-open');
+  unlockBodyScroll();
+}
 
 document.getElementById('upgradeLink').addEventListener('click', (e) => { e.preventDefault(); openUpgradeModal(); });
 document.getElementById('planWidgetUpgradeBtn')?.addEventListener('click', (e) => { e.preventDefault(); openUpgradeModal(); });
@@ -1431,11 +1514,30 @@ window.loadGroups = loadGroups;
 // ---------------- Mobile hamburger nav ----------------
 const sidebar = document.getElementById('sidebar');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
-function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('visible'); }
-function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('visible'); }
-document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
-sidebarOverlay.addEventListener('click', closeSidebar);
-sidebar.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeSidebar));
+function openSidebar() {
+  if (!sidebar) return;
+  sidebar.classList.add('open');
+  sidebarOverlay?.classList.add('visible');
+  document.body.classList.add('nav-open');
+  lockBodyScroll();
+}
+function closeSidebar() {
+  if (!sidebar) return;
+  sidebar.classList.remove('open');
+  sidebarOverlay?.classList.remove('visible');
+  document.body.classList.remove('nav-open');
+  unlockBodyScroll();
+}
+document.getElementById('hamburgerBtn')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  openSidebar();
+});
+sidebarOverlay?.addEventListener('click', closeSidebar);
+sidebarOverlay?.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+}, { passive: false });
+sidebar?.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeSidebar));
 
 // ---------------- Init ----------------
 // Check for redirect from payment provider (Dodo Payments / Stripe)
