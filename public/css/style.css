@@ -1056,7 +1056,7 @@ body.landing-page-3d .plan-card .plan-subtitle {
 /* ---------- Dashboard shell ---------- */
 .app-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
 .sidebar {
-  background: var(--navy); color: #fff; padding: 16px 14px 14px;
+  background: var(--navy); color: #fff; padding: 20px 16px 16px;
   display: flex; flex-direction: column;
   position: sticky;
   top: 0;
@@ -1080,16 +1080,16 @@ body.landing-page-3d .plan-card .plan-subtitle {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 .sidebar-plan-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  padding: 3.5px 11px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -1166,95 +1166,124 @@ body.landing-page-3d .plan-card .plan-subtitle {
 }
 
 .sidebar nav {
-  margin-top: 14px;
+  margin-top: 18px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  flex: 1 1 auto;
-  min-height: 0;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+.sidebar-nav-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 7px 4px;
 }
 .sidebar nav a, .sidebar-user {
   color: #C9D6DC;
   text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 7px;
+  padding: 8px 12px;
+  border-radius: 8px;
   font-size: 13.5px;
   font-weight: 500;
   line-height: 1.35;
   display: flex;
   align-items: center;
-  transition: all 0.15s ease;
+  gap: 10px;
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+.sidebar nav a .nav-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  stroke: currentColor;
+}
+.sidebar nav a:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  transform: translateX(2px);
+}
+.sidebar nav a:hover:not(.active) .nav-icon {
+  opacity: 1;
+  color: var(--teal, #2DD4BF);
 }
 .sidebar nav a.active {
   background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: #FFFFFF;
   font-weight: 600;
+  border-left: 3px solid var(--teal, #2DD4BF);
+  padding-left: 9px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.15);
 }
-.sidebar nav a:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+.sidebar nav a.active .nav-icon {
+  opacity: 1;
+  color: var(--teal, #2DD4BF);
 }
+
 .plan-widget {
   margin-top: auto;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 11px 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 13px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   position: relative;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 .plan-widget:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  border-color: rgba(45, 212, 191, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), 0 0 14px rgba(45, 212, 191, 0.12);
 }
 .plan-widget .name {
   font-size: 11px;
   font-weight: 700;
-  color: #9FB2BB;
+  color: #94A3B8;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.06em;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .plan-widget .usage {
-  font-family: var(--serif);
-  font-size: 16.5px;
-  color: #fff;
-  margin: 3px 0 6px;
-  letter-spacing: -0.2px;
+  font-family: var(--sans);
+  font-size: 17px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 4px 0 7px;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 .usage-bar {
   height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 .usage-bar > div {
   height: 100%;
-  background: linear-gradient(90deg, var(--teal) 0%, #38BDF8 100%);
+  background: linear-gradient(90deg, #10B981 0%, #0EA5E9 100%);
   border-radius: 999px;
   transition: width 0.3s ease;
 }
 .plan-widget-upgrade-btn {
-  margin-top: 8px;
+  margin-top: 10px;
   width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 7px 10px;
+  gap: 7px;
+  padding: 8px 12px;
   font-family: var(--sans);
   font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   color: #FFFFFF !important;
   background: linear-gradient(135deg, #10B981 0%, #0EA5E9 100%);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
   box-shadow: 0 3px 12px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1318,67 +1347,89 @@ body.landing-page-3d .plan-card .plan-subtitle {
 }
 
 /* Responsive height compaction for monitors and short viewports */
-@media (max-height: 750px) and (min-width: 769px) {
+@media (max-height: 680px) and (min-width: 769px) {
   .sidebar {
-    padding: 12px 10px 10px;
+    padding: 14px 12px 12px;
   }
   .sidebar-brand-wrapper {
-    gap: 4px;
+    gap: 5px;
   }
   .sidebar nav {
-    margin-top: 10px;
-    gap: 1px;
+    margin-top: 12px;
+    gap: 2.5px;
+  }
+  .sidebar-nav-divider {
+    margin: 5px 2px;
+  }
+  .sidebar nav a, .sidebar-user {
+    padding: 6.5px 10px;
+    font-size: 13px;
+    gap: 8px;
+  }
+  .sidebar nav a.active {
+    padding-left: 7px;
+  }
+  .sidebar nav a .nav-icon {
+    width: 15px;
+    height: 15px;
+  }
+  .plan-widget {
+    padding: 10px 11px;
+    margin-top: auto;
+  }
+  .plan-widget .name {
+    font-size: 10.5px;
+  }
+  .plan-widget .usage {
+    font-size: 15.5px;
+    margin: 2px 0 5px;
+  }
+  .plan-widget-upgrade-btn {
+    padding: 6.5px 10px;
+    font-size: 12px;
+    margin-top: 7px;
+  }
+}
+@media (max-height: 560px) and (min-width: 769px) {
+  .sidebar {
+    padding: 10px 10px 10px;
+  }
+  .sidebar-brand-wrapper {
+    gap: 3px;
+  }
+  .sidebar-plan-pill {
+    padding: 2.5px 8px;
+    font-size: 10px;
+  }
+  .sidebar nav {
+    margin-top: 8px;
+    gap: 1.5px;
+  }
+  .sidebar-nav-divider {
+    margin: 3px 2px;
   }
   .sidebar nav a, .sidebar-user {
     padding: 4.5px 8px;
-    font-size: 12.5px;
+    font-size: 12px;
+    gap: 7px;
+  }
+  .sidebar nav a.active {
+    padding-left: 5px;
+  }
+  .sidebar nav a .nav-icon {
+    width: 14px;
+    height: 14px;
   }
   .plan-widget {
     padding: 8px 10px;
-    margin-top: 8px;
-  }
-  .plan-widget .name {
-    font-size: 10px;
+    margin-top: auto;
   }
   .plan-widget .usage {
-    font-size: 14.5px;
-    margin: 2px 0 4px;
+    font-size: 13.5px;
+    margin: 1px 0 3px;
   }
   .plan-widget-upgrade-btn {
-    padding: 6px 8px;
-    font-size: 11.5px;
-    margin-top: 6px;
-  }
-}
-@media (max-height: 640px) and (min-width: 769px) {
-  .sidebar {
-    padding: 8px 8px 8px;
-  }
-  .sidebar-brand-wrapper {
-    gap: 2px;
-  }
-  .sidebar-plan-pill {
-    padding: 2px 8px;
-    font-size: 9.5px;
-  }
-  .sidebar nav {
-    margin-top: 6px;
-    gap: 1px;
-  }
-  .sidebar nav a, .sidebar-user {
-    padding: 3.5px 6px;
-    font-size: 11.5px;
-  }
-  .plan-widget {
-    padding: 6px 8px;
-    margin-top: 6px;
-  }
-  .plan-widget .usage {
-    font-size: 13px;
-    margin: 2px 0 3px;
-  }
-  .plan-widget-upgrade-btn {
-    padding: 5px 6px;
+    padding: 5px 8px;
     font-size: 11px;
     margin-top: 5px;
   }
