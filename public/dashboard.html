@@ -45,6 +45,10 @@
 
       <div class="sidebar-nav-divider"></div>
 
+      <a href="/account.html" id="accountLink">
+        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Account</span>
+      </a>
       <a href="#docs" data-section="docs" onclick="showDocs(event)">
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span>Docs</span>
@@ -52,10 +56,6 @@
       <a href="#" id="upgradeLink" onclick="handlePlansNav(event)">
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span>Upgrade plan</span>
-      </a>
-      <a href="/account.html" id="accountLink">
-        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Account</span>
       </a>
       <a href="mailto:support@sslalerts.info" id="supportLink">
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1542,18 +1542,6 @@
   font-style: italic;
 }
 
-/* Navigation active states */
-.sidebar nav a.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-weight: 600;
-}
-
-.sidebar nav a:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-}
-
 /* Responsive improvements */
 @media (max-width: 768px) {
   .tools-grid {
@@ -1614,7 +1602,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="/js/app.js?v=20261015-v2"></script>
-<script src="/js/dashboard-features.js?v=20261015-v2"></script>
+<script src="/js/app.js?v=20261015-v3"></script>
+<script src="/js/dashboard-features.js?v=20261015-v3"></script>
 </body>
 </html>

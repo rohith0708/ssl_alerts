@@ -388,8 +388,7 @@ function setupGuestUI(plans) {
     }).catch(() => {});
   }
 
-  const upgradeLink = document.getElementById('upgradeLink');
-  if (upgradeLink) upgradeLink.textContent = 'Plans';
+  setUpgradeLinkText('Plans');
 
   const accountLink = document.getElementById('accountLink');
   if (accountLink) accountLink.style.display = 'none';
@@ -424,6 +423,17 @@ function setupGuestUI(plans) {
   if (trialExpiredBanner) trialExpiredBanner.style.display = 'none';
 }
 
+function setUpgradeLinkText(text) {
+  const upgradeLink = document.getElementById('upgradeLink');
+  if (!upgradeLink) return;
+  const span = upgradeLink.querySelector('span');
+  if (span) {
+    span.textContent = text;
+  } else {
+    upgradeLink.innerHTML = `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>${text}</span>`;
+  }
+}
+
 function setupAuthenticatedUI(data) {
   isGuest = false;
   window.isGuest = false;
@@ -431,8 +441,7 @@ function setupAuthenticatedUI(data) {
   window.currentUser = data.user;
   currentPlans = data.plans;
 
-  const upgradeLink = document.getElementById('upgradeLink');
-  if (upgradeLink) upgradeLink.textContent = 'Upgrade plan';
+  setUpgradeLinkText('Upgrade plan');
 
   const accountLink = document.getElementById('accountLink');
   if (accountLink) accountLink.style.display = '';
