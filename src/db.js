@@ -261,6 +261,21 @@ async function initSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_email_log (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      admin_id INT NOT NULL,
+      user_id INT NOT NULL,
+      recipient_email VARCHAR(255) NOT NULL,
+      subject VARCHAR(255) NOT NULL,
+      message_body TEXT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'sent',
+      sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_admin_email_admin FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_admin_email_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   // Seed default admin user: admin@sslalerts.info / admin@sslalerts
   try {
     const adminEmail = 'admin@sslalerts.info';

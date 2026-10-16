@@ -2,7 +2,7 @@ const express = require('express');
 const { db, PLANS } = require('../db');
 const { requireAuth, requireAdmin } = require('../auth');
 const { runFullSweep } = require('../scheduler');
-const { sendEmailChangeOtpEmail } = require('../mailer');
+const { sendEmailChangeOtpEmail, sendAdminCustomEmail } = require('../mailer');
 
 const router = express.Router();
 router.use(requireAuth, requireAdmin);
@@ -135,6 +135,19 @@ router.get('/users/:id/details', async (req, res) => {
       ORDER BY created_at DESC
     `, [userId]);
 
+    let adminEmails = [];
+    try {
+      adminEmails = await db.getAll(`
+        SELECT l.id, l.recipient_email, l.subject, l.message_body, l.status, l.sent_at,
+               a.name AS admin_name, a.email AS admin_email
+        FROM admin_email_log l
+        LEFT JOIN users a ON a.id = l.admin_id
+        WHERE l.user_id = ?
+        ORDER BY l.sent_at DESC
+        LIMIT 25
+      `, [userId]);
+    } catch (_) {}
+
     res.json({
       user,
       domains,
@@ -143,7 +156,8 @@ router.get('/users/:id/details', async (req, res) => {
       totalAlertsSent,
       recentAlerts,
       totalGeneratedCerts,
-      generatedCertificates
+      generatedCertificates,
+      adminEmails
     });
   } catch (err) {
     console.error('Error fetching user drilldown details:', err);
@@ -599,6 +613,82 @@ router.post('/run-alert-sweep', async (req, res) => {
   const { runAlertSweep } = require('../scheduler');
   const result = await runAlertSweep();
   res.json(result);
+});
+
+// Admin Custom Email to User
+router.post('/users/:id/send-email', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+  const { subject, messageBody, senderName } = req.body;
+
+  if (!subject || typeof subject !== 'string' || !subject.trim()) {
+    return res.status(400).json({ error: 'Subject is required.' });
+  }
+  if (!messageBody || typeof messageBody !== 'string' || !messageBody.trim()) {
+    return res.status(400).json({ error: 'Email message content is required.' });
+  }
+
+  const cleanSubject = subject.trim();
+  const cleanBody = messageBody.trim();
+
+  if (cleanSubject.length > 200) {
+    return res.status(400).json({ error: 'Subject cannot exceed 200 characters.' });
+  }
+  if (cleanBody.length > 10000) {
+    return res.status(400).json({ error: 'Message content cannot exceed 10,000 characters.' });
+  }
+
+  try {
+    const user = await db.getOne('SELECT id, name, email FROM users WHERE id = ?', [userId]);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // Send the custom email via Mailjet or SMTP
+    await sendAdminCustomEmail({
+      to: user.email,
+      recipientName: user.name,
+      subject: cleanSubject,
+      messageBody: cleanBody,
+      senderName: senderName ? String(senderName).trim().slice(0, 50) : 'SSL Alerts Support'
+    });
+
+    // Record in admin_email_log
+    const result = await db.execute(`
+      INSERT INTO admin_email_log (admin_id, user_id, recipient_email, subject, message_body, status)
+      VALUES (?, ?, ?, ?, ?, 'sent')
+    `, [req.userId, user.id, user.email, cleanSubject, cleanBody]);
+
+    res.json({
+      success: true,
+      message: `Email successfully sent to ${user.email}`,
+      logId: result ? result.insertId : null
+    });
+  } catch (err) {
+    console.error('Error sending admin custom email:', err);
+    res.status(500).json({ error: 'Failed to send email: ' + (err.message || 'Internal server error') });
+  }
+});
+
+router.get('/users/:id/emails', async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+  try {
+    const emails = await db.getAll(`
+      SELECT l.id, l.recipient_email, l.subject, l.message_body, l.status, l.sent_at,
+             a.name AS admin_name, a.email AS admin_email
+      FROM admin_email_log l
+      LEFT JOIN users a ON a.id = l.admin_id
+      WHERE l.user_id = ?
+      ORDER BY l.sent_at DESC
+      LIMIT 50
+    `, [userId]);
+
+    res.json({ emails });
+  } catch (err) {
+    console.error('Error fetching user email history:', err);
+    res.status(500).json({ error: 'Failed to load user email history.' });
+  }
 });
 
 module.exports = router;

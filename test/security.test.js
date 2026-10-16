@@ -164,6 +164,19 @@ async function runTests() {
   assert.strictEqual(isBadValid, false, 'Invalid signature must return false');
   console.log('✓ Test 6 Passed: Dodo standard webhook HMAC verification passes.');
 
+  // Test 7: Admin Custom Email (sendAdminCustomEmail)
+  console.log('Test 7: Testing Admin Custom Email helper...');
+  const { sendAdminCustomEmail } = require('../src/mailer');
+  assert.strictEqual(typeof sendAdminCustomEmail, 'function', 'sendAdminCustomEmail must be a function');
+  const emailRes = await sendAdminCustomEmail({
+    to: 'testuser@example.com',
+    recipientName: 'Test User',
+    subject: 'Welcome to SSL Alerts — How is your experience so far?',
+    messageBody: 'Hi Test,\n\nHow is your experience with the application? Are you experiencing any issues?'
+  });
+  assert.ok(emailRes && (emailRes.success || emailRes.simulated), 'Custom admin email send should succeed or simulate');
+  console.log('✓ Test 7 Passed: Admin Custom Email helper behaves correctly.');
+
   console.log('\n=======================================');
   console.log('ALL SECURITY SUITE TESTS PASSED 100%!');
   console.log('=======================================');

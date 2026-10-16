@@ -673,7 +673,10 @@
         </div>
         <div id="modalUserEmail" style="font-size:13px; color:var(--muted); margin-top:4px;"></div>
       </div>
-      <button type="button" class="admin-modal-close" onclick="closeUserModal()">✕</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="btn btn-primary btn-sm" id="modalSendEmailTopBtn" onclick="openEmailModalFromUserModal()" style="display:inline-flex; align-items:center; gap:6px;">✉️ Send Email</button>
+        <button type="button" class="admin-modal-close" onclick="closeUserModal()">✕</button>
+      </div>
     </div>
     <div class="admin-modal-body">
       <!-- Top Metrics -->
@@ -839,6 +842,22 @@
         </div>
       </div>
 
+      <!-- Outreach & Direct Email History -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>📨 Sent Emails &amp; Customer Outreach (<span id="modalAdminEmailListCount">0</span>)</h4>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openEmailModalFromUserModal()">✉️ Compose Email</button>
+        </div>
+        <div class="admin-table-wrap" style="max-height:220px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr><th>Sent At</th><th>Subject</th><th>Sender</th><th>Message Preview</th></tr>
+            </thead>
+            <tbody id="modalAdminEmailsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- DANGER ZONE: DELETE ACCOUNT -->
       <div class="danger-zone">
         <h4 style="color:#b91c1c; margin:0 0 6px; font-size:14px; text-transform:uppercase;">⚠️ Danger Zone — Delete Account</h4>
@@ -846,6 +865,79 @@
           Permanently delete this customer account. This will immediately cascade and delete all monitored domains, certificates, groups, notification emails, and history. <strong>This action cannot be undone.</strong>
         </p>
         <button type="button" class="btn btn-sm" style="background:#dc2626; color:#fff; border:none;" onclick="initiateUserDeletion()">🗑️ Delete User Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ADMIN EMAIL COMPOSER MODAL                 -->
+<!-- ========================================== -->
+<div class="admin-modal-overlay" id="adminEmailModal" style="display:none; z-index: 10001;">
+  <div class="admin-modal" style="max-width: 650px;">
+    <div class="admin-modal-head">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 style="margin:0; font-size:18px;">✉️ Compose Email to Customer</h3>
+          <span class="pill pill-valid" style="font-size:11px; background:rgba(16,185,129,0.12); color:#059669; border:1px solid rgba(16,185,129,0.25);">support@sslalerts.info</span>
+        </div>
+        <div style="font-size:13px; color:var(--muted); margin-top:4px;">
+          Sent directly from your official support email. Customer replies will land in your support inbox.
+        </div>
+      </div>
+      <button type="button" class="admin-modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+    <div class="admin-modal-body" style="padding: 20px 24px;">
+      <!-- Recipient & Sender Banner -->
+      <div style="background:#F8FAFC; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+          <span style="color:var(--muted); font-weight:600;">To:</span>
+          <span style="font-weight:700; color:var(--navy);"><span id="composeRecipientName">Customer</span> &lt;<span id="composeRecipientEmail">email@example.com</span>&gt;</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+          <span style="color:var(--muted); font-weight:600;">From:</span>
+          <span style="font-weight:600; color:#0f766e;">SSL Alerts Support &lt;support@sslalerts.info&gt;</span>
+        </div>
+      </div>
+
+      <!-- Quick Template Selector -->
+      <div style="margin-bottom:14px;">
+        <label style="display:block; font-size:12px; font-weight:700; color:var(--navy); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+          ⚡ Choose a Quick Template
+        </label>
+        <select id="composeTemplateSelect" onchange="applyEmailTemplate(this.value)" style="width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:8px; font-size:13.5px; background:#fff; font-weight:500;">
+          <option value="welcome">👋 Welcome &amp; Experience Check-in ("How is the application? Any issues?")</option>
+          <option value="setup">🛠️ Setup Assistance ("Need help adding your first domain?")</option>
+          <option value="enterprise">🏢 Enterprise Quota &amp; Custom SLA Inquiry</option>
+          <option value="blank">✏️ Blank / Custom Message</option>
+        </select>
+      </div>
+
+      <!-- Subject Field -->
+      <div style="margin-bottom:14px;">
+        <label for="composeSubjectInput" style="display:block; font-size:12px; font-weight:700; color:var(--navy); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
+          Email Subject
+        </label>
+        <input type="text" id="composeSubjectInput" placeholder="Email subject line..." style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; font-weight:600; background:#fff; color:var(--navy);">
+      </div>
+
+      <!-- Message Body Field -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label for="composeMessageInput" style="font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:0.5px;">
+            Message Content
+          </label>
+          <span style="font-size:12px; color:var(--muted);">Line breaks become formatted paragraphs</span>
+        </div>
+        <textarea id="composeMessageInput" rows="9" style="width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:13.5px; line-height:1.6; font-family:var(--sans); background:#fff; color:#334155; resize:vertical;"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:12px; border-top:1px solid var(--line);">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeEmailModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="composeSendBtn" onclick="sendAdminEmail()" style="padding:10px 22px; font-weight:700; gap:8px;">
+          <span id="composeSendBtnText">🚀 Send Email via support@sslalerts.info</span>
+        </button>
       </div>
     </div>
   </div>
@@ -1084,7 +1176,10 @@ function renderUsersList() {
       <td>${formatLimit(u.domain_limit, u.plan)}</td>
       <td>${new Date(u.created_at + 'Z').toLocaleDateString()}</td>
       <td>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openEmailModal(${u.id})" title="Send email from support@sslalerts.info">✉️ Email</button>
+        </div>
       </td>
     </tr>`).join('');
 
@@ -1287,6 +1382,7 @@ async function openUserModal(userId) {
   document.getElementById('modalNotificationEmailsList').innerHTML = 'Loading…';
   document.getElementById('modalGenCertsTbody').innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
   document.getElementById('modalAlertsTbody').innerHTML = '<tr><td colspan="3">Loading…</td></tr>';
+  document.getElementById('modalAdminEmailsTbody').innerHTML = '<tr><td colspan="4">Loading…</td></tr>';
 
   try {
     const res = await fetch(`/api/admin/users/${userId}/details`);
@@ -1366,6 +1462,19 @@ async function openUserModal(userId) {
           </tr>`).join('')
       : `<tr><td colspan="3" style="color:var(--muted);">No alert emails have been sent to this user.</td></tr>`;
 
+    // Sent outreach emails
+    const adminEmails = data.adminEmails || [];
+    document.getElementById('modalAdminEmailListCount').textContent = adminEmails.length;
+    document.getElementById('modalAdminEmailsTbody').innerHTML = adminEmails.length
+      ? adminEmails.map(m => `
+          <tr>
+            <td style="white-space:nowrap;">${new Date(m.sent_at + 'Z').toLocaleString()}</td>
+            <td><strong>${escapeHtml(m.subject)}</strong></td>
+            <td>${escapeHtml(m.admin_name || 'Admin')}</td>
+            <td style="color:var(--muted); max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(m.message_body)}">${escapeHtml(m.message_body)}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="4" style="color:var(--muted); padding:16px;">No outreach emails sent to this customer yet.</td></tr>`;
+
   } catch (err) {
     toast(err.message, true);
     closeUserModal();
@@ -1376,6 +1485,140 @@ function closeUserModal() {
   document.getElementById('adminUserModal').style.display = 'none';
   currentModalUserId = null;
   currentModalUserObj = null;
+}
+
+// ==========================================
+// ADMIN EMAIL COMPOSER LOGIC
+// ==========================================
+let currentEmailTargetUser = null;
+
+const EMAIL_TEMPLATES = {
+  welcome: {
+    subject: (name) => `Welcome to SSL Alerts — How is your experience so far?`,
+    body: (firstName) => `Hi ${firstName},
+
+Thank you for signing up for SSL Alerts!
+
+I am reaching out directly from the SSL Alerts team to see how everything is going with the application. Have you had an opportunity to test out your certificate monitoring, or are you experiencing any issues or roadblocks?
+
+If you have any questions, need assistance adding your domains, or have any feedback to share, simply reply directly to this email — I'd be happy to assist you!
+
+Best regards,
+SSL Alerts Support Team
+support@sslalerts.info`
+  },
+  setup: {
+    subject: (name) => `Need any help setting up your SSL certificate monitoring?`,
+    body: (firstName) => `Hi ${firstName},
+
+We noticed you recently joined SSL Alerts!
+
+If you need any guidance setting up automated 24/7 certificate checks, internal certificate tracking, or configuring alert recipients for your team, please feel free to let us know.
+
+Simply reply directly to this email with any domains or questions, and our technical team will be glad to walk you through it.
+
+Best regards,
+SSL Alerts Support Team
+support@sslalerts.info`
+  },
+  enterprise: {
+    subject: (name) => `SSL Alerts — Dedicated Quotas & Enterprise Monitoring`,
+    body: (firstName) => `Hi ${firstName},
+
+Thank you for using SSL Alerts!
+
+If your organization manages a large domain portfolio, requires custom check frequencies, dedicated SLA, or invoice-based billing, we offer customized Enterprise and Agency packages tailored to your infrastructure.
+
+Let us know if you'd like to explore custom quotas or schedule a quick walkthrough.
+
+Best regards,
+SSL Alerts Support Team
+support@sslalerts.info`
+  },
+  blank: {
+    subject: () => ``,
+    body: (firstName) => `Hi ${firstName},
+
+`
+  }
+};
+
+function openEmailModal(userId) {
+  let user = allUsers.find(u => String(u.id) === String(userId));
+  if (!user && currentModalUserObj && String(currentModalUserObj.id) === String(userId)) {
+    user = currentModalUserObj;
+  }
+  if (!user) return toast('User not found', true);
+
+  currentEmailTargetUser = user;
+  document.getElementById('composeRecipientName').textContent = user.name || 'Customer';
+  document.getElementById('composeRecipientEmail').textContent = user.email || '';
+
+  // Apply default welcome check-in template
+  const select = document.getElementById('composeTemplateSelect');
+  if (select) select.value = 'welcome';
+  applyEmailTemplate('welcome');
+
+  document.getElementById('adminEmailModal').style.display = 'flex';
+}
+
+function closeEmailModal() {
+  document.getElementById('adminEmailModal').style.display = 'none';
+  currentEmailTargetUser = null;
+}
+
+function openEmailModalFromUserModal() {
+  if (!currentModalUserId) return;
+  openEmailModal(currentModalUserId);
+}
+
+function applyEmailTemplate(type) {
+  const tpl = EMAIL_TEMPLATES[type] || EMAIL_TEMPLATES.welcome;
+  const rawName = currentEmailTargetUser ? (currentEmailTargetUser.name || 'there') : 'there';
+  const firstName = rawName.split(' ')[0] || 'there';
+
+  document.getElementById('composeSubjectInput').value = tpl.subject(rawName);
+  document.getElementById('composeMessageInput').value = tpl.body(firstName);
+}
+
+async function sendAdminEmail() {
+  if (!currentEmailTargetUser) return toast('No recipient selected', true);
+
+  const subject = document.getElementById('composeSubjectInput').value.trim();
+  const messageBody = document.getElementById('composeMessageInput').value.trim();
+
+  if (!subject) return toast('Please enter an email subject', true);
+  if (!messageBody) return toast('Please enter message content', true);
+
+  const btn = document.getElementById('composeSendBtn');
+  const btnText = document.getElementById('composeSendBtnText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ Sending email…';
+
+  try {
+    const res = await fetch(`/api/admin/users/${currentEmailTargetUser.id}/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, messageBody })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send email');
+
+    toast(`✉️ Email successfully sent to ${currentEmailTargetUser.email}!`);
+    const sentUserId = currentEmailTargetUser.id;
+    closeEmailModal();
+
+    // If user drilldown modal is currently open for this user, refresh it to show new sent email
+    if (currentModalUserId && String(currentModalUserId) === String(sentUserId)) {
+      openUserModal(currentModalUserId);
+    }
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '🚀 Send Email via support@sslalerts.info';
+  }
 }
 
 function toggleEnterpriseLimitInput() {

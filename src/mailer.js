@@ -18,18 +18,27 @@ function mailjetConfigured() {
   return !!(process.env.MAILJET_API_KEY && process.env.MAILJET_API_SECRET);
 }
 
-async function sendViaMailjet({ to, subject, html }) {
-  const from = parseFrom();
+async function sendViaMailjet({ to, subject, html, text, replyTo, fromName, fromEmail }) {
+  const defaultFrom = parseFrom();
+  const from = {
+    name: fromName || defaultFrom.name,
+    email: fromEmail || defaultFrom.email
+  };
   const auth = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_API_SECRET}`).toString('base64');
   const recipients = (Array.isArray(to) ? to : String(to).split(',')).map(s => s.trim()).filter(Boolean);
   if (recipients.length === 0) return;
 
-  const messages = recipients.map(email => ({
-    From: { Email: from.email, Name: from.name },
-    To: [{ Email: email }],
-    Subject: subject,
-    HTMLPart: html
-  }));
+  const messages = recipients.map(email => {
+    const msg = {
+      From: { Email: from.email, Name: from.name },
+      To: [{ Email: email }],
+      Subject: subject,
+      HTMLPart: html
+    };
+    if (text) msg.TextPart = text;
+    if (replyTo) msg.ReplyTo = { Email: replyTo };
+    return msg;
+  });
 
   const res = await fetch('https://api.mailjet.com/v3.1/send', {
     method: 'POST',
@@ -69,15 +78,27 @@ function getSmtpTransport() {
   });
 }
 
-async function sendViaSmtp({ to, subject, html }) {
+async function sendViaSmtp({ to, subject, html, text, replyTo, fromName, fromEmail }) {
   const transport = getSmtpTransport();
   if (!transport) return;
-  const from = parseFrom();
+  const defaultFrom = parseFrom();
+  const from = {
+    name: fromName || defaultFrom.name,
+    email: fromEmail || defaultFrom.email
+  };
   const recipients = (Array.isArray(to) ? to : String(to).split(',')).map(s => s.trim()).filter(Boolean);
   if (recipients.length === 0) return;
   for (const email of recipients) {
     try {
-      await transport.sendMail({ from: `"${from.name}" <${from.email}>`, to: email, subject, html });
+      const mailOptions = {
+        from: `"${from.name}" <${from.email}>`,
+        to: email,
+        subject,
+        html
+      };
+      if (text) mailOptions.text = text;
+      if (replyTo) mailOptions.replyTo = replyTo;
+      await transport.sendMail(mailOptions);
     } catch (err) {
       console.error(`[mailer:smtp] Send error for ${email}:`, err.message);
     }
@@ -318,4 +339,82 @@ async function sendPasswordResetOtpEmail({ to, name, otp }) {
   }
 }
 
-module.exports = { sendExpiryAlert, sendOtpEmail, sendEmailChangeOtpEmail, sendPasswordResetOtpEmail };
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function sendAdminCustomEmail({ to, recipientName, subject, messageBody, senderName }) {
+  const canSend = mailjetConfigured() || !!process.env.SMTP_HOST;
+  if (!canSend) {
+    console.warn(`[mailer] No email provider configured — simulated admin custom email to ${to}`);
+    return { success: true, simulated: true };
+  }
+
+  const supportEmail = SUPPORT_EMAIL || 'support@sslalerts.info';
+  const fromName = senderName || 'SSL Alerts Support';
+
+  const safeBody = (messageBody || '').trim();
+  const paragraphs = safeBody.split(/\r?\n\r?\n/).map(p => {
+    const cleanLines = p.split(/\r?\n/).map(line => escapeHtml(line)).join('<br>');
+    return `<p style="color:#334155; font-size:15px; line-height:1.7; margin:0 0 16px;">${cleanLines}</p>`;
+  }).join('');
+
+  const html = `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:#F4F7F8; padding:36px 16px;">
+    <div style="max-width:540px; margin:0 auto; background:#ffffff; border-radius:14px; overflow:hidden; border:1px solid #E2E8F0; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+      <div style="background:#0A2740; padding:22px 28px;">
+        <span style="color:#1BC7B5; font-weight:800; letter-spacing:1px; font-size:16px;">SSL ALERTS</span>
+      </div>
+      <div style="padding:32px 28px;">
+        ${paragraphs}
+      </div>
+      <div style="padding:20px 28px; background:#F8FAFC; border-top:1px solid #E2E8F0; color:#64748B; font-size:12px; line-height:1.5;">
+        You received this direct message from <strong>SSL Alerts Support</strong>.<br>
+        You can reply directly to this email or reach us anytime at <a href="mailto:${supportEmail}" style="color:#0D9488; text-decoration:none; font-weight:600;">${supportEmail}</a>.
+      </div>
+    </div>
+  </div>`;
+
+  const text = `${safeBody}\n\n---\nSSL Alerts Support (${supportEmail})\nYou can reply directly to this email.`;
+
+  try {
+    if (mailjetConfigured()) {
+      await sendViaMailjet({
+        to,
+        subject,
+        html,
+        text,
+        replyTo: supportEmail,
+        fromName
+      });
+    } else {
+      await sendViaSmtp({
+        to,
+        subject,
+        html,
+        text,
+        replyTo: supportEmail,
+        fromName
+      });
+    }
+    console.log(`[mailer] Admin custom email sent to ${to} (Subject: "${subject}")`);
+    return { success: true };
+  } catch (err) {
+    console.error(`[mailer] Failed to send admin custom email to ${to}:`, err.message);
+    throw err;
+  }
+}
+
+module.exports = {
+  sendExpiryAlert,
+  sendOtpEmail,
+  sendEmailChangeOtpEmail,
+  sendPasswordResetOtpEmail,
+  sendAdminCustomEmail
+};
