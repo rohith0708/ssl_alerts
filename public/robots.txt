@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /account
+Disallow: /account.html
+
+Sitemap: https://sslalerts.info/sitemap.xml
