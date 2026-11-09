@@ -1,6 +1,13 @@
 // Dashboard Navigation and SSL Tools Functionality
 let currentSection = 'domains';
 
+// Global Utility: HTML Escaping
+function safeEsc(s) {
+  if (typeof escapeHtml === 'function') return escapeHtml(s);
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+window.safeEsc = safeEsc;
+
 // Navigation Functions
 function showSection(sectionName, updateHash = true) {
   // Hide all sections
@@ -2070,17 +2077,21 @@ async function loadTeamsStatus() {
         if (btnToggle) btnToggle.textContent = 'Resume Alerts';
       }
 
-      if (isWebhook) {
-        if (destWrap) destWrap.style.display = 'none';
-        if (currentDestEl) {
-          currentDestEl.innerHTML = `Delivering alerts to Teams channel: <strong>${safeEsc(conn.destination_name || 'Channel Webhook')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+      try {
+        if (isWebhook) {
+          if (destWrap) destWrap.style.display = 'none';
+          if (currentDestEl) {
+            currentDestEl.innerHTML = `Delivering alerts to Teams channel: <strong>${safeEsc(conn.destination_name || 'Channel Webhook')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+          }
+        } else {
+          if (destWrap) destWrap.style.display = 'block';
+          if (currentDestEl) {
+            currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+          }
+          loadTeamsDestinations(conn.destination_id).catch(e => console.warn('Non-critical destinations fetch warning:', e));
         }
-      } else {
-        if (destWrap) destWrap.style.display = 'block';
-        if (currentDestEl) {
-          currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
-        }
-        loadTeamsDestinations(conn.destination_id);
+      } catch (renderErr) {
+        console.warn('Teams destination text render error:', renderErr);
       }
     } else {
       notConnected.style.display = 'block';
