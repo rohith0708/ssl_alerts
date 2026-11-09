@@ -284,11 +284,11 @@ async function initSchema() {
       ms_user_id VARCHAR(255) NULL,
       ms_user_name VARCHAR(255) NULL,
       ms_user_email VARCHAR(255) NULL,
-      access_token TEXT NOT NULL,
-      refresh_token TEXT NOT NULL,
-      token_expires_at DATETIME NOT NULL,
+      access_token TEXT NULL,
+      refresh_token TEXT NULL,
+      token_expires_at DATETIME NULL,
       destination_type VARCHAR(50) NOT NULL DEFAULT 'chat',
-      destination_id VARCHAR(255) NOT NULL,
+      destination_id TEXT NOT NULL,
       destination_name VARCHAR(255) NOT NULL,
       team_id VARCHAR(255) NULL,
       is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -300,6 +300,20 @@ async function initSchema() {
       CONSTRAINT fk_teams_graph_group FOREIGN KEY (group_id) REFERENCES \`groups\`(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  // Safe migrations for teams_graph_connections
+  try {
+    await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN destination_id TEXT NOT NULL');
+  } catch (_) {}
+  try {
+    await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN access_token TEXT NULL');
+  } catch (_) {}
+  try {
+    await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN refresh_token TEXT NULL');
+  } catch (_) {}
+  try {
+    await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN token_expires_at DATETIME NULL');
+  } catch (_) {}
 
   // Seed default admin user: admin@sslalerts.info / admin@sslalerts
   try {

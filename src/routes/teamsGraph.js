@@ -7,6 +7,7 @@ const {
   exchangeCodeForTokens,
   getUserProfile,
   getDestinations,
+  sendWebhookAlert,
   sendTeamsAlert
 } = require('../microsoftGraph');
 
@@ -65,7 +66,7 @@ router.get('/connect', requireAuth, (req, res) => {
     res.redirect(authUrl);
   } catch (err) {
     console.error('[teamsGraph] Error starting OAuth:', err);
-    res.status(500).redirect('/dashboard#teamsAlerts?error=Failed+to+start+Microsoft+authentication');
+    res.status(500).redirect(`/dashboard?teams_error=${encodeURIComponent(err.message || 'Failed to start Microsoft authentication')}#teams-alerts`);
   }
 });
 
@@ -78,11 +79,11 @@ router.get('/callback', async (req, res) => {
 
   if (error) {
     console.error('[teamsGraph] OAuth callback error:', error, error_description);
-    return res.redirect(`/dashboard#teamsAlerts?error=${encodeURIComponent(error_description || error)}`);
+    return res.redirect(`/dashboard?teams_error=${encodeURIComponent(error_description || error)}#teams-alerts`);
   }
 
   if (!code || !state) {
-    return res.redirect('/dashboard#teamsAlerts?error=Missing+code+or+state+parameter');
+    return res.redirect('/dashboard?teams_error=Missing+authorization+code+or+state+parameter#teams-alerts');
   }
 
   let decoded;
@@ -90,7 +91,7 @@ router.get('/callback', async (req, res) => {
     decoded = jwt.verify(state, JWT_SECRET);
   } catch (err) {
     console.error('[teamsGraph] Invalid state token:', err.message);
-    return res.redirect('/dashboard#teamsAlerts?error=Session+expired.+Please+try+connecting+again.');
+    return res.redirect('/dashboard?teams_error=Session+expired.+Please+try+connecting+again.#teams-alerts');
   }
 
   const userId = decoded.userId;
@@ -107,18 +108,13 @@ router.get('/callback', async (req, res) => {
     const msUserName = profile.displayName || 'Microsoft User';
     const msUserEmail = profile.mail || profile.userPrincipalName || '';
 
-    // 3. Discover available destinations (1-on-1 DM, group chats like 'tst', channels)
-    const destinations = await getDestinations(tokenData.accessToken);
-    const defaultDest = destinations[0] || {
-      type: 'dm',
-      id: 'me',
-      teamId: null,
-      rawName: 'Direct Message (Me)'
-    };
-
-    // 4. Save connection to database
+    // 3. Immediately save connection to DB with a safe default destination
+    // Saving NOW ensures the connection record exists even if destination queries have warnings
     const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ?', [userId]);
+    let connectionId;
+
     if (existing) {
+      connectionId = existing.id;
       await db.execute(`
         UPDATE teams_graph_connections SET
           ms_user_id = ?,
@@ -127,10 +123,9 @@ router.get('/callback', async (req, res) => {
           access_token = ?,
           refresh_token = ?,
           token_expires_at = ?,
-          destination_type = ?,
-          destination_id = ?,
-          destination_name = ?,
-          team_id = ?,
+          destination_type = COALESCE(destination_type, 'dm'),
+          destination_id = COALESCE(destination_id, 'me'),
+          destination_name = COALESCE(destination_name, 'Direct Message (Me)'),
           is_active = 1,
           last_error = NULL
         WHERE id = ?
@@ -141,17 +136,13 @@ router.get('/callback', async (req, res) => {
         tokenData.accessToken,
         tokenData.refreshToken,
         expiresAt,
-        defaultDest.type,
-        defaultDest.id,
-        defaultDest.rawName || defaultDest.name,
-        defaultDest.teamId || null,
         existing.id
       ]);
     } else {
-      await db.execute(`
+      const insertResult = await db.execute(`
         INSERT INTO teams_graph_connections
-          (user_id, ms_user_id, ms_user_name, ms_user_email, access_token, refresh_token, token_expires_at, destination_type, destination_id, destination_name, team_id, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+          (user_id, ms_user_id, ms_user_name, ms_user_email, access_token, refresh_token, token_expires_at, destination_type, destination_id, destination_name, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'dm', 'me', 'Direct Message (Me)', 1)
       `, [
         userId,
         msUserId,
@@ -159,18 +150,108 @@ router.get('/callback', async (req, res) => {
         msUserEmail,
         tokenData.accessToken,
         tokenData.refreshToken,
-        expiresAt,
-        defaultDest.type,
-        defaultDest.id,
-        defaultDest.rawName || defaultDest.name,
-        defaultDest.teamId || null
+        expiresAt
       ]);
+      connectionId = insertResult.insertId;
     }
 
-    res.redirect('/dashboard#teamsAlerts?success=connected');
+    // 4. Non-fatal destination discovery: if chats or channels are accessible, attach the first valid one
+    try {
+      const destinations = await getDestinations(tokenData.accessToken);
+      if (destinations && destinations.length > 0 && !existing) {
+        const firstDest = destinations[0];
+        await db.execute(`
+          UPDATE teams_graph_connections SET
+            destination_type = ?,
+            destination_id = ?,
+            destination_name = ?,
+            team_id = ?
+          WHERE id = ?
+        `, [
+          firstDest.type,
+          firstDest.id,
+          firstDest.rawName || firstDest.name,
+          firstDest.teamId || null,
+          connectionId
+        ]);
+      }
+    } catch (destErr) {
+      console.warn('[teamsGraph] Non-fatal destination discovery warning:', destErr.message);
+    }
+
+    // Redirect with query param for search parsing AND hash route
+    res.redirect('/dashboard?teams_success=connected#teams-alerts');
   } catch (err) {
     console.error('[teamsGraph] Callback processing failed:', err);
-    res.redirect(`/dashboard#teamsAlerts?error=${encodeURIComponent(err.message || 'Failed to complete connection')}`);
+    res.redirect(`/dashboard?teams_error=${encodeURIComponent(err.message || 'Failed to complete connection')}#teams-alerts`);
+  }
+});
+
+/**
+ * POST /api/integrations/teams/connect-webhook
+ * Connects Teams channel via Incoming Webhook URL
+ */
+router.post('/connect-webhook', requireAuth, async (req, res) => {
+  try {
+    const { webhookUrl, channelName } = req.body;
+
+    if (!webhookUrl || typeof webhookUrl !== 'string') {
+      return res.status(400).json({ error: 'Please enter a valid Microsoft Teams Webhook URL.' });
+    }
+
+    const trimmedUrl = webhookUrl.trim();
+    if (!trimmedUrl.startsWith('https://')) {
+      return res.status(400).json({ error: 'Webhook URL must start with https://' });
+    }
+
+    const name = (channelName && channelName.trim()) || 'Teams Channel';
+
+    // Verify webhook by sending a lightweight test card
+    await sendWebhookAlert({
+      webhookUrl: trimmedUrl,
+      hostname: 'sslalerts.info',
+      daysLeft: 14,
+      status: 'warning',
+      validTo: new Date(Date.now() + 14 * 86400000).toUTCString(),
+      intervalText: 'This is a test notification verifying your Microsoft Teams channel connection.',
+      isTest: true
+    });
+
+    // Save webhook connection in DB
+    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const expiresFar = new Date(Date.now() + 10 * 365 * 86400000); // 10 years
+
+    if (existing) {
+      await db.execute(`
+        UPDATE teams_graph_connections SET
+          ms_user_id = 'webhook',
+          ms_user_name = ?,
+          ms_user_email = 'webhook@teams.local',
+          access_token = 'webhook',
+          refresh_token = 'webhook',
+          token_expires_at = ?,
+          destination_type = 'webhook',
+          destination_id = ?,
+          destination_name = ?,
+          team_id = NULL,
+          is_active = 1,
+          last_sent_at = NOW(),
+          last_status = 'ok',
+          last_error = NULL
+        WHERE id = ?
+      `, [name, expiresFar, trimmedUrl, name, existing.id]);
+    } else {
+      await db.execute(`
+        INSERT INTO teams_graph_connections
+          (user_id, ms_user_id, ms_user_name, ms_user_email, access_token, refresh_token, token_expires_at, destination_type, destination_id, destination_name, is_active, last_sent_at, last_status)
+        VALUES (?, 'webhook', ?, 'webhook@teams.local', 'webhook', 'webhook', ?, 'webhook', ?, ?, 1, NOW(), 'ok')
+      `, [req.userId, name, expiresFar, trimmedUrl, name]);
+    }
+
+    res.json({ ok: true, message: `Connected successfully! A verification alert was delivered to ${name}.` });
+  } catch (err) {
+    console.error('[teamsGraph] Webhook connection error:', err);
+    res.status(400).json({ error: err.message || 'Failed to verify Teams Webhook URL. Please check the URL and try again.' });
   }
 });
 
@@ -186,6 +267,22 @@ router.get('/destinations', requireAuth, async (req, res) => {
 
     if (!connection) {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
+    }
+
+    if (connection.destination_type === 'webhook') {
+      return res.json({
+        destinations: [{
+          type: 'webhook',
+          id: connection.destination_id,
+          name: `📢 Webhook: ${connection.destination_name}`,
+          rawName: connection.destination_name
+        }],
+        currentDestination: {
+          type: 'webhook',
+          id: connection.destination_id,
+          name: connection.destination_name
+        }
+      });
     }
 
     const { ensureValidAccessToken } = require('../microsoftGraph');
@@ -257,7 +354,7 @@ router.post('/test', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
 
-    const result = await sendTeamsAlert({
+    await sendTeamsAlert({
       connection,
       hostname: 'example.com',
       daysLeft: 14,
@@ -277,7 +374,7 @@ router.post('/test', requireAuth, async (req, res) => {
 
     res.json({
       ok: true,
-      message: `Test alert sent successfully to ${connection.destination_name}! Check your Microsoft Teams.`
+      message: `Test alert delivered successfully to ${connection.destination_name}! Check your Microsoft Teams.`
     });
   } catch (err) {
     console.error('[teamsGraph] Test alert failed:', err);

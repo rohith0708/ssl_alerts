@@ -1,6 +1,6 @@
 const { db } = require('./db');
 
-const CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || '';
+const CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || '2ebae323-7d11-433c-a355-a42118999a07';
 const CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || '';
 const DEFAULT_REDIRECT_URI = process.env.MICROSOFT_REDIRECT_URI || 'https://sslalerts.info/api/integrations/teams/callback';
 
@@ -33,6 +33,13 @@ function getAuthUrl(state, redirectUri) {
  * Exchanges authorization code for access and refresh tokens
  */
 async function exchangeCodeForTokens(code, redirectUri) {
+  if (!CLIENT_ID) {
+    throw new Error('MICROSOFT_CLIENT_ID is not configured on the server.');
+  }
+  if (!CLIENT_SECRET) {
+    throw new Error('MICROSOFT_CLIENT_SECRET is missing from server .env file. Please add your Azure Secret Value to /opt/harisree-ssl-alerts/.env and restart.');
+  }
+
   const uri = redirectUri || DEFAULT_REDIRECT_URI;
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
@@ -64,6 +71,10 @@ async function exchangeCodeForTokens(code, redirectUri) {
  * Refreshes an expired access token using the refresh token
  */
 async function refreshAccessToken(refreshToken) {
+  if (!CLIENT_SECRET) {
+    throw new Error('MICROSOFT_CLIENT_SECRET is missing from server .env file.');
+  }
+
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
@@ -94,6 +105,11 @@ async function refreshAccessToken(refreshToken) {
  * Refreshes automatically if within 5 minutes of expiration.
  */
 async function ensureValidAccessToken(connection) {
+  // Webhook-based connections do not need Graph tokens
+  if (connection.destination_type === 'webhook' || connection.access_token === 'webhook') {
+    return 'webhook';
+  }
+
   const expiresAt = new Date(connection.token_expires_at).getTime();
   const now = Date.now();
   const fiveMinutes = 5 * 60 * 1000;
@@ -134,7 +150,8 @@ async function getUserProfile(accessToken) {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
   if (!res.ok) {
-    throw new Error(`Failed to fetch user profile: ${res.statusText}`);
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch user profile (${res.status}): ${errText || res.statusText}`);
   }
   return await res.json();
 }
@@ -146,8 +163,9 @@ async function getDestinations(accessToken) {
   const destinations = [];
 
   // 1. Fetch user's chats (1-on-1 and Group chats)
+  // Note: Omit $expand=members because Chat.ReadBasic does not have permission to expand members
   try {
-    const resChats = await fetch('https://graph.microsoft.com/v1.0/me/chats?$expand=members&$top=50', {
+    const resChats = await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
@@ -157,7 +175,7 @@ async function getDestinations(accessToken) {
 
       for (const chat of chats) {
         if (chat.chatType === 'group') {
-          const name = chat.topic || 'Group Chat (' + (chat.members?.map(m => m.displayName).filter(Boolean).slice(0, 3).join(', ') || 'Members') + ')';
+          const name = chat.topic || 'Group Chat';
           destinations.push({
             type: 'chat',
             id: chat.id,
@@ -170,11 +188,14 @@ async function getDestinations(accessToken) {
             type: 'dm',
             id: chat.id,
             teamId: null,
-            name: `👤 Direct Message (Private to Me)`,
-            rawName: 'Direct Message (Me)'
+            name: `👤 Direct Message`,
+            rawName: 'Direct Message'
           });
         }
       }
+    } else {
+      const chatErr = await resChats.text().catch(() => '');
+      console.warn('[microsoftGraph] Chats query returned non-200:', resChats.status, chatErr);
     }
   } catch (err) {
     console.warn('[microsoftGraph] Error fetching chats:', err.message);
@@ -210,12 +231,15 @@ async function getDestinations(accessToken) {
           }
         } catch (_) {}
       }
+    } else {
+      const teamErr = await resTeams.text().catch(() => '');
+      console.warn('[microsoftGraph] JoinedTeams query returned non-200:', resTeams.status, teamErr);
     }
   } catch (err) {
     console.warn('[microsoftGraph] Error fetching teams:', err.message);
   }
 
-  // If no 1-on-1 chat found in history, add option to message me
+  // Ensure default Direct Message exists in destination list
   if (!destinations.some(d => d.type === 'dm')) {
     destinations.unshift({
       type: 'dm',
@@ -227,6 +251,147 @@ async function getDestinations(accessToken) {
   }
 
   return destinations;
+}
+
+/**
+ * Sends notification card to Microsoft Teams Incoming Webhook or Power Automate workflow
+ */
+async function sendWebhookAlert({
+  webhookUrl,
+  hostname,
+  daysLeft,
+  status = 'critical',
+  validTo,
+  ackUrl,
+  intervalText,
+  isTest = false
+}) {
+  const isWarning = status === 'warning';
+  const isExpired = status === 'expired' || daysLeft === 0;
+  const themeColor = isTest ? '0D9488' : (isWarning ? 'D97706' : 'DC2626');
+  const badgeText = isTest
+    ? '🧪 TEST NOTIFICATION'
+    : (isExpired ? '🛑 CERTIFICATE EXPIRED' : (isWarning ? '⚠️ WARNING: EXPIRING SOON' : '🚨 CRITICAL ALERT'));
+
+  const daysLabel = daysLeft === 0
+    ? 'EXPIRED'
+    : (daysLeft === 1 ? '1 day left' : `${daysLeft} days left`);
+
+  const dashboardUrl = (process.env.APP_URL || 'https://sslalerts.info').replace(/\/+$/, '') + '/dashboard#domains';
+
+  // Strategy 1: Standard Office 365 Connector MessageCard
+  const messageCard = {
+    '@type': 'MessageCard',
+    '@context': 'http://schema.org/extensions',
+    'themeColor': themeColor,
+    'summary': isTest ? 'SSL Alerts Test Notification' : `SSL Alert: ${hostname} (${daysLabel})`,
+    'sections': [{
+      'activityTitle': isTest ? '🧪 SSL Alerts Integration Active' : `${badgeText}: ${hostname}`,
+      'activitySubtitle': isTest
+        ? 'Your Microsoft Teams channel has been connected successfully via Webhook.'
+        : `The SSL certificate for <strong>${hostname}</strong> expires in <strong>${daysLabel}</strong>.`,
+      'facts': !isTest ? [
+        { 'name': 'Domain:', 'value': hostname },
+        { 'name': 'Days Left:', 'value': daysLabel },
+        ...(validTo ? [{ 'name': 'Valid Until:', 'value': validTo }] : [])
+      ] : [
+        { 'name': 'Status:', 'value': 'Active & Verified' },
+        { 'name': 'Alert System:', 'value': 'Proactive Expiry Notifications' }
+      ],
+      'markdown': true
+    }],
+    'potentialAction': [
+      ...(ackUrl ? [{
+        '@type': 'OpenUri',
+        'name': '🔕 1-Click Snooze (14 Days)',
+        'targets': [{ 'os': 'default', 'uri': ackUrl }]
+      }] : []),
+      {
+        '@type': 'OpenUri',
+        'name': '🔍 View in Dashboard',
+        'targets': [{ 'os': 'default', 'uri': dashboardUrl }]
+      }
+    ]
+  };
+
+  // Strategy 2: Power Automate Workflows Adaptive Card
+  const adaptiveCard = {
+    'type': 'message',
+    'attachments': [
+      {
+        'contentType': 'application/vnd.microsoft.card.adaptive',
+        'contentUrl': null,
+        'content': {
+          '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
+          'type': 'AdaptiveCard',
+          'version': '1.4',
+          'body': [
+            {
+              'type': 'TextBlock',
+              'size': 'Medium',
+              'weight': 'Bolder',
+              'color': isTest ? 'Good' : (isWarning ? 'Warning' : 'Attention'),
+              'text': isTest ? '🧪 SSL Alerts Test Notification' : `${badgeText}: ${hostname}`
+            },
+            {
+              'type': 'TextBlock',
+              'wrap': true,
+              'text': isTest
+                ? 'Your Microsoft Teams channel has been connected successfully via Webhook.'
+                : `The SSL certificate for **${hostname}** expires in **${daysLabel}**.`
+            },
+            ...(!isTest ? [{
+              'type': 'FactSet',
+              'facts': [
+                { 'title': 'Domain', 'value': hostname },
+                { 'title': 'Days Left', 'value': daysLabel },
+                ...(validTo ? [{ 'title': 'Valid Until', 'value': validTo }] : [])
+              ]
+            }] : [])
+          ],
+          'actions': [
+            ...(ackUrl ? [{
+              'type': 'Action.OpenUrl',
+              'title': '🔕 1-Click Snooze (14 Days)',
+              'url': ackUrl
+            }] : []),
+            {
+              'type': 'Action.OpenUrl',
+              'title': '🔍 View in Dashboard',
+              'url': dashboardUrl
+            }
+          ]
+        }
+      }
+    ]
+  };
+
+  // Choose appropriate payload based on webhook endpoint
+  const isLogicApp = webhookUrl.includes('logic.azure.com');
+  const firstPayload = isLogicApp ? adaptiveCard : messageCard;
+  const secondPayload = isLogicApp ? messageCard : adaptiveCard;
+
+  let res = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(firstPayload)
+  });
+
+  if (!res.ok) {
+    // Attempt fallback format if primary format was not accepted
+    const resFallback = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(secondPayload)
+    });
+
+    if (!resFallback.ok) {
+      const errText = await resFallback.text().catch(() => '');
+      throw new Error(`Teams Webhook rejected notification (${resFallback.status}): ${errText || resFallback.statusText}`);
+    }
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -242,6 +407,21 @@ async function sendTeamsAlert({
   intervalText,
   isTest = false
 }) {
+  // If destination is a Webhook URL, route to sendWebhookAlert
+  if (connection.destination_type === 'webhook' || (connection.destination_id && connection.destination_id.startsWith('http'))) {
+    return await sendWebhookAlert({
+      webhookUrl: connection.destination_id,
+      hostname,
+      daysLeft,
+      status,
+      validTo,
+      ackUrl,
+      intervalText,
+      isTest
+    });
+  }
+
+  // Otherwise, dispatch via Microsoft Graph API
   const token = await ensureValidAccessToken(connection);
 
   const isWarning = status === 'warning';
@@ -311,40 +491,20 @@ async function sendTeamsAlert({
   let postUrl;
   let destinationId = connection.destination_id;
 
-  // If user selected "dm to me" and destination_id is 'me', resolve or create 1-on-1 chat
+  // If user selected "dm" and destination_id is 'me', attempt to resolve to an existing chat thread
   if (connection.destination_type === 'dm' && destinationId === 'me') {
-    // Call /chats to get user's chats or post to me
-    const meRes = await fetch('https://graph.microsoft.com/v1.0/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const meData = await meRes.json();
-    const myId = meData.id;
-
-    // Create or get 1-on-1 chat with myself
-    const chatRes = await fetch('https://graph.microsoft.com/v1.0/chats', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        chatType: 'oneOnOne',
-        members: [
-          {
-            '@odata.type': '#microsoft.graph.aadUserConversationMember',
-            roles: ['owner'],
-            'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${myId}')`
-          }
-        ]
-      })
-    });
-
-    if (chatRes.ok) {
-      const newChat = await chatRes.json();
-      destinationId = newChat.id;
-      // Update DB with resolved chat id
-      await db.execute('UPDATE teams_graph_connections SET destination_id = ? WHERE id = ?', [destinationId, connection.id]);
-    }
+    try {
+      const resRecent = await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=1', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (resRecent.ok) {
+        const recentData = await resRecent.json();
+        if (recentData.value && recentData.value.length > 0) {
+          destinationId = recentData.value[0].id;
+          await db.execute('UPDATE teams_graph_connections SET destination_id = ? WHERE id = ?', [destinationId, connection.id]);
+        }
+      }
+    } catch (_) {}
   }
 
   if (connection.destination_type === 'channel' && connection.team_id) {
@@ -382,5 +542,6 @@ module.exports = {
   ensureValidAccessToken,
   getUserProfile,
   getDestinations,
+  sendWebhookAlert,
   sendTeamsAlert
 };

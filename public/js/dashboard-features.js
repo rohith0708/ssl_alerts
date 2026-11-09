@@ -1960,6 +1960,7 @@ window.saveTeamsDestination = saveTeamsDestination;
 window.testTeamsAlert = testTeamsAlert;
 window.disconnectTeams = disconnectTeams;
 window.toggleTeamsActive = toggleTeamsActive;
+window.connectTeamsWebhook = connectTeamsWebhook;
 
 // ==========================================
 // Microsoft Teams Integration Functions
@@ -1968,21 +1969,58 @@ window.toggleTeamsActive = toggleTeamsActive;
 async function loadTeamsStatus() {
   const notConnected = document.getElementById('teamsNotConnectedState');
   const connected = document.getElementById('teamsConnectedState');
+  const banner = document.getElementById('teamsAlertBanner');
   if (!notConnected || !connected) return;
 
   // Check URL query parameters for success or error from OAuth callback
   const hashPart = window.location.hash || '';
   const searchPart = window.location.search || '';
-  const queryStr = hashPart.includes('?') ? hashPart.split('?')[1] : searchPart.replace(/^\?/, '');
-  const urlParams = new URLSearchParams(queryStr);
 
-  if (urlParams.get('success') === 'connected') {
-    alert('🎉 Microsoft Teams connected successfully! Select where you want to receive alerts below.');
-    history.replaceState(null, null, '#teams-alerts');
-  } else if (urlParams.get('error')) {
-    const errorMsg = decodeURIComponent(urlParams.get('error'));
-    alert('Failed to connect Teams: ' + errorMsg);
-    history.replaceState(null, null, '#teams-alerts');
+  const searchParams = new URLSearchParams(searchPart);
+  let hashQueryStr = hashPart.includes('?') ? hashPart.split('?')[1] : '';
+  const hashParams = new URLSearchParams(hashQueryStr);
+
+  const errorMsg = searchParams.get('teams_error') || searchParams.get('error') || hashParams.get('teams_error') || hashParams.get('error');
+  const isSuccess = searchParams.get('teams_success') === 'connected' || searchParams.get('success') === 'connected' || hashParams.get('teams_success') === 'connected' || hashParams.get('success') === 'connected';
+
+  if (errorMsg) {
+    const decodedError = decodeURIComponent(errorMsg);
+    if (banner) {
+      banner.style.display = 'block';
+      banner.style.background = '#fef2f2';
+      banner.style.border = '1px solid #fecaca';
+      banner.style.color = '#991b1b';
+      banner.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">⚠️ Microsoft Teams Notice</div>
+            <div style="font-size:13px; line-height:1.5;">${safeEsc(decodedError)}</div>
+            <div style="margin-top:8px; font-size:12px; color:#b91c1c;">
+              <strong>Tip:</strong> If your organization restricts third-party OAuth apps or you are using a personal account, you can connect in 30 seconds using the <strong>Channel Webhook URL</strong> option below without needing Azure admin consent!
+            </div>
+          </div>
+          <button type="button" onclick="document.getElementById('teamsAlertBanner').style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer; color:#991b1b; padding:0 4px;">✕</button>
+        </div>
+      `;
+    }
+    history.replaceState(null, null, window.location.pathname + '#teams-alerts');
+  } else if (isSuccess) {
+    if (banner) {
+      banner.style.display = 'block';
+      banner.style.background = '#f0fdf4';
+      banner.style.border = '1px solid #bbf7d0';
+      banner.style.color = '#166534';
+      banner.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <div style="font-weight:700; font-size:14px; margin-bottom:4px;">🎉 Microsoft Teams Connected Successfully!</div>
+            <div style="font-size:13px;">Your integration is now active. Send a test notification below to verify alert delivery.</div>
+          </div>
+          <button type="button" onclick="document.getElementById('teamsAlertBanner').style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer; color:#166534; padding:0 4px;">✕</button>
+        </div>
+      `;
+    }
+    history.replaceState(null, null, window.location.pathname + '#teams-alerts');
   }
 
   try {
@@ -1998,14 +2036,25 @@ async function loadTeamsStatus() {
       const emailEl = document.getElementById('teamsAccountEmail');
       const activeBadge = document.getElementById('teamsActiveBadge');
       const btnToggle = document.getElementById('btnToggleTeamsActive');
+      const destWrap = document.getElementById('teamsDestinationWrap');
       const currentDestEl = document.getElementById('teamsCurrentDestinationText');
+      const iconWrap = document.getElementById('teamsConnectedIconWrap');
 
-      if (nameEl) nameEl.textContent = conn.ms_user_name || 'Microsoft Account';
-      if (emailEl) emailEl.textContent = conn.ms_user_email || '';
+      const isWebhook = conn.destination_type === 'webhook';
+
+      if (nameEl) nameEl.textContent = conn.ms_user_name || (isWebhook ? 'Teams Webhook Channel' : 'Microsoft Account');
+      if (emailEl) emailEl.textContent = isWebhook ? 'Channel Webhook Integration' : (conn.ms_user_email || '');
+
+      if (iconWrap) {
+        iconWrap.style.background = isWebhook ? '#ecfdf5' : '#f0f2fe';
+        iconWrap.innerHTML = isWebhook
+          ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+          : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5059cb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>';
+      }
 
       if (conn.is_active) {
         if (activeBadge) {
-          activeBadge.textContent = '● Active';
+          activeBadge.textContent = isWebhook ? '● Active (Webhook)' : '● Active (OAuth)';
           activeBadge.style.background = '#dcfce7';
           activeBadge.style.color = '#15803d';
           activeBadge.style.borderColor = '#bbf7d0';
@@ -2021,11 +2070,18 @@ async function loadTeamsStatus() {
         if (btnToggle) btnToggle.textContent = 'Resume Alerts';
       }
 
-      if (currentDestEl) {
-        currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+      if (isWebhook) {
+        if (destWrap) destWrap.style.display = 'none';
+        if (currentDestEl) {
+          currentDestEl.innerHTML = `Delivering alerts to Teams channel: <strong>${safeEsc(conn.destination_name || 'Channel Webhook')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+        }
+      } else {
+        if (destWrap) destWrap.style.display = 'block';
+        if (currentDestEl) {
+          currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+        }
+        loadTeamsDestinations(conn.destination_id);
       }
-
-      loadTeamsDestinations(conn.destination_id);
     } else {
       notConnected.style.display = 'block';
       connected.style.display = 'none';
@@ -2034,6 +2090,43 @@ async function loadTeamsStatus() {
     console.error('Failed to load Teams status:', err);
     notConnected.style.display = 'block';
     connected.style.display = 'none';
+  }
+}
+
+async function connectTeamsWebhook(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const channelName = document.getElementById('teamsWebhookChannelName')?.value?.trim();
+  const webhookUrl = document.getElementById('teamsWebhookUrl')?.value?.trim();
+  const btn = document.getElementById('btnConnectTeamsWebhook');
+
+  if (!webhookUrl) {
+    alert('Please enter your Teams Webhook URL.');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Verifying Webhook...</span>';
+  }
+
+  try {
+    const res = await fetch('/api/integrations/teams/connect-webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ webhookUrl, channelName })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to verify webhook');
+
+    alert('🎉 ' + data.message);
+    loadTeamsStatus();
+  } catch (err) {
+    alert('Failed to connect Teams Webhook: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔗 Connect & Test Webhook</span>';
+    }
   }
 }
 
