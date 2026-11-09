@@ -385,7 +385,11 @@ router.post('/test', requireAuth, async (req, res) => {
       WHERE user_id = ?
     `, [err.message, req.userId]);
 
-    res.status(500).json({ error: `Failed to send test alert: ${err.message}` });
+    const friendlyError = err.message.includes('valid license')
+      ? 'Your Microsoft account is a personal/free account which lacks a Microsoft 365 Business license for Graph API messages. Please click Disconnect and use the Channel Webhook URL option (works completely free with zero license requirements!).'
+      : `Failed to send test alert: ${err.message}`;
+
+    res.status(500).json({ error: friendlyError });
   }
 });
 

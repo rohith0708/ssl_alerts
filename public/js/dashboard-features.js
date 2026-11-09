@@ -2247,8 +2247,20 @@ async function testTeamsAlert() {
     }
   } catch (err) {
     if (statusEl) {
-      statusEl.textContent = '❌ ' + err.message;
-      statusEl.style.color = '#ef4444';
+      if (err.message.includes('valid license') || err.message.includes('license')) {
+        statusEl.innerHTML = `
+          <div style="margin-top:10px; padding:12px 16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#991b1b; font-size:13px; line-height:1.5;">
+            <div style="font-weight:700; margin-bottom:4px;">⚠️ Personal Account Limitation:</div>
+            Microsoft Graph API requires a paid Microsoft 365 Business license to post messages via OAuth. Free/personal accounts (@gmail.com, @outlook.com) cannot use Graph chat APIs.
+            <div style="margin-top:8px;">
+              👉 <strong>Solution:</strong> Click <strong>Disconnect</strong> above and connect via <strong>Channel Webhook URL</strong>. Webhooks work completely free with any Teams channel without requiring a Microsoft 365 paid license!
+            </div>
+          </div>
+        `;
+      } else {
+        statusEl.textContent = '❌ ' + err.message;
+        statusEl.style.color = '#ef4444';
+      }
     }
   } finally {
     if (btn) {
