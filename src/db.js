@@ -276,6 +276,31 @@ async function initSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS teams_graph_connections (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      group_id INT NULL,
+      ms_user_id VARCHAR(255) NULL,
+      ms_user_name VARCHAR(255) NULL,
+      ms_user_email VARCHAR(255) NULL,
+      access_token TEXT NOT NULL,
+      refresh_token TEXT NOT NULL,
+      token_expires_at DATETIME NOT NULL,
+      destination_type VARCHAR(50) NOT NULL DEFAULT 'chat',
+      destination_id VARCHAR(255) NOT NULL,
+      destination_name VARCHAR(255) NOT NULL,
+      team_id VARCHAR(255) NULL,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      last_sent_at DATETIME NULL,
+      last_status VARCHAR(50) NULL,
+      last_error TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_teams_graph_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_teams_graph_group FOREIGN KEY (group_id) REFERENCES \`groups\`(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   // Seed default admin user: admin@sslalerts.info / admin@sslalerts
   try {
     const adminEmail = 'admin@sslalerts.info';

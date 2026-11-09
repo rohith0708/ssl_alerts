@@ -172,6 +172,35 @@ async function applyCheckResult(row, result) {
   } catch (err) {
     console.error('[alerts] send failed for', row.hostname, err.message);
   }
+
+  // Dispatch Microsoft Teams alerts if connected
+  try {
+    const teamsConn = await db.getOne(`
+      SELECT * FROM teams_graph_connections
+      WHERE user_id = ? AND is_active = 1
+        AND (group_id IS NULL OR group_id = ?)
+      ORDER BY id DESC LIMIT 1
+    `, [row.user_id, row.group_id || null]);
+
+    if (teamsConn) {
+      const { sendTeamsAlert } = require('./microsoftGraph');
+      await sendTeamsAlert({
+        connection: teamsConn,
+        hostname: row.hostname,
+        daysLeft: result.daysLeft,
+        status: newStatus,
+        validTo: result.validTo,
+        ackUrl,
+        intervalText,
+        isTest: false
+      });
+      await db.execute('UPDATE teams_graph_connections SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [teamsConn.id]);
+      console.log(`[alerts] Dispatched Teams alert for ${row.hostname} to ${teamsConn.destination_name}`);
+    }
+  } catch (teamsErr) {
+    console.error(`[alerts] Teams alert failed for ${row.hostname}:`, teamsErr.message);
+    await db.execute('UPDATE teams_graph_connections SET last_status = "error", last_error = ? WHERE user_id = ?', [teamsErr.message, row.user_id]).catch(() => {});
+  }
 }
 
 async function runFullSweep() {

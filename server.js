@@ -11,6 +11,7 @@ const toolsRoutes = require('./src/routes/tools');
 const alertEmailsRoutes = require('./src/routes/alertEmails');
 const certificatesRoutes = require('./src/routes/certificates');
 const ssltoolsRoutes = require('./src/routes/ssltools');
+const teamsGraphRoutes = require('./src/routes/teamsGraph');
 const { router: billingRoutes, handleWebhook, handleRazorpayWebhook, handleDodoWebhook } = require('./src/routes/billing');
 const jwt = require('jsonwebtoken');
 const { COOKIE_NAME, JWT_SECRET } = require('./src/auth');
@@ -38,6 +39,7 @@ app.use('/api/tools', toolsRoutes);
 app.use('/api/alert-emails', alertEmailsRoutes);
 app.use('/api/certificates', certificatesRoutes);
 app.use('/api/ssltools', ssltoolsRoutes);
+app.use('/api/integrations/teams', teamsGraphRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 

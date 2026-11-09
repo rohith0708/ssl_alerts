@@ -23,6 +23,7 @@ function showSection(sectionName, updateHash = true) {
     sslTools: 'SSL Tools',
     certificates: 'Certificate Generator',
     alertEmails: 'Alert Email Recipients',
+    teamsAlerts: 'Microsoft Teams Alerts',
     dnsLookup: 'DNS Lookup',
     docs: 'Documentation'
   };
@@ -41,6 +42,7 @@ function showSection(sectionName, updateHash = true) {
       sslTools: '#ssl-tools',
       certificates: '#certificates',
       alertEmails: '#alert-emails',
+      teamsAlerts: '#teams-alerts',
       dnsLookup: '#dns-lookup',
       docs: '#docs'
     };
@@ -59,6 +61,12 @@ function showDomains(e) {
 function showSSLTools(e) {
   if (e && e.preventDefault) e.preventDefault();
   showSection('sslTools');
+}
+
+function showTeamsAlerts(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  showSection('teamsAlerts');
+  if (typeof loadTeamsStatus === 'function') loadTeamsStatus();
 }
 
 function showCertificates(e, tab = 'cert-generator-letsencrypt') {
@@ -184,6 +192,8 @@ function handleHashRoute() {
     showSSLTools();
   } else if (hash === '#alert-emails' || hash === '#alertemails') {
     showAlertEmails();
+  } else if (hash === '#teams-alerts' || hash === '#teamsalerts' || hash.startsWith('#teams')) {
+    showTeamsAlerts();
   } else if (hash === '#dns-lookup' || hash === '#dnslookup' || hash === '#tools') {
     showDNSLookup();
   } else if (hash.startsWith('#docs')) {
@@ -1931,6 +1941,7 @@ async function runDashDnsLookup(domain, type) {
 window.showSection = showSection;
 window.showDomains = showDomains;
 window.showSSLTools = showSSLTools;
+window.showTeamsAlerts = showTeamsAlerts;
 window.showCertificates = showCertificates;
 window.showAlertEmails = showAlertEmails;
 window.showDNSLookup = showDNSLookup;
@@ -1943,3 +1954,227 @@ window.initDashDnsLookup = initDashDnsLookup;
 window.runDashDnsLookup = runDashDnsLookup;
 window.handleBrandClick = handleBrandClick;
 window.handleHashRoute = handleHashRoute;
+window.loadTeamsStatus = loadTeamsStatus;
+window.loadTeamsDestinations = loadTeamsDestinations;
+window.saveTeamsDestination = saveTeamsDestination;
+window.testTeamsAlert = testTeamsAlert;
+window.disconnectTeams = disconnectTeams;
+window.toggleTeamsActive = toggleTeamsActive;
+
+// ==========================================
+// Microsoft Teams Integration Functions
+// ==========================================
+
+async function loadTeamsStatus() {
+  const notConnected = document.getElementById('teamsNotConnectedState');
+  const connected = document.getElementById('teamsConnectedState');
+  if (!notConnected || !connected) return;
+
+  // Check URL query parameters for success or error from OAuth callback
+  const hashPart = window.location.hash || '';
+  const searchPart = window.location.search || '';
+  const queryStr = hashPart.includes('?') ? hashPart.split('?')[1] : searchPart.replace(/^\?/, '');
+  const urlParams = new URLSearchParams(queryStr);
+
+  if (urlParams.get('success') === 'connected') {
+    alert('🎉 Microsoft Teams connected successfully! Select where you want to receive alerts below.');
+    history.replaceState(null, null, '#teams-alerts');
+  } else if (urlParams.get('error')) {
+    const errorMsg = decodeURIComponent(urlParams.get('error'));
+    alert('Failed to connect Teams: ' + errorMsg);
+    history.replaceState(null, null, '#teams-alerts');
+  }
+
+  try {
+    const res = await fetch('/api/integrations/teams/status');
+    const data = await res.json();
+
+    if (data.connected && data.connection) {
+      const conn = data.connection;
+      notConnected.style.display = 'none';
+      connected.style.display = 'block';
+
+      const nameEl = document.getElementById('teamsAccountName');
+      const emailEl = document.getElementById('teamsAccountEmail');
+      const activeBadge = document.getElementById('teamsActiveBadge');
+      const btnToggle = document.getElementById('btnToggleTeamsActive');
+      const currentDestEl = document.getElementById('teamsCurrentDestinationText');
+
+      if (nameEl) nameEl.textContent = conn.ms_user_name || 'Microsoft Account';
+      if (emailEl) emailEl.textContent = conn.ms_user_email || '';
+
+      if (conn.is_active) {
+        if (activeBadge) {
+          activeBadge.textContent = '● Active';
+          activeBadge.style.background = '#dcfce7';
+          activeBadge.style.color = '#15803d';
+          activeBadge.style.borderColor = '#bbf7d0';
+        }
+        if (btnToggle) btnToggle.textContent = 'Pause Alerts';
+      } else {
+        if (activeBadge) {
+          activeBadge.textContent = '⏸️ Paused';
+          activeBadge.style.background = '#fef3c7';
+          activeBadge.style.color = '#b45309';
+          activeBadge.style.borderColor = '#fde68a';
+        }
+        if (btnToggle) btnToggle.textContent = 'Resume Alerts';
+      }
+
+      if (currentDestEl) {
+        currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
+      }
+
+      loadTeamsDestinations(conn.destination_id);
+    } else {
+      notConnected.style.display = 'block';
+      connected.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Failed to load Teams status:', err);
+    notConnected.style.display = 'block';
+    connected.style.display = 'none';
+  }
+}
+
+async function loadTeamsDestinations(selectedId) {
+  const select = document.getElementById('teamsDestinationSelect');
+  if (!select) return;
+
+  try {
+    const res = await fetch('/api/integrations/teams/destinations');
+    const data = await res.json();
+
+    if (!res.ok) {
+      select.innerHTML = `<option value="">${safeEsc(data.error || 'Failed to load destinations')}</option>`;
+      return;
+    }
+
+    const destinations = data.destinations || [];
+    if (destinations.length === 0) {
+      select.innerHTML = '<option value="me" data-type="dm">👤 Direct Message (Private to Me)</option>';
+      return;
+    }
+
+    select.innerHTML = destinations.map(d => {
+      const isSel = (d.id === selectedId) || (selectedId === 'me' && d.id === 'me');
+      return `<option value="${safeEsc(d.id)}" data-type="${safeEsc(d.type)}" data-name="${safeEsc(d.rawName || d.name)}" data-team="${safeEsc(d.teamId || '')}" ${isSel ? 'selected' : ''}>${safeEsc(d.name)}</option>`;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading destinations:', err);
+    select.innerHTML = '<option value="">Error loading chats and channels</option>';
+  }
+}
+
+async function saveTeamsDestination() {
+  const select = document.getElementById('teamsDestinationSelect');
+  const btn = document.getElementById('btnSaveTeamsDestination');
+  if (!select) return;
+
+  const selectedOpt = select.options[select.selectedIndex];
+  if (!selectedOpt || !selectedOpt.value) {
+    alert('Please select a destination first.');
+    return;
+  }
+
+  const destinationId = selectedOpt.value;
+  const destinationType = selectedOpt.getAttribute('data-type') || 'chat';
+  const destinationName = selectedOpt.getAttribute('data-name') || selectedOpt.text;
+  const teamId = selectedOpt.getAttribute('data-team') || null;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+  }
+
+  try {
+    const res = await fetch('/api/integrations/teams/save-destination', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destinationId,
+        destinationType,
+        destinationName,
+        teamId
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save destination');
+
+    const currentDestEl = document.getElementById('teamsCurrentDestinationText');
+    if (currentDestEl) {
+      currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(destinationName)}</strong>`;
+    }
+    alert('Alert destination updated to: ' + destinationName);
+  } catch (err) {
+    alert('Failed to save destination: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Save Destination';
+    }
+  }
+}
+
+async function testTeamsAlert() {
+  const btn = document.getElementById('btnTestTeams');
+  const statusEl = document.getElementById('teamsTestStatus');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Sending test alert...</span>';
+  }
+  if (statusEl) {
+    statusEl.textContent = 'Connecting to Microsoft Teams...';
+    statusEl.style.color = 'var(--text-muted)';
+  }
+
+  try {
+    const res = await fetch('/api/integrations/teams/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send test alert');
+
+    if (statusEl) {
+      statusEl.textContent = '✅ ' + (data.message || 'Test alert delivered! Check your Teams.');
+      statusEl.style.color = '#15803d';
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = '❌ ' + err.message;
+      statusEl.style.color = '#ef4444';
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>⚡ Send Test Alert to Teams</span>';
+    }
+  }
+}
+
+async function disconnectTeams() {
+  if (!confirm('Are you sure you want to disconnect Microsoft Teams? SSL alerts will no longer be sent to Teams.')) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/integrations/teams/disconnect', { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to disconnect');
+    loadTeamsStatus();
+  } catch (err) {
+    alert('Failed to disconnect: ' + err.message);
+  }
+}
+
+async function toggleTeamsActive() {
+  try {
+    const res = await fetch('/api/integrations/teams/toggle', { method: 'PATCH' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to toggle status');
+    loadTeamsStatus();
+  } catch (err) {
+    alert('Failed to toggle status: ' + err.message);
+  }
+}
