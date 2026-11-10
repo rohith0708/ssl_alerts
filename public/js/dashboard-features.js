@@ -2455,9 +2455,23 @@ async function loadWhatsAppQR() {
         }, 4000);
       }
     } else {
-      if (qrPlaceholder) {
-        qrPlaceholder.textContent = 'Starting WhatsApp instance... Click refresh in a moment.';
-        qrPlaceholder.style.display = 'block';
+      if (data.error) {
+        if (pollStatus) pollStatus.textContent = 'Error: ' + data.error;
+        if (qrPlaceholder) {
+          qrPlaceholder.textContent = 'Evolution API message: ' + data.error;
+          qrPlaceholder.style.display = 'block';
+        }
+      } else {
+        if (pollStatus) pollStatus.textContent = 'Generating QR code... checking again in 3s...';
+        if (qrPlaceholder) {
+          qrPlaceholder.textContent = 'Starting WhatsApp engine... Please wait a moment.';
+          qrPlaceholder.style.display = 'block';
+        }
+        setTimeout(() => {
+          if (currentSection === 'whatsappAlerts' && (!qrImg || qrImg.style.display === 'none')) {
+            loadWhatsAppQR();
+          }
+        }, 3000);
       }
       if (qrImg) qrImg.style.display = 'none';
     }

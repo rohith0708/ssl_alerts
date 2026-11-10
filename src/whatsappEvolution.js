@@ -8,6 +8,20 @@ const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || 'harisree_wa_key_8f93
 const INSTANCE_NAME = process.env.EVOLUTION_INSTANCE || 'sslalerts';
 
 /**
+ * Helper to extract QR code from various Evolution API response schemas
+ */
+function extractQr(data) {
+  if (!data) return null;
+  if (typeof data === 'string' && (data.startsWith('data:image') || data.length > 100)) return data;
+  if (data.base64 && typeof data.base64 === 'string') return data.base64;
+  if (data.qrcode?.base64 && typeof data.qrcode.base64 === 'string') return data.qrcode.base64;
+  if (data.qrcode && typeof data.qrcode === 'string') return data.qrcode;
+  if (data.instance?.qrcode?.base64 && typeof data.instance.qrcode.base64 === 'string') return data.instance.qrcode.base64;
+  if (data.code && typeof data.code === 'string') return data.code;
+  return null;
+}
+
+/**
  * Ensures the instance exists in Evolution API
  */
 async function ensureInstance() {
@@ -19,7 +33,12 @@ async function ensureInstance() {
     if (res.ok) {
       const instances = await res.json();
       if (Array.isArray(instances)) {
-        const found = instances.some(i => i.name === INSTANCE_NAME || i.instanceName === INSTANCE_NAME);
+        const found = instances.some(i =>
+          i.name === INSTANCE_NAME ||
+          i.instanceName === INSTANCE_NAME ||
+          i.instance?.name === INSTANCE_NAME ||
+          i.instance?.instanceName === INSTANCE_NAME
+        );
         if (found) return true;
       }
     }
@@ -39,7 +58,7 @@ async function ensureInstance() {
       })
     });
 
-    return createRes.ok;
+    return true;
   } catch (err) {
     console.warn('[EvolutionAPI] Error ensuring instance:', err.message);
     return false;
@@ -89,19 +108,40 @@ async function getQrCode() {
       headers: { apikey: EVOLUTION_API_KEY }
     });
 
-    if (!res.ok) {
-      return { qrcode: null, error: `Evolution returned status ${res.status}` };
+    const resText = await res.text();
+    let data = {};
+    try {
+      data = JSON.parse(resText);
+    } catch (_) {}
+
+    if (data.instance?.state === 'open' || data.state === 'open') {
+      return { connected: true, qrcode: null };
     }
 
-    const data = await res.json();
-    let qr = data.base64 || data.code || null;
+    let qr = extractQr(data);
+
+    // If QR not immediately ready on first request, wait 1.8s and retry once
+    if (!qr) {
+      await new Promise(r => setTimeout(r, 1800));
+      const retryRes = await fetch(`${EVOLUTION_URL}/instance/connect/${INSTANCE_NAME}`, {
+        headers: { apikey: EVOLUTION_API_KEY }
+      });
+      const retryText = await retryRes.text();
+      try {
+        const retryData = JSON.parse(retryText);
+        qr = extractQr(retryData);
+      } catch (_) {}
+    }
 
     if (qr && !qr.startsWith('data:image')) {
       qr = `data:image/png;base64,${qr}`;
     }
 
-    return { qrcode: qr };
+    const errorMsg = qr ? null : (data.response?.message?.[0] || data.error || data.message || (res.ok ? null : `HTTP ${res.status}`));
+
+    return { qrcode: qr, error: errorMsg };
   } catch (err) {
+    console.error('[EvolutionAPI] getQrCode error:', err.message);
     return { qrcode: null, error: err.message };
   }
 }
