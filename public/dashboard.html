@@ -742,65 +742,20 @@
         </div>
       </div>
 
-      <!-- Gateway Status Card -->
-      <div class="card" style="margin-bottom:24px; padding:24px; background:#ffffff; border-radius:12px; border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border); padding-bottom:14px; flex-wrap:wrap; gap:10px;">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="width:40px; height:40px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            </div>
-            <div>
-              <h3 style="margin:0; font-size:16px; color:#0f172a;">WhatsApp Gateway Connection</h3>
-              <p style="margin:2px 0 0; font-size:12px; color:var(--text-muted);" id="waGatewaySubtext">Checking gateway status...</p>
-            </div>
+      <!-- Platform WhatsApp Status Banner for Customers -->
+      <div class="card" style="margin-bottom:24px; padding:18px 22px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="width:42px; height:42px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
           </div>
-          <div id="waGatewayActions">
-            <span id="waStatusBadge" class="badge" style="background:#f1f5f9; color:#64748b; font-size:12px; padding:4px 10px; border-radius:9999px;">Checking...</span>
+          <div>
+            <div style="font-weight:700; font-size:15px; color:#14532d;">WhatsApp Notifications Active</div>
+            <p style="margin:2px 0 0; font-size:13px; color:#166534;">
+              SSL expiry warnings and downtime alerts are dispatched automatically to your verified phone numbers via the official SSL Alerts WhatsApp bot.
+            </p>
           </div>
         </div>
-
-        <!-- Connected State -->
-        <div id="waConnectedState" style="display:none;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <span style="font-size:24px;">📱</span>
-              <div>
-                <strong id="waConnectedNumber" style="font-size:15px; color:#0f172a;">Connected</strong>
-                <div style="font-size:12px; color:#16a34a; font-weight:500;">● Active & Ready to dispatch alerts</div>
-              </div>
-            </div>
-            <button class="btn btn-outline" onclick="logoutWhatsAppGateway()" style="color:#ef4444; border-color:#fca5a5; font-size:13px; padding:6px 14px;">
-              🔌 Disconnect & Re-pair
-            </button>
-          </div>
-        </div>
-
-        <!-- QR Code Pairing State -->
-        <div id="waQrState" style="display:none;">
-          <div style="display:grid; grid-template-columns:1fr auto; gap:24px; align-items:center;">
-            <div>
-              <h4 style="margin:0 0 8px; font-size:15px; color:#0f172a;">Pair WhatsApp to send SSL alerts</h4>
-              <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin:0 0 14px;">
-                Link your phone or a dedicated alerting number via WhatsApp Web QR code. Messages will be dispatched directly to your recipients.
-              </p>
-              <ol style="margin:0 0 16px 20px; padding:0; font-size:13px; color:#334155; line-height:1.7;">
-                <li>Open <strong>WhatsApp</strong> on your phone</li>
-                <li>Tap <strong>Settings</strong> (iOS) or <strong>Menu •••</strong> (Android) &rarr; <strong>Linked Devices</strong></li>
-                <li>Tap <strong>Link a Device</strong> and point your camera at the QR code</li>
-              </ol>
-              <button class="btn btn-secondary" onclick="loadWhatsAppQR()" id="btnRefreshWaQr" style="font-size:12px; padding:6px 12px;">
-                🔄 Refresh QR Code
-              </button>
-              <span id="waQrPollStatus" style="font-size:12px; color:var(--text-muted); margin-left:10px;">Waiting for scan...</span>
-            </div>
-            <div style="text-align:center;">
-              <div id="waQrWrap" style="width:200px; height:200px; border:1px solid #e2e8f0; border-radius:12px; padding:8px; background:#ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                <img id="waQrImg" src="" alt="Scan QR code" style="width:100%; height:100%; object-fit:contain; display:none;" />
-                <span id="waQrPlaceholder" style="font-size:12px; color:#94a3b8; text-align:center;">Loading QR code...</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:12px; padding:4px 10px; border-radius:9999px;">● Gateway Online</span>
       </div>
 
       <!-- Recipients Card -->

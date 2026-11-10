@@ -3,6 +3,12 @@ const { db, PLANS } = require('../db');
 const { requireAuth, requireAdmin } = require('../auth');
 const { runFullSweep } = require('../scheduler');
 const { sendEmailChangeOtpEmail, sendAdminCustomEmail } = require('../mailer');
+const {
+  getConnectionStatus,
+  getQrCode,
+  sendWhatsAppAlert,
+  logoutInstance
+} = require('../whatsappEvolution');
 
 const router = express.Router();
 router.use(requireAuth, requireAdmin);
@@ -688,6 +694,60 @@ router.get('/users/:id/emails', async (req, res) => {
   } catch (err) {
     console.error('Error fetching user email history:', err);
     res.status(500).json({ error: 'Failed to load user email history.' });
+  }
+});
+
+// ==========================================
+// WhatsApp Gateway Admin Controls
+// ==========================================
+
+router.get('/whatsapp/gateway-status', async (req, res) => {
+  try {
+    const status = await getConnectionStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ connected: false, state: 'disconnected', error: err.message });
+  }
+});
+
+router.get('/whatsapp/qr', async (req, res) => {
+  try {
+    const qrData = await getQrCode();
+    res.json(qrData);
+  } catch (err) {
+    res.status(500).json({ qrcode: null, error: err.message });
+  }
+});
+
+router.post('/whatsapp/logout', async (req, res) => {
+  try {
+    await logoutInstance();
+    res.json({ ok: true, message: 'WhatsApp gateway disconnected. Scan QR to link a new number.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to logout WhatsApp gateway: ' + err.message });
+  }
+});
+
+router.post('/whatsapp/test', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    if (!phoneNumber) {
+      return res.status(400).json({ error: 'Phone number is required.' });
+    }
+
+    await sendWhatsAppAlert({
+      toPhoneNumber: phoneNumber,
+      hostname: 'sslalerts.info',
+      daysLeft: 7,
+      status: 'warning',
+      validTo: new Date(Date.now() + 7 * 86400000).toUTCString(),
+      intervalText: 'This is an administrative test notification verifying WhatsApp Gateway delivery.',
+      isTest: true
+    });
+
+    res.json({ ok: true, message: `Test alert dispatched to ${phoneNumber}!` });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send test alert: ' + err.message });
   }
 });
 

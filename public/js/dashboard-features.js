@@ -82,7 +82,6 @@ function showWhatsAppAlerts(e) {
   if (e && e.preventDefault) e.preventDefault();
   showSection('whatsappAlerts');
   if (typeof loadWhatsAppGroupsSelect === 'function') loadWhatsAppGroupsSelect();
-  if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
   if (typeof loadWhatsAppRecipients === 'function') loadWhatsAppRecipients();
 }
 
