@@ -31,6 +31,7 @@ function showSection(sectionName, updateHash = true) {
     certificates: 'Certificate Generator',
     alertEmails: 'Alert Email Recipients',
     teamsAlerts: 'Microsoft Teams Alerts',
+    whatsappAlerts: 'WhatsApp Alerts',
     dnsLookup: 'DNS Lookup',
     docs: 'Documentation'
   };
@@ -50,6 +51,7 @@ function showSection(sectionName, updateHash = true) {
       certificates: '#certificates',
       alertEmails: '#alert-emails',
       teamsAlerts: '#teams-alerts',
+      whatsappAlerts: '#whatsapp-alerts',
       dnsLookup: '#dns-lookup',
       docs: '#docs'
     };
@@ -74,6 +76,14 @@ function showTeamsAlerts(e) {
   if (e && e.preventDefault) e.preventDefault();
   showSection('teamsAlerts');
   if (typeof loadTeamsStatus === 'function') loadTeamsStatus();
+}
+
+function showWhatsAppAlerts(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  showSection('whatsappAlerts');
+  if (typeof loadWhatsAppGroupsSelect === 'function') loadWhatsAppGroupsSelect();
+  if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
+  if (typeof loadWhatsAppRecipients === 'function') loadWhatsAppRecipients();
 }
 
 function showCertificates(e, tab = 'cert-generator-letsencrypt') {
@@ -201,6 +211,8 @@ function handleHashRoute() {
     showAlertEmails();
   } else if (hash === '#teams-alerts' || hash === '#teamsalerts' || hash.startsWith('#teams')) {
     showTeamsAlerts();
+  } else if (hash === '#whatsapp-alerts' || hash === '#whatsappalerts' || hash.startsWith('#whatsapp')) {
+    showWhatsAppAlerts();
   } else if (hash === '#dns-lookup' || hash === '#dnslookup' || hash === '#tools') {
     showDNSLookup();
   } else if (hash.startsWith('#docs')) {
@@ -1968,6 +1980,16 @@ window.testTeamsAlert = testTeamsAlert;
 window.disconnectTeams = disconnectTeams;
 window.toggleTeamsActive = toggleTeamsActive;
 window.connectTeamsWebhook = connectTeamsWebhook;
+window.showWhatsAppAlerts = showWhatsAppAlerts;
+window.loadWhatsAppGroupsSelect = loadWhatsAppGroupsSelect;
+window.loadWhatsAppStatus = loadWhatsAppStatus;
+window.loadWhatsAppQR = loadWhatsAppQR;
+window.logoutWhatsAppGateway = logoutWhatsAppGateway;
+window.loadWhatsAppRecipients = loadWhatsAppRecipients;
+window.addWhatsAppRecipient = addWhatsAppRecipient;
+window.testWhatsAppAlert = testWhatsAppAlert;
+window.toggleWhatsAppActive = toggleWhatsAppActive;
+window.deleteWhatsAppRecipient = deleteWhatsAppRecipient;
 
 // ==========================================
 // Microsoft Teams Integration Functions
@@ -2292,5 +2314,322 @@ async function toggleTeamsActive() {
     loadTeamsStatus();
   } catch (err) {
     alert('Failed to toggle status: ' + err.message);
+  }
+}
+
+// ==========================================
+// WhatsApp Evolution API Integration
+// ==========================================
+
+let waQrPollInterval = null;
+
+async function loadWhatsAppGroupsSelect() {
+  const select = document.getElementById('waRecipientGroup');
+  if (!select) return;
+  try {
+    const res = await fetch('/api/groups');
+    const data = await res.json();
+    const groups = Array.isArray(data) ? data : (data.groups || []);
+    let options = '<option value="">All Domains</option>';
+    if (groups && groups.length > 0) {
+      options += groups.map(g => `<option value="${g.id}">${safeEsc(g.name)}</option>`).join('');
+    }
+    select.innerHTML = options;
+  } catch (err) {
+    console.error('Failed to load groups for WhatsApp select:', err);
+  }
+}
+
+async function loadWhatsAppStatus() {
+  const badge = document.getElementById('waStatusBadge');
+  const subtext = document.getElementById('waGatewaySubtext');
+  const connectedState = document.getElementById('waConnectedState');
+  const qrState = document.getElementById('waQrState');
+  const connectedNumber = document.getElementById('waConnectedNumber');
+
+  if (!badge) return;
+
+  try {
+    const res = await fetch('/api/integrations/whatsapp/gateway-status');
+    const data = await res.json();
+
+    if (!res.ok) {
+      badge.textContent = 'Offline';
+      badge.style.background = '#fef2f2';
+      badge.style.color = '#dc2626';
+      if (subtext) subtext.textContent = data.error || 'Evolution API container unreachable.';
+      return;
+    }
+
+    const isConnected = data.connected === true || data.state === 'connected' || data.status === 'open';
+
+    if (isConnected) {
+      // WhatsApp is fully connected
+      if (waQrPollInterval) {
+        clearInterval(waQrPollInterval);
+        waQrPollInterval = null;
+      }
+      badge.textContent = '● Connected';
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#15803d';
+      badge.style.border = '1px solid #bbf7d0';
+
+      if (subtext) subtext.textContent = 'WhatsApp gateway is paired and listening for alert dispatches.';
+      if (connectedNumber) {
+        const phone = data.user || data.number ? (String(data.user || data.number).startsWith('+') ? String(data.user || data.number) : '+' + String(data.user || data.number)) : 'Linked Device';
+        connectedNumber.textContent = phone;
+      }
+      if (connectedState) connectedState.style.display = 'block';
+      if (qrState) qrState.style.display = 'none';
+    } else {
+      // Needs pairing or disconnected
+      badge.textContent = '● Needs Pairing';
+      badge.style.background = '#fef9c3';
+      badge.style.color = '#854d0e';
+      badge.style.border = '1px solid #fef08a';
+
+      if (subtext) subtext.textContent = 'Scan the QR code with WhatsApp on your phone to link alerting gateway.';
+      if (connectedState) connectedState.style.display = 'none';
+      if (qrState) qrState.style.display = 'block';
+
+      loadWhatsAppQR();
+    }
+  } catch (err) {
+    console.error('Failed to load WhatsApp status:', err);
+    if (badge) {
+      badge.textContent = 'Error';
+      badge.style.background = '#fef2f2';
+      badge.style.color = '#dc2626';
+    }
+  }
+}
+
+async function loadWhatsAppQR() {
+  const qrImg = document.getElementById('waQrImg');
+  const qrPlaceholder = document.getElementById('waQrPlaceholder');
+  const pollStatus = document.getElementById('waQrPollStatus');
+  const btnRefresh = document.getElementById('btnRefreshWaQr');
+
+  if (btnRefresh) btnRefresh.disabled = true;
+  if (pollStatus) pollStatus.textContent = 'Fetching pairing code...';
+
+  try {
+    const res = await fetch('/api/integrations/whatsapp/qr');
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch QR');
+
+    if (data.connected) {
+      loadWhatsAppStatus();
+      return;
+    }
+
+    const qrDataStr = data.qrcode || data.qr || data.base64;
+    if (qrDataStr) {
+      const src = qrDataStr.startsWith('data:') ? qrDataStr : `data:image/png;base64,${qrDataStr}`;
+      if (qrImg) {
+        qrImg.src = src;
+        qrImg.style.display = 'block';
+      }
+      if (qrPlaceholder) qrPlaceholder.style.display = 'none';
+      if (pollStatus) pollStatus.textContent = 'Point camera at QR code now (auto-refreshes)...';
+
+      // Start polling for connection confirmation
+      if (!waQrPollInterval) {
+        waQrPollInterval = setInterval(async () => {
+          // If we left the section, clear interval
+          if (currentSection !== 'whatsappAlerts') {
+            clearInterval(waQrPollInterval);
+            waQrPollInterval = null;
+            return;
+          }
+          try {
+            const checkRes = await fetch('/api/integrations/whatsapp/gateway-status');
+            const checkData = await checkRes.json();
+            if (checkData.connected || checkData.state === 'connected' || checkData.status === 'open') {
+              clearInterval(waQrPollInterval);
+              waQrPollInterval = null;
+              loadWhatsAppStatus();
+            }
+          } catch (_) {}
+        }, 4000);
+      }
+    } else {
+      if (qrPlaceholder) {
+        qrPlaceholder.textContent = 'Starting WhatsApp instance... Click refresh in a moment.';
+        qrPlaceholder.style.display = 'block';
+      }
+      if (qrImg) qrImg.style.display = 'none';
+    }
+  } catch (err) {
+    if (pollStatus) pollStatus.textContent = 'Could not load QR: ' + err.message;
+    if (qrPlaceholder) {
+      qrPlaceholder.textContent = 'Pairing unavailable. Ensure Evolution API container is running.';
+      qrPlaceholder.style.display = 'block';
+    }
+    if (qrImg) qrImg.style.display = 'none';
+  } finally {
+    if (btnRefresh) btnRefresh.disabled = false;
+  }
+}
+
+async function logoutWhatsAppGateway() {
+  if (!confirm('Are you sure you want to disconnect WhatsApp? You will need to scan the QR code again to resume alerts.')) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/integrations/whatsapp/logout', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Logout failed');
+    loadWhatsAppStatus();
+  } catch (err) {
+    alert('Failed to disconnect WhatsApp: ' + err.message);
+  }
+}
+
+async function loadWhatsAppRecipients() {
+  const tbody = document.getElementById('waRecipientsTableBody');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch('/api/integrations/whatsapp/recipients');
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed to load recipients');
+
+    const recipients = Array.isArray(data) ? data : (data.recipients || []);
+
+    if (recipients.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:28px 12px; color:#94a3b8;">
+            No WhatsApp alert recipients configured yet. Add a phone number above to start receiving alerts.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = recipients.map(r => {
+      const activeBadge = r.is_active
+        ? '<span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:11px; padding:2px 6px; border-radius:9999px;">Active</span>'
+        : '<span class="badge" style="background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; font-size:11px; padding:2px 6px; border-radius:9999px;">Paused</span>';
+
+      const lastSent = r.last_sent_at
+        ? new Date(r.last_sent_at).toLocaleString()
+        : '<span style="color:#94a3b8;">Never</span>';
+
+      const groupName = r.group_name ? safeEsc(r.group_name) : 'All Domains (Global)';
+
+      return `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:600; color:#0f172a;">${safeEsc(r.label || 'Recipient')}</td>
+          <td style="padding:10px 12px; font-family:monospace; color:#334155;">${safeEsc(r.phone_number || r.phone)}</td>
+          <td style="padding:10px 12px; color:#64748b;">${groupName}</td>
+          <td style="padding:10px 12px;">${activeBadge}</td>
+          <td style="padding:10px 12px; font-size:12px; color:#64748b;">${lastSent}</td>
+          <td style="padding:10px 12px; text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <button class="btn btn-secondary" onclick="testWhatsAppAlert(${r.id})" id="btnTestWa_${r.id}" style="padding:4px 8px; font-size:11px;" title="Send Test Alert">
+                ⚡ Test
+              </button>
+              <button class="btn btn-outline" onclick="toggleWhatsAppActive(${r.id})" style="padding:4px 8px; font-size:11px;">
+                ${r.is_active ? 'Pause' : 'Resume'}
+              </button>
+              <button class="btn btn-outline" onclick="deleteWhatsAppRecipient(${r.id})" style="padding:4px 8px; font-size:11px; color:#ef4444; border-color:#fca5a5;" title="Delete">
+                ✕
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to load WhatsApp recipients:', err);
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:16px; color:#dc2626;">Error loading recipients: ${safeEsc(err.message)}</td></tr>`;
+  }
+}
+
+async function addWhatsAppRecipient(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const label = document.getElementById('waRecipientLabel')?.value?.trim();
+  const phone = document.getElementById('waRecipientPhone')?.value?.trim();
+  const groupId = document.getElementById('waRecipientGroup')?.value || null;
+  const btn = document.getElementById('btnAddWaRecipient');
+
+  if (!label || !phone) {
+    alert('Please provide both recipient name and phone number.');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/integrations/whatsapp/recipients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, phone, groupId })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to add recipient');
+
+    document.getElementById('waRecipientLabel').value = '';
+    document.getElementById('waRecipientPhone').value = '';
+    loadWhatsAppRecipients();
+  } catch (err) {
+    alert('Failed to add recipient: ' + err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function testWhatsAppAlert(id) {
+  const btn = document.getElementById(`btnTestWa_${id}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Sending...';
+  }
+
+  try {
+    const res = await fetch('/api/integrations/whatsapp/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send test alert');
+
+    alert('🎉 Test alert sent successfully to WhatsApp!');
+    loadWhatsAppRecipients();
+  } catch (err) {
+    alert('Failed to send WhatsApp alert: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Test';
+    }
+  }
+}
+
+async function toggleWhatsAppActive(id) {
+  try {
+    const res = await fetch(`/api/integrations/whatsapp/recipients/${id}/toggle`, { method: 'PATCH' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to toggle status');
+    loadWhatsAppRecipients();
+  } catch (err) {
+    alert('Failed to toggle status: ' + err.message);
+  }
+}
+
+async function deleteWhatsAppRecipient(id) {
+  if (!confirm('Are you sure you want to delete this WhatsApp recipient?')) return;
+  try {
+    const res = await fetch(`/api/integrations/whatsapp/recipients/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete recipient');
+    loadWhatsAppRecipients();
+  } catch (err) {
+    alert('Failed to delete: ' + err.message);
   }
 }

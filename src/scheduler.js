@@ -201,6 +201,40 @@ async function applyCheckResult(row, result) {
     console.error(`[alerts] Teams alert failed for ${row.hostname}:`, teamsErr.message);
     await db.execute('UPDATE teams_graph_connections SET last_status = "error", last_error = ? WHERE user_id = ?', [teamsErr.message, row.user_id]).catch(() => {});
   }
+
+  // Dispatch WhatsApp alerts if recipients configured
+  try {
+    const waRecipients = await db.getAll(`
+      SELECT * FROM whatsapp_recipients
+      WHERE user_id = ? AND is_active = 1
+        AND (group_id IS NULL OR group_id = ?)
+    `, [row.user_id, row.group_id || null]);
+
+    if (waRecipients && waRecipients.length > 0) {
+      const { sendWhatsAppAlert } = require('./whatsappEvolution');
+      for (const recipient of waRecipients) {
+        try {
+          await sendWhatsAppAlert({
+            toPhoneNumber: recipient.phone_number,
+            hostname: row.hostname,
+            daysLeft: result.daysLeft,
+            status: newStatus,
+            validTo: result.validTo,
+            ackUrl,
+            intervalText,
+            isTest: false
+          });
+          await db.execute('UPDATE whatsapp_recipients SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [recipient.id]);
+          console.log(`[alerts] Dispatched WhatsApp alert for ${row.hostname} to ${recipient.phone_number} (${recipient.label})`);
+        } catch (waErr) {
+          console.error(`[alerts] WhatsApp alert failed for ${recipient.phone_number}:`, waErr.message);
+          await db.execute('UPDATE whatsapp_recipients SET last_status = "error", last_error = ? WHERE id = ?', [waErr.message, recipient.id]).catch(() => {});
+        }
+      }
+    }
+  } catch (waOverallErr) {
+    console.error(`[alerts] WhatsApp sweep failed for ${row.hostname}:`, waOverallErr.message);
+  }
 }
 
 async function runFullSweep() {

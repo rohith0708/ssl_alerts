@@ -315,6 +315,25 @@ async function initSchema() {
     await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN token_expires_at DATETIME NULL');
   } catch (_) {}
 
+  // WhatsApp Alert Recipients (Self-Hosted WhatsApp Gateway)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS whatsapp_recipients (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      group_id INT NULL,
+      label VARCHAR(255) NOT NULL,
+      phone_number VARCHAR(50) NOT NULL,
+      is_global TINYINT(1) NOT NULL DEFAULT 1,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      last_sent_at DATETIME NULL,
+      last_status VARCHAR(50) NULL,
+      last_error TEXT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_wa_recip_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_wa_recip_group FOREIGN KEY (group_id) REFERENCES \`groups\`(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   // Seed default admin user: admin@sslalerts.info / admin@sslalerts
   try {
     const adminEmail = 'admin@sslalerts.info';

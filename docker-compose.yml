@@ -37,6 +37,56 @@ services:
     networks:
       - harisree-network
 
+  # Evolution API PostgreSQL Database
+  evolution-db:
+    image: postgres:15-alpine
+    container_name: harisree-evolution-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution_strong_secret_2026
+      POSTGRES_DB: evolution
+    volumes:
+      - evolution_pg_data:/var/lib/postgresql/data
+    networks:
+      - harisree-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Evolution API v2 WhatsApp Gateway
+  evolution-api:
+    image: atendai/evolution-api:v2.1.2
+    container_name: harisree-evolution-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_URL=http://evolution-api:8080
+      - DOCKER_ENV=true
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:-harisree_wa_key_8f93e2b1049c81a2}
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution_strong_secret_2026@evolution-db:5432/evolution?schema=public
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=false
+      - CACHE_REDIS_ENABLED=false
+      - LOG_LEVEL=ERROR,WARN,INFO
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      evolution-db:
+        condition: service_healthy
+    networks:
+      - harisree-network
+
+volumes:
+  evolution_pg_data:
+  evolution_instances:
+
 networks:
   harisree-network:
     external: true
