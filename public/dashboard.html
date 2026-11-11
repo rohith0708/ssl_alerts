@@ -627,14 +627,16 @@
               <div style="width:52px; height:52px; margin-bottom:16px; background:#f0f2fe; border-radius:12px; display:flex; align-items:center; justify-content:center;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5059cb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               </div>
-              <h3 style="margin:0 0 8px; font-size:18px; color:#0f172a;">1-Click Microsoft Sign-In</h3>
+              <h3 style="margin:0 0 8px; font-size:18px; color:#0f172a;">Option 1: 1-Click Microsoft Sign-In</h3>
               <p style="color:var(--text-muted); font-size:13px; line-height:1.5; margin:0 0 16px;">
-                Connect directly with your Microsoft 365 or Work account. Choose to receive alerts in private 1-on-1 DMs, group chats (e.g. "tst"), or team channels.
+                Connect directly with your Microsoft 365 or Work account. Choose to receive alerts in private 1-on-1 DMs, group chats, or team channels.
               </p>
               <div style="background:#f8fafc; border-radius:8px; padding:12px 14px; margin-bottom:20px; font-size:12px; color:#475569; line-height:1.5;">
                 ✓ Direct 1-on-1 personal chat alerts<br>
                 ✓ Shared group chats & channel routing<br>
-                ✓ No webhook creation needed
+                <span style="color:#d97706; font-size:11px; display:block; margin-top:4px;">
+                  ⚠️ Corporate domains (e.g. @company.com) require IT admin consent. If your account shows "Need admin approval", use Option 2 on the right!
+                </span>
               </div>
             </div>
             <a href="/api/integrations/teams/connect" class="btn btn-primary" style="background:#5059cb; border-color:#5059cb; font-size:14px; padding:11px 20px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:10px; width:100%; box-sizing:border-box;">
@@ -644,14 +646,17 @@
           </div>
 
           <!-- Option 2: Teams Channel Webhook (Universal & Instant) -->
-          <div class="card" style="padding:28px 24px; background:#ffffff; border-radius:12px; border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+          <div class="card" style="padding:28px 24px; background:#ffffff; border-radius:12px; border:2px solid #10b981; box-shadow:0 4px 12px rgba(16,185,129,0.08); display:flex; flex-direction:column; justify-content:space-between; position:relative;">
             <div>
-              <div style="width:52px; height:52px; margin-bottom:16px; background:#ecfdf5; border-radius:12px; display:flex; align-items:center; justify-content:center;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+                <div style="width:52px; height:52px; background:#ecfdf5; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </div>
+                <span style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:700; padding:4px 8px; border-radius:999px;">★ RECOMMENDED (NO ADMIN APPROVAL NEEDED)</span>
               </div>
-              <h3 style="margin:0 0 8px; font-size:18px; color:#0f172a;">Channel Webhook URL (Instant)</h3>
+              <h3 style="margin:0 0 8px; font-size:18px; color:#0f172a;">Option 2: Channel Webhook URL (Instant)</h3>
               <p style="color:var(--text-muted); font-size:13px; line-height:1.5; margin:0 0 16px;">
-                Send SSL expiry cards to any Teams channel via Incoming Webhook or Power Automate Workflow. Works across all personal, work, and enterprise tenants without admin permissions!
+                Send SSL expiry cards to any Teams channel via Incoming Webhook. <strong>Works instantly for all corporate accounts without requiring IT admin approval or Microsoft licenses!</strong>
               </p>
 
               <form id="teamsWebhookForm" onsubmit="connectTeamsWebhook(event)">
