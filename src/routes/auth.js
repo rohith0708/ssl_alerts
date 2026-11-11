@@ -10,7 +10,15 @@ const { sendOtpEmail, sendEmailChangeOtpEmail, sendPasswordResetOtpEmail } = req
 const router = express.Router();
 
 function isAdminEmail(email) {
-  return process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase();
+  if (!email) return false;
+  const lower = email.toLowerCase().trim();
+  const configuredAdmins = (process.env.ADMIN_EMAIL || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const defaultAdmins = ['admin@sslalerts.info', 'rohithr9037@gmail.com'];
+  return defaultAdmins.includes(lower) || configuredAdmins.includes(lower);
 }
 
 function validatePasswordStrength(password) {
@@ -320,8 +328,11 @@ router.post('/login', loginLimiter, async (req, res) => {
     return res.status(403).json(payload);
   }
 
-  if (isAdminEmail(user.email) && !user.is_admin) {
-    await db.execute('UPDATE users SET is_admin = 1 WHERE id = ?', [user.id]);
+  if (isAdminEmail(user.email)) {
+    if (!user.is_admin) {
+      await db.execute('UPDATE users SET is_admin = 1 WHERE id = ?', [user.id]);
+    }
+    user.is_admin = 1;
   }
   const token = issueToken(user);
   setAuthCookie(res, token);

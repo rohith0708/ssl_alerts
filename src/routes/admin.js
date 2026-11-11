@@ -18,10 +18,16 @@ router.get('/stats', async (req, res) => {
     const users = await db.getAll(`
       SELECT u.id, u.name, u.email, u.plan, u.domain_limit, u.billing_status, u.is_verified, u.current_period_end, u.payment_reference, u.admin_notes, u.created_at,
              COUNT(DISTINCT d.id) AS domain_count,
-             COUNT(DISTINCT g.id) AS group_count
+             COUNT(DISTINCT g.id) AS group_count,
+             COUNT(DISTINCT ne.id) AS email_recipient_count,
+             COUNT(DISTINCT wr.id) AS wa_recipient_count,
+             COUNT(DISTINCT tc.id) AS teams_recipient_count
       FROM users u
       LEFT JOIN domains d ON d.user_id = u.id
       LEFT JOIN \`groups\` g ON g.user_id = u.id
+      LEFT JOIN notification_emails ne ON ne.user_id = u.id
+      LEFT JOIN whatsapp_recipients wr ON wr.user_id = u.id
+      LEFT JOIN teams_graph_connections tc ON tc.user_id = u.id
       GROUP BY u.id
       ORDER BY u.created_at DESC
     `);
@@ -50,29 +56,94 @@ router.get('/stats', async (req, res) => {
     `);
 
     const byPlan = { trial: 0, micro: 0, starter: 0, growth: 0, pro: 0, agency: 0, enterprise: 0 };
+    const planRevenue = { trial: 0, micro: 0, starter: 0, growth: 0, pro: 0, agency: 0, enterprise: 0 };
     let totalDomains = 0;
     let totalGroups = 0;
     let haltedUsers = 0;
+    let activePaidUsers = 0;
     let mrr = 0;
+    let atRiskRevenue = 0;
+    let totalCapacity = 0;
+    let usersWithWa = 0;
+    let usersWithEmail = 0;
+    let usersWithTeams = 0;
+    let totalWaRecipients = 0;
+    let totalEmailRecipients = 0;
+    let totalTeamsRecipients = 0;
 
     for (const u of users) {
       const planKey = (u.plan === 'unlimited') ? 'enterprise' : u.plan;
-      if (byPlan[planKey] === undefined) byPlan[planKey] = 0;
+      if (byPlan[planKey] === undefined) {
+        byPlan[planKey] = 0;
+        planRevenue[planKey] = 0;
+      }
       byPlan[planKey]++;
       totalDomains += Number(u.domain_count || 0);
       totalGroups += Number(u.group_count || 0);
-      if (u.plan !== 'trial' && u.billing_status === 'halted') haltedUsers++;
-      if (u.billing_status === 'active') mrr += (PLANS[u.plan]?.price || 0);
+      if (u.domain_limit && Number(u.domain_limit) < 100000) {
+        totalCapacity += Number(u.domain_limit);
+      }
+
+      const price = PLANS[u.plan]?.price || 0;
+      if (u.plan !== 'trial') {
+        if (u.billing_status === 'halted') {
+          haltedUsers++;
+          atRiskRevenue += price;
+        } else if (u.billing_status === 'active') {
+          activePaidUsers++;
+          mrr += price;
+          planRevenue[planKey] += price;
+        }
+      }
+
+      const waCount = Number(u.wa_recipient_count || 0);
+      const emailCount = Number(u.email_recipient_count || 0);
+      const teamsCount = Number(u.teams_recipient_count || 0);
+
+      if (waCount > 0) {
+        usersWithWa++;
+        totalWaRecipients += waCount;
+      }
+      if (emailCount > 0) {
+        usersWithEmail++;
+        totalEmailRecipients += emailCount;
+      }
+      if (teamsCount > 0) {
+        usersWithTeams++;
+        totalTeamsRecipients += teamsCount;
+      }
     }
 
+    const totalUsers = users.length;
+    const paidUsers = totalUsers - (byPlan.trial || 0);
+    const arr = mrr * 12;
+    const arpu = activePaidUsers > 0 ? Number((mrr / activePaidUsers).toFixed(2)) : 0;
+    const conversionRate = totalUsers > 0 ? Number(((paidUsers / totalUsers) * 100).toFixed(1)) : 0;
+
     res.json({
-      totalUsers: users.length,
-      paidUsers: users.length - (byPlan.trial || 0),
+      totalUsers,
+      paidUsers,
+      activePaidUsers,
+      trialUsers: byPlan.trial || 0,
       haltedUsers,
       byPlan,
+      planRevenue,
       totalDomains,
       totalGroups,
+      totalCapacity,
       estimatedMrr: mrr,
+      estimatedArr: arr,
+      arpu,
+      conversionRate,
+      atRiskRevenue,
+      channelAdoption: {
+        usersWithWa,
+        usersWithEmail,
+        usersWithTeams,
+        totalWaRecipients,
+        totalEmailRecipients,
+        totalTeamsRecipients
+      },
       emailsSentToday: emailsToday ? emailsToday.n : 0,
       emailsByDay,
       staleUnacknowledged,
@@ -154,11 +225,31 @@ router.get('/users/:id/details', async (req, res) => {
       `, [userId]);
     } catch (_) {}
 
+    let whatsappRecipients = [];
+    try {
+      whatsappRecipients = await db.getAll(`
+        SELECT id, label, phone_number, is_active, last_sent_at, last_status, created_at
+        FROM whatsapp_recipients WHERE user_id = ?
+        ORDER BY created_at DESC
+      `, [userId]);
+    } catch (_) {}
+
+    let teamsConnections = [];
+    try {
+      teamsConnections = await db.getAll(`
+        SELECT id, destination_name, destination_type, is_active, last_sent_at, last_status, created_at
+        FROM teams_graph_connections WHERE user_id = ?
+        ORDER BY created_at DESC
+      `, [userId]);
+    } catch (_) {}
+
     res.json({
       user,
       domains,
       groups,
       notificationEmails,
+      whatsappRecipients,
+      teamsConnections,
       totalAlertsSent,
       recentAlerts,
       totalGeneratedCerts,

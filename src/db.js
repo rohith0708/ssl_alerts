@@ -364,11 +364,18 @@ async function initSchema() {
     console.error('[MySQL] Failed to seed admin user:', err.message);
   }
 
-  if (process.env.ADMIN_EMAIL) {
-    try {
-      await execute('UPDATE users SET is_admin = 1 WHERE email = ?', [process.env.ADMIN_EMAIL.toLowerCase()]);
-    } catch (_) {}
-  }
+  // Ensure primary admins have is_admin = 1
+  try {
+    const adminEmails = ['admin@sslalerts.info', 'rohithr9037@gmail.com'];
+    if (process.env.ADMIN_EMAIL) {
+      adminEmails.push(...process.env.ADMIN_EMAIL.split(',').map(e => e.trim().toLowerCase()));
+    }
+    for (const em of adminEmails) {
+      if (em) {
+        await execute('UPDATE users SET is_admin = 1 WHERE LOWER(email) = ?', [em.toLowerCase()]);
+      }
+    }
+  } catch (_) {}
 }
 
 initSchema().catch(err => {

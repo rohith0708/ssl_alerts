@@ -375,14 +375,133 @@
 
 /* Dedicated Admin Login Card if unauthenticated */
 #adminLoginContainer {
-  max-width: 420px;
+  max-width: 440px;
   margin: 60px auto;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 32px 28px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  border-radius: 14px;
+  padding: 36px 30px;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.08);
 }
+
+/* Executive Cockpit & Widescreen Layout Overrides */
+html, body {
+  width: 100%;
+  max-width: 100%;
+}
+
+.app-shell {
+  display: grid !important;
+  grid-template-columns: 240px minmax(0, 1fr) !important;
+  min-height: 100vh;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.main {
+  padding: 24px 32px 48px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (min-width: 1600px) {
+  .main {
+    padding: 28px 48px 60px !important;
+  }
+}
+
+.admin-panel-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-table-wrap {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Executive SaaS KPI Grid */
+.exec-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.exec-kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.exec-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.exec-kpi-card .kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.exec-kpi-card .kpi-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--navy);
+  font-family: var(--serif);
+  margin: 6px 0 2px;
+  letter-spacing: -0.5px;
+}
+.exec-kpi-card .kpi-sub {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.exec-kpi-card.highlight-green::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #16a34a;
+}
+.exec-kpi-card.highlight-blue::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #2563eb;
+}
+.exec-kpi-card.highlight-purple::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #7c3aed;
+}
+.exec-kpi-card.highlight-amber::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #d97706;
+}
+.exec-kpi-card.highlight-cyan::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #0891b2;
+}
+.exec-kpi-card.highlight-coral::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--coral);
+}
+
+/* Channel Pill Badges */
+.channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+.channel-pill-wa { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.channel-pill-email { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.channel-pill-teams { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+.channel-pill-none { background: #f1f5f9; color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -424,7 +543,7 @@
     <!-- Header & Command Bar -->
     <div class="main-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
       <div>
-        <h1 style="margin:0 0 6px;">Admin Command Center</h1>
+        <h1 style="margin:0 0 6px;">Executive Command Center</h1>
         <div class="admin-header-status">
           <span class="admin-pulse-dot"></span>
           <span>SYSTEM ONLINE · MYSQL 8.0 POOL ACTIVE</span>
@@ -435,19 +554,112 @@
       </div>
     </div>
 
-    <!-- High-level Metric Stat Cards -->
-    <div class="stat-row">
-      <div class="stat-card"><div class="n" id="statUsers">—</div><div class="l">Total signups</div></div>
-      <div class="stat-card"><div class="n" id="statPaid">—</div><div class="l">Paid subscribers</div></div>
-      <div class="stat-card"><div class="n" id="statHalted">—</div><div class="l">Missed payments</div></div>
-      <div class="stat-card"><div class="n" id="statDomains">—</div><div class="l">Certs monitored (all users)</div></div>
-      <div class="stat-card"><div class="n" id="statGroups">—</div><div class="l">Groups created</div></div>
-      <div class="stat-card"><div class="n" id="statMrr">—</div><div class="l">Estimated MRR</div></div>
-      <div class="stat-card"><div class="n" id="statEmailsToday">—</div><div class="l">Emails sent today</div></div>
+    <!-- Executive SaaS Revenue & Business KPIs Grid -->
+    <div class="exec-kpi-grid">
+      <!-- MRR -->
+      <div class="exec-kpi-card highlight-green">
+        <div class="kpi-label">
+          <span>Monthly Revenue (MRR)</span>
+          <span style="color:#16a34a; font-weight:800;">● Active</span>
+        </div>
+        <div class="kpi-val" id="statMrr" style="color:#16a34a;">$0</div>
+        <div class="kpi-sub">
+          <span>ARR Run Rate: <strong id="statArr" style="color:var(--navy);">$0</strong></span>
+        </div>
+      </div>
+
+      <!-- ARPU -->
+      <div class="exec-kpi-card highlight-blue">
+        <div class="kpi-label">
+          <span>ARPU (Avg Rev / Paid User)</span>
+          <span style="color:#2563eb; font-weight:700;">Blended</span>
+        </div>
+        <div class="kpi-val" id="statArpu" style="color:#2563eb;">$0.00</div>
+        <div class="kpi-sub">
+          <span>Paying Accounts: <strong id="statActivePaidCount" style="color:var(--navy);">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Conversion Rate -->
+      <div class="exec-kpi-card highlight-purple">
+        <div class="kpi-label">
+          <span>Paid Conversion Rate</span>
+          <span style="color:#7c3aed; font-weight:700;">Free → Paid</span>
+        </div>
+        <div class="kpi-val" id="statConversionRate" style="color:#7c3aed;">0.0%</div>
+        <div class="kpi-sub">
+          <span><strong id="statPaid" style="color:var(--navy);">0</strong> paid of <strong id="statUsers" style="color:var(--navy);">0</strong> total</span>
+        </div>
+      </div>
+
+      <!-- Revenue At Risk (Halted) -->
+      <div class="exec-kpi-card highlight-coral">
+        <div class="kpi-label">
+          <span>Revenue At-Risk</span>
+          <span style="color:var(--coral); font-weight:700;">Halted / Overdue</span>
+        </div>
+        <div class="kpi-val" id="statAtRiskMrr" style="color:var(--coral);">$0</div>
+        <div class="kpi-sub">
+          <span><strong id="statHalted" style="color:var(--coral);">0</strong> accounts requiring attention</span>
+        </div>
+      </div>
+
+      <!-- Fleet Monitoring Capacity -->
+      <div class="exec-kpi-card highlight-cyan">
+        <div class="kpi-label">
+          <span>Monitored Domains</span>
+          <span style="color:#0891b2; font-weight:700;">Fleet Scale</span>
+        </div>
+        <div class="kpi-val" id="statDomains" style="color:#0891b2;">0</div>
+        <div class="kpi-sub">
+          <span>In <strong id="statGroups" style="color:var(--navy);">0</strong> organized groups</span>
+        </div>
+      </div>
+
+      <!-- Multi-Channel Delivery Activity -->
+      <div class="exec-kpi-card highlight-amber">
+        <div class="kpi-label">
+          <span>Alerts Dispatched Today</span>
+          <span style="color:#d97706; font-weight:700;">Live</span>
+        </div>
+        <div class="kpi-val" id="statEmailsToday" style="color:#d97706;">0</div>
+        <div class="kpi-sub">
+          <span>Multi-channel delivery active</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Plan breakdown -->
-    <div class="stat-row" id="planBreakdown" style="margin-top: -12px; margin-bottom: 24px;"></div>
+    <!-- Multi-Channel Adoption Summary Strip -->
+    <div class="admin-panel-card" style="padding:14px 20px; margin-bottom:20px; background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:0.5px;">Customer Alerting Channels Adoption:</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span class="channel-pill channel-pill-wa">🟢 WhatsApp</span>
+            <strong id="statChannelWaAdoption" style="color:var(--navy);">0 users (0 numbers)</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span class="channel-pill channel-pill-email">🔵 Email</span>
+            <strong id="statChannelEmailAdoption" style="color:var(--navy);">0 users (0 recipients)</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span class="channel-pill channel-pill-teams">🟣 Teams</span>
+            <strong id="statChannelTeamsAdoption" style="color:var(--navy);">0 users (0 channels)</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue & Subscribers by Plan Breakdown -->
+    <div class="admin-panel-card" style="padding:16px 20px; margin-bottom:24px;">
+      <div class="admin-panel-card-head">
+        <h4>💰 Subscription Tiers &amp; Revenue Breakdown</h4>
+        <span style="font-size:12px; color:var(--muted);">Sorted by tier pricing</span>
+      </div>
+      <div class="stat-row" id="planBreakdown" style="margin-bottom:0;"></div>
+    </div>
 
     <!-- Navigation Tabs -->
     <div class="admin-tabs-nav">
@@ -503,7 +715,7 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Name</th><th>Email (click for details)</th><th>Plan</th><th>Billing</th><th>Verified</th><th>Domains</th><th>Limit</th><th>Signed up</th><th>Actions</th>
+              <th>Customer</th><th>Tier &amp; MRR</th><th>Status</th><th>Domains Quota</th><th>Alerting Channels</th><th>Renewal / Period</th><th>Payment Reference</th><th>Joined</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="usersTableBody"></tbody>
@@ -920,11 +1132,11 @@
     <h2 style="margin:0 0 6px; font-size:22px; color:var(--navy);">SSL Alerts Admin</h2>
     <p style="margin:0; font-size:14px; color:var(--muted);">Sign in with administrator credentials</p>
   </div>
-  <div class="form-error" id="adminLoginError" style="display:none; margin-bottom:16px; color:#ef4444; font-size:13px;"></div>
+  <div class="form-error" id="adminLoginError" style="display:none; margin-bottom:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 14px; color:#b91c1c; font-size:13px; font-weight:500; line-height:1.4;"></div>
   <form id="adminLoginForm">
     <div class="field full">
       <label for="adminEmail">Admin Email</label>
-      <input type="email" id="adminEmail" value="admin@sslalerts.info" required style="width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; margin-top:4px;">
+      <input type="email" id="adminEmail" placeholder="e.g. rohithr9037@gmail.com" required style="width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; margin-top:4px;">
     </div>
     <div class="field full" style="margin-top:16px;">
       <label for="adminPassword">Password</label>
@@ -1474,6 +1686,11 @@ async function checkAdminAuth() {
     const res = await fetch('/api/admin/stats');
     if (res.status === 401 || res.status === 403) {
       showAdminLogin();
+      const errEl = document.getElementById('adminLoginError');
+      if (errEl && res.status === 403) {
+        errEl.textContent = 'Access Denied: You are not authorized to view the Admin Command Center.';
+        errEl.style.display = 'block';
+      }
       return;
     }
     const data = await res.json();
@@ -1504,7 +1721,7 @@ document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) 
   const errEl = document.getElementById('adminLoginError');
 
   btn.disabled = true;
-  btn.textContent = 'Signing in…';
+  btn.textContent = 'Authenticating…';
   errEl.style.display = 'none';
 
   try {
@@ -1515,6 +1732,12 @@ document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) 
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Login failed');
+
+    // Verify admin flag before toasting success
+    if (!data.user?.is_admin) {
+      throw new Error(`Access Denied: The account "${email}" does not have administrator privileges.`);
+    }
+
     toast('Welcome, Administrator!');
     await checkAdminAuth();
   } catch (err) {
@@ -1526,23 +1749,73 @@ document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) 
   }
 });
 
+const PLAN_PRICES = {
+  trial: 0,
+  micro: 2,
+  starter: 5,
+  growth: 10,
+  pro: 20,
+  agency: 50,
+  enterprise: 0,
+  unlimited: 0
+};
+
 function renderStats(data) {
-  document.getElementById('statUsers').textContent = data.totalUsers;
-  document.getElementById('statPaid').textContent = data.paidUsers;
-  document.getElementById('statHalted').textContent = data.haltedUsers;
-  document.getElementById('statDomains').textContent = data.totalDomains;
-  document.getElementById('statGroups').textContent = data.totalGroups;
-  document.getElementById('statMrr').textContent = `$${data.estimatedMrr}`;
-  document.getElementById('statEmailsToday').textContent = data.emailsSentToday;
+  // Executive SaaS & Growth Engine Metrics
+  if (document.getElementById('statUsers')) document.getElementById('statUsers').textContent = data.totalUsers ?? 0;
+  if (document.getElementById('statPaid')) document.getElementById('statPaid').textContent = data.paidUsers ?? 0;
+  if (document.getElementById('statActivePaidCount')) document.getElementById('statActivePaidCount').textContent = data.activePaidUsers ?? data.paidUsers ?? 0;
+  if (document.getElementById('statHalted')) document.getElementById('statHalted').textContent = data.haltedUsers ?? 0;
+  if (document.getElementById('statDomains')) document.getElementById('statDomains').textContent = data.totalDomains ?? 0;
+  if (document.getElementById('statGroups')) document.getElementById('statGroups').textContent = data.totalGroups ?? 0;
+  if (document.getElementById('statMrr')) document.getElementById('statMrr').textContent = `$${data.estimatedMrr ?? 0}`;
+  if (document.getElementById('statArr')) document.getElementById('statArr').textContent = `$${(data.estimatedArr ?? ((data.estimatedMrr || 0) * 12)).toLocaleString()}`;
+  if (document.getElementById('statArpu')) document.getElementById('statArpu').textContent = `$${data.arpu ?? '0.00'}`;
+  if (document.getElementById('statConversionRate')) document.getElementById('statConversionRate').textContent = `${data.conversionRate ?? '0.0'}%`;
+  if (document.getElementById('statAtRiskMrr')) document.getElementById('statAtRiskMrr').textContent = `$${data.atRiskRevenue ?? 0}`;
+  if (document.getElementById('statEmailsToday')) document.getElementById('statEmailsToday').textContent = data.emailsSentToday ?? 0;
 
-  document.getElementById('tabUsersBadge').textContent = data.totalUsers;
-  document.getElementById('tabCertsBadge').textContent = data.totalDomains;
+  // Channel Adoption Strip
+  if (data.channelAdoption) {
+    if (document.getElementById('statChannelWaAdoption')) {
+      document.getElementById('statChannelWaAdoption').textContent = `${data.channelAdoption.usersWithWa || 0} user(s) (${data.channelAdoption.totalWaRecipients || 0} numbers)`;
+    }
+    if (document.getElementById('statChannelEmailAdoption')) {
+      document.getElementById('statChannelEmailAdoption').textContent = `${data.channelAdoption.usersWithEmail || 0} user(s) (${data.channelAdoption.totalEmailRecipients || 0} emails)`;
+    }
+    if (document.getElementById('statChannelTeamsAdoption')) {
+      document.getElementById('statChannelTeamsAdoption').textContent = `${data.channelAdoption.usersWithTeams || 0} user(s) (${data.channelAdoption.totalTeamsRecipients || 0} webhooks)`;
+    }
+  }
 
-  document.getElementById('planBreakdown').innerHTML = Object.entries(data.byPlan).map(([plan, count]) => `
-    <div class="stat-card">
-      <div class="n">${count}</div>
-      <div class="l">${PLAN_LABELS[plan] || plan}</div>
-    </div>`).join('');
+  if (document.getElementById('tabUsersBadge')) document.getElementById('tabUsersBadge').textContent = data.totalUsers ?? 0;
+  if (document.getElementById('tabCertsBadge')) document.getElementById('tabCertsBadge').textContent = data.totalDomains ?? 0;
+
+  // Plan Breakdown Cards with Revenue
+  const planBreakdownEl = document.getElementById('planBreakdown');
+  if (planBreakdownEl && data.byPlan) {
+    planBreakdownEl.innerHTML = Object.entries(data.byPlan).map(([plan, count]) => {
+      const price = PLAN_PRICES[plan] ?? 0;
+      const rev = (data.planRevenue && data.planRevenue[plan] !== undefined)
+        ? data.planRevenue[plan]
+        : (plan === 'trial' ? 0 : count * price);
+      const isPaid = plan !== 'trial' && price > 0;
+      return `
+        <div class="stat-card" style="position:relative; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span class="plan-chip plan-chip-${plan}">${PLAN_LABELS[plan] || plan}</span>
+            <span style="font-size:11px; font-weight:700; color:${isPaid ? '#16a34a' : 'var(--muted)'};">
+              ${isPaid ? `$${price}/mo` : 'Free'}
+            </span>
+          </div>
+          <div class="n" style="font-size:24px; margin-top:6px;">${count} <span style="font-size:13px; font-weight:500; color:var(--muted); font-family:var(--sans);">subscribers</span></div>
+          <div class="l" style="font-size:12px; color:${rev > 0 ? '#16a34a' : 'var(--muted)'}; font-weight:600; margin-top:4px;">
+            ${rev > 0 ? `Contributing $${rev}/mo MRR` : (plan === 'trial' ? '30-day evaluation' : 'Custom SLA')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
 
   document.getElementById('emailsTableBody').innerHTML = (data.emailsByDay && data.emailsByDay.length)
     ? data.emailsByDay.map(row => `
@@ -1625,27 +1898,83 @@ function renderUsersList() {
   const startIndex = (usersCurrentPage - 1) * usersPageSize;
   const pageUsers = filteredUsers.slice(startIndex, startIndex + usersPageSize);
 
-  tbody.innerHTML = pageUsers.map(u => `
-    <tr>
-      <td><strong>${escapeHtml(u.name)}</strong></td>
-      <td>
-        <a href="#" class="admin-user-email-link" onclick="openUserModal(${u.id}); return false;" title="Inspect user details">
-          ${escapeHtml(u.email)} 🔍
-        </a>
-      </td>
-      <td><span class="plan-chip plan-chip-${u.plan}">${u.plan}</span></td>
-      <td>${u.billing_status === 'halted' ? '<span class="pill pill-critical">Halted</span>' : '<span class="pill pill-valid">Active</span>'}</td>
-      <td>${u.is_verified ? '<span class="pill pill-valid" style="font-size:11px;">✓ Verified</span>' : '<span class="pill pill-warning" style="font-size:11px;">Unverified</span>'}</td>
-      <td><strong>${u.domain_count}</strong></td>
-      <td>${formatLimit(u.domain_limit, u.plan)}</td>
-      <td>${new Date(u.created_at + 'Z').toLocaleDateString()}</td>
-      <td>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="openEmailModal(${u.id})" title="Send email from support@sslalerts.info">✉️ Email</button>
-        </div>
-      </td>
-    </tr>`).join('');
+  tbody.innerHTML = pageUsers.map(u => {
+    const waCount = Number(u.wa_recipient_count || 0);
+    const emailCount = Number(u.email_recipient_count || 0);
+    const teamsCount = Number(u.teams_recipient_count || 0);
+
+    const price = (PLAN_PRICES[u.plan] || 0);
+    const mrrText = (u.plan !== 'trial' && u.billing_status === 'active' && price > 0)
+      ? `<div style="font-size:11px; color:#16a34a; font-weight:700; margin-top:2px;">+$${price}/mo MRR</div>`
+      : (u.plan === 'trial' ? '<div style="font-size:11px; color:var(--muted); margin-top:2px;">Free Trial</div>' : '');
+
+    const limitNum = Number(u.domain_limit) || 1;
+    const countNum = Number(u.domain_count) || 0;
+    const domainPct = Math.min(100, Math.round((countNum / limitNum) * 100));
+
+    // Channels badges
+    let channelsHtml = '';
+    if (waCount > 0) {
+      channelsHtml += `<span class="channel-pill channel-pill-wa" title="${waCount} WhatsApp recipient(s)">🟢 WA: ${waCount}</span>`;
+    }
+    if (emailCount > 0) {
+      channelsHtml += `<span class="channel-pill channel-pill-email" title="${emailCount} Notification email(s)">🔵 Email: ${emailCount}</span>`;
+    }
+    if (teamsCount > 0) {
+      channelsHtml += `<span class="channel-pill channel-pill-teams" title="${teamsCount} Microsoft Teams webhook(s)">🟣 Teams: ${teamsCount}</span>`;
+    }
+    if (!channelsHtml) {
+      channelsHtml = `<span class="channel-pill channel-pill-none" style="font-size:11px;">None configured</span>`;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:700; color:var(--navy); font-size:14px;">${escapeHtml(u.name)}</div>
+          <a href="#" class="admin-user-email-link" onclick="openUserModal(${u.id}); return false;" title="Inspect customer account" style="font-size:12px;">
+            ${escapeHtml(u.email)} 🔍
+          </a>
+        </td>
+        <td>
+          <span class="plan-chip plan-chip-${u.plan}">${u.plan}</span>
+          ${mrrText}
+        </td>
+        <td>
+          ${u.billing_status === 'halted' 
+            ? '<span class="pill pill-critical" style="font-size:11px;">Halted</span>' 
+            : '<span class="pill pill-valid" style="font-size:11px;">Active</span>'}
+          <div style="margin-top:3px;">
+            ${u.is_verified 
+              ? '<span style="font-size:10px; color:#16a34a; font-weight:700;">✓ Verified</span>' 
+              : '<span style="font-size:10px; color:#d97706; font-weight:600;">⚠ Unverified</span>'}
+          </div>
+        </td>
+        <td>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:3px;">
+            <strong>${countNum}</strong>
+            <span style="color:var(--muted); font-size:11px;">/ ${formatLimit(u.domain_limit, u.plan)}</span>
+          </div>
+          <div style="width:100%; min-width:80px; height:5px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+            <div style="width:${domainPct}%; height:100%; background:${domainPct > 90 ? 'var(--coral)' : 'var(--teal)'};"></div>
+          </div>
+        </td>
+        <td>${channelsHtml}</td>
+        <td>
+          <div style="font-size:12px; font-weight:500;">${u.current_period_end ? new Date(u.current_period_end).toLocaleDateString() : '—'}</div>
+        </td>
+        <td>
+          <code style="font-size:11px; color:#475569; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(u.payment_reference || '—')}</code>
+        </td>
+        <td style="font-size:12px; color:var(--muted);">${new Date(u.created_at + 'Z').toLocaleDateString()}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openEmailModal(${u.id})" title="Send email to user">✉️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   renderPagination('usersPagination', usersCurrentPage, totalPages, filteredUsers.length, usersPageSize, 'goToUsersPage');
 }
@@ -2089,11 +2418,25 @@ async function openUserModal(userId) {
           </tr>`).join('')
       : `<tr><td colspan="5" style="color:var(--muted);">No domains currently monitored.</td></tr>`;
 
-    // Notification emails
-    document.getElementById('modalEmailListCount').textContent = data.notificationEmails.length;
-    document.getElementById('modalNotificationEmailsList').innerHTML = data.notificationEmails.length
-      ? data.notificationEmails.map(e => `<div>📧 <strong>${escapeHtml(e.email)}</strong> <span style="color:var(--muted); font-size:11px;">(added ${new Date(e.created_at + 'Z').toLocaleDateString()})</span></div>`).join('')
-      : `<span style="color:var(--muted);">No extra notification recipients configured (defaults to primary account email).</span>`;
+    // Notification recipients & channels
+    document.getElementById('modalEmailListCount').textContent = (data.notificationEmails?.length || 0) + (data.whatsappRecipients?.length || 0) + (data.teamsConnections?.length || 0);
+    let channelsHtml = '';
+    if (data.notificationEmails && data.notificationEmails.length) {
+      channelsHtml += `<div style="margin-bottom:6px; font-weight:700; color:var(--navy); font-size:12px;">Alert Emails:</div>` +
+        data.notificationEmails.map(e => `<div style="margin-bottom:3px;">🔵 <strong>${escapeHtml(e.email)}</strong> <span style="color:var(--muted); font-size:11px;">(added ${new Date(e.created_at + 'Z').toLocaleDateString()})</span></div>`).join('');
+    }
+    if (data.whatsappRecipients && data.whatsappRecipients.length) {
+      channelsHtml += `<div style="margin-top:10px; margin-bottom:6px; font-weight:700; color:#16a34a; font-size:12px;">WhatsApp Alert Numbers:</div>` +
+        data.whatsappRecipients.map(w => `<div style="margin-bottom:3px;">🟢 <strong>${escapeHtml(w.label)}</strong> (${escapeHtml(w.phone_number)}) <span class="badge-pill" style="font-size:10px; background:${w.is_active ? '#dcfce7' : '#fee2e2'}; color:${w.is_active ? '#15803d' : '#991b1b'};">${w.is_active ? 'Active' : 'Inactive'}</span></div>`).join('');
+    }
+    if (data.teamsConnections && data.teamsConnections.length) {
+      channelsHtml += `<div style="margin-top:10px; margin-bottom:6px; font-weight:700; color:#7c3aed; font-size:12px;">Microsoft Teams Channels:</div>` +
+        data.teamsConnections.map(t => `<div style="margin-bottom:3px;">🟣 <strong>${escapeHtml(t.destination_name)}</strong> (${escapeHtml(t.destination_type)}) <span class="badge-pill" style="font-size:10px; background:${t.is_active ? '#ede9fe' : '#fee2e2'}; color:${t.is_active ? '#6d28d9' : '#991b1b'};">${t.is_active ? 'Active' : 'Inactive'}</span></div>`).join('');
+    }
+    if (!channelsHtml) {
+      channelsHtml = `<span style="color:var(--muted);">No extra notification recipients configured (defaults to primary account email: ${escapeHtml(u.email)}).</span>`;
+    }
+    document.getElementById('modalNotificationEmailsList').innerHTML = channelsHtml;
 
     // Generated certs
     document.getElementById('modalGenCertListCount').textContent = data.generatedCertificates.length;
