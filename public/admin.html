@@ -391,11 +391,11 @@ html, body {
 }
 
 .app-shell {
-  display: grid !important;
-  grid-template-columns: 240px minmax(0, 1fr) !important;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
-  width: 100% !important;
-  max-width: 100% !important;
+  width: 100%;
+  max-width: 100%;
 }
 
 .main {
@@ -1681,6 +1681,17 @@ let analyticsPreset = '7d';
 let analyticsStartDate = '';
 let analyticsEndDate = '';
 
+function formatDateTime(val) {
+  if (!val) return '—';
+  try {
+    const s = String(val).trim().replace(' ', 'T');
+    const d = new Date(s.endsWith('Z') ? s : s + 'Z');
+    return isNaN(d.getTime()) ? val : d.toLocaleDateString();
+  } catch (_) {
+    return val;
+  }
+}
+
 async function checkAdminAuth() {
   try {
     const res = await fetch('/api/admin/stats');
@@ -1696,21 +1707,44 @@ async function checkAdminAuth() {
     const data = await res.json();
     showAdminDashboard(data);
   } catch (err) {
+    console.error('checkAdminAuth error:', err);
     showAdminLogin();
   }
 }
 
 function showAdminLogin() {
-  document.getElementById('adminShell').style.display = 'none';
-  document.getElementById('adminLoginContainer').style.display = 'block';
+  const shell = document.getElementById('adminShell');
+  const login = document.getElementById('adminLoginContainer');
+  if (shell) {
+    shell.style.display = 'none';
+    shell.style.setProperty('display', 'none', 'important');
+  }
+  if (login) login.style.display = 'block';
 }
 
 function showAdminDashboard(data) {
-  document.getElementById('adminLoginContainer').style.display = 'none';
-  document.getElementById('adminShell').style.display = 'grid';
-  renderStats(data);
-  loadGlobalCertificates();
-  loadGlobalAlerts();
+  const login = document.getElementById('adminLoginContainer');
+  const shell = document.getElementById('adminShell');
+  if (login) login.style.display = 'none';
+  if (shell) {
+    shell.style.display = 'grid';
+    shell.style.setProperty('display', 'grid', 'important');
+  }
+  try {
+    renderStats(data);
+  } catch (e) {
+    console.error('renderStats error:', e);
+  }
+  try {
+    loadGlobalCertificates();
+  } catch (e) {
+    console.error('loadGlobalCertificates error:', e);
+  }
+  try {
+    loadGlobalAlerts();
+  } catch (e) {
+    console.error('loadGlobalAlerts error:', e);
+  }
 }
 
 document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) => {
@@ -1817,24 +1851,19 @@ function renderStats(data) {
     }).join('');
   }
 
-  document.getElementById('emailsTableBody').innerHTML = (data.emailsByDay && data.emailsByDay.length)
-    ? data.emailsByDay.map(row => `
-        <tr>
-          <td>${new Date(row.day + 'T00:00:00Z').toLocaleDateString()}</td>
-          <td><strong>${row.n}</strong> alert email(s)</td>
-        </tr>`).join('')
-    : `<tr><td colspan="2" style="color:var(--muted);">No alert emails sent in the last 14 days.</td></tr>`;
-
-  document.getElementById('staleTableBody').innerHTML = (data.staleUnacknowledged && data.staleUnacknowledged.length)
-    ? data.staleUnacknowledged.map(d => `
-        <tr>
-          <td>${escapeHtml(d.hostname)}</td>
-          <td>${escapeHtml(d.user_name)} (${escapeHtml(d.user_email)})</td>
-          <td><span class="pill pill-${d.status}">${d.status}</span></td>
-          <td>${d.days_left ?? '—'}</td>
-          <td>${daysSince(d.status_since)}</td>
-        </tr>`).join('')
-    : `<tr><td colspan="5" style="color:var(--muted);">Nothing unacknowledged for more than a day — all systems healthy.</td></tr>`;
+  const staleTbody = document.getElementById('staleTableBody');
+  if (staleTbody) {
+    staleTbody.innerHTML = (data.staleUnacknowledged && data.staleUnacknowledged.length)
+      ? data.staleUnacknowledged.map(d => `
+          <tr>
+            <td>${escapeHtml(d.hostname)}</td>
+            <td>${escapeHtml(d.user_name)} (${escapeHtml(d.user_email)})</td>
+            <td><span class="pill pill-${d.status}">${d.status}</span></td>
+            <td>${d.days_left ?? '—'}</td>
+            <td>${daysSince(d.status_since)}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="5" style="color:var(--muted);">Nothing unacknowledged for more than a day — all systems healthy.</td></tr>`;
+  }
 
   allUsers = data.users || [];
   applyUserFilters();
@@ -1960,12 +1989,12 @@ function renderUsersList() {
         </td>
         <td>${channelsHtml}</td>
         <td>
-          <div style="font-size:12px; font-weight:500;">${u.current_period_end ? new Date(u.current_period_end).toLocaleDateString() : '—'}</div>
+          <div style="font-size:12px; font-weight:500;">${formatDateTime(u.current_period_end)}</div>
         </td>
         <td>
           <code style="font-size:11px; color:#475569; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(u.payment_reference || '—')}</code>
         </td>
-        <td style="font-size:12px; color:var(--muted);">${new Date(u.created_at + 'Z').toLocaleDateString()}</td>
+        <td style="font-size:12px; color:var(--muted);">${formatDateTime(u.created_at)}</td>
         <td>
           <div style="display:flex; align-items:center; gap:6px;">
             <button type="button" class="btn btn-ghost btn-sm" onclick="openUserModal(${u.id})">Inspect</button>
