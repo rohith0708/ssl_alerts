@@ -91,8 +91,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Microsoft Identity Association for Azure Publisher Domain Verification
+app.get('/.well-known/microsoft-identity-association.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.join(__dirname, 'public', '.well-known', 'microsoft-identity-association.json'));
+});
+
 // Serve static assets with automatic .html extension resolution for clean URLs
 app.use(express.static(path.join(__dirname, 'public'), {
+  dotfiles: 'allow',
   extensions: ['html']
 }));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
