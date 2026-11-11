@@ -547,42 +547,213 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- TAB 3: ALERT LOGS & DELIVERY               -->
+    <!-- TAB 3: ALERT LOGS & CHANNEL ANALYTICS      -->
     <!-- ========================================== -->
     <div class="admin-tab-content" id="tabAlerts">
-      <div class="admin-control-bar">
-        <div class="admin-filter-group">
-          <button type="button" class="filter-chip active" onclick="setAlertStatusFilter('all', this)">All Severities</button>
-          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('warning', this)">Warning</button>
-          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('critical', this)">Critical</button>
-          <button type="button" class="filter-chip" onclick="setAlertStatusFilter('expired', this)">Expired</button>
-        </div>
-        <div class="admin-search-wrapper">
-          <input type="text" id="alertSearchInput" class="admin-search-input" placeholder="🔍 Search by domain or recipient…">
+      <!-- Date Filter Control Bar -->
+      <div class="admin-panel-card" style="margin-bottom:20px; padding:18px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:0.5px; margin-right:4px;">Date Filter:</span>
+            <button type="button" class="filter-chip" data-preset="today" onclick="setAnalyticsPreset('today', this)">Today</button>
+            <button type="button" class="filter-chip" data-preset="yesterday" onclick="setAnalyticsPreset('yesterday', this)">Yesterday</button>
+            <button type="button" class="filter-chip active" data-preset="7d" onclick="setAnalyticsPreset('7d', this)">Last 7 Days</button>
+            <button type="button" class="filter-chip" data-preset="30d" onclick="setAnalyticsPreset('30d', this)">Last 30 Days</button>
+            <button type="button" class="filter-chip" data-preset="month" onclick="setAnalyticsPreset('month', this)">This Month</button>
+          </div>
+          <form onsubmit="applyCustomAnalyticsDate(event)" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <label style="font-size:12px; color:var(--muted); font-weight:600;">From:</label>
+            <input type="date" id="analyticsStartDate" style="padding:6px 10px; border:1px solid var(--line); border-radius:6px; font-size:12px; background:#fff;">
+            <label style="font-size:12px; color:var(--muted); font-weight:600;">To:</label>
+            <input type="date" id="analyticsEndDate" style="padding:6px 10px; border:1px solid var(--line); border-radius:6px; font-size:12px; background:#fff;">
+            <button type="submit" class="btn btn-primary btn-sm" style="padding:6px 12px; font-size:12px;">Apply Filter</button>
+          </form>
         </div>
       </div>
 
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Timestamp</th><th>Domain</th><th>Recipient</th><th>Alert Severity</th>
-            </tr>
-          </thead>
-          <tbody id="globalAlertsTableBody"></tbody>
-        </table>
-      </div>
-      <div class="pagination-bar" id="globalAlertsPagination"></div>
+      <!-- Channel Analytics Cards Grid -->
+      <div class="health-grid" style="margin-bottom:24px;">
+        <!-- WhatsApp Card -->
+        <div class="health-card" style="border-top:3px solid #16a34a;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#16a34a; font-weight:700;">🟢 WhatsApp</div>
+            <span class="badge-pill" style="background:#dcfce7; color:#15803d; font-size:11px;">Evolution API</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:8px;">
+            <div>
+              <div class="value" id="statWaRecipientsAdded" style="color:#16a34a;">—</div>
+              <div class="desc">Recipients Added in Range</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="value" id="statWaAlertsSent" style="font-size:22px; color:var(--navy);">—</div>
+              <div class="desc">Alerts Sent in Range</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;">
+            <span>All-time configured: <strong id="statWaTotalRecipients" style="color:var(--navy);">—</strong></span>
+            <span>All-time sent: <strong id="statWaTotalAlerts" style="color:var(--navy);">—</strong></span>
+          </div>
+        </div>
 
-      <!-- Historical Chart Section -->
-      <div class="section-head" style="margin:24px 0 16px;">
-        <h3 style="font-size:16px;">Alert Emails Dispatched — Last 14 Days</h3>
+        <!-- Email Card -->
+        <div class="health-card" style="border-top:3px solid #2563eb;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#2563eb; font-weight:700;">🔵 Alert Emails</div>
+            <span class="badge-pill" style="background:#dbeafe; color:#1d4ed8; font-size:11px;">SMTP / Mailer</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:8px;">
+            <div>
+              <div class="value" id="statEmailRecipientsAdded" style="color:#2563eb;">—</div>
+              <div class="desc">Emails Added in Range</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="value" id="statEmailAlertsSent" style="font-size:22px; color:var(--navy);">—</div>
+              <div class="desc">Alerts Sent in Range</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;">
+            <span>All-time configured: <strong id="statEmailTotalRecipients" style="color:var(--navy);">—</strong></span>
+            <span>All-time sent: <strong id="statEmailTotalAlerts" style="color:var(--navy);">—</strong></span>
+          </div>
+        </div>
+
+        <!-- Teams Card -->
+        <div class="health-card" style="border-top:3px solid #7c3aed;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#7c3aed; font-weight:700;">🟣 Microsoft Teams</div>
+            <span class="badge-pill" style="background:#ede9fe; color:#6d28d9; font-size:11px;">Webhook / Graph</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:8px;">
+            <div>
+              <div class="value" id="statTeamsRecipientsAdded" style="color:#7c3aed;">—</div>
+              <div class="desc">Channels Added in Range</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="value" id="statTeamsAlertsSent" style="font-size:22px; color:var(--navy);">—</div>
+              <div class="desc">Alerts Sent in Range</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;">
+            <span>All-time configured: <strong id="statTeamsTotalRecipients" style="color:var(--navy);">—</strong></span>
+            <span>All-time sent: <strong id="statTeamsTotalAlerts" style="color:var(--navy);">—</strong></span>
+          </div>
+        </div>
+
+        <!-- Combined Total Card -->
+        <div class="health-card" style="border-top:3px solid var(--navy);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:var(--navy); font-weight:700;">📊 Range Totals</div>
+            <span class="badge-pill" id="statRangeLabel" style="background:#f1f5f9; color:var(--navy); font-size:11px;">Last 7 Days</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:8px;">
+            <div>
+              <div class="value" id="statTotalRecipientsAdded" style="color:var(--navy);">—</div>
+              <div class="desc">Total New Recipients</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="value" id="statTotalAlertsSent" style="font-size:22px; color:#16a34a;">—</div>
+              <div class="desc">Total Alerts Dispatched</div>
+            </div>
+          </div>
+          <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); display:flex; justify-content:space-between;">
+            <span>Active channels: <strong>3 Available</strong></span>
+            <span>Auto-sweep: <strong style="color:#16a34a;">● Running</strong></span>
+          </div>
+        </div>
       </div>
-      <div class="admin-table-wrap" style="max-height:220px; overflow-y:auto;">
-        <table class="admin-table">
-          <thead><tr><th>Date</th><th>Alert Emails Sent</th></tr></thead>
-          <tbody id="emailsTableBody"></tbody>
-        </table>
+
+      <!-- Daily Breakdown Table -->
+      <div class="admin-panel-card" style="margin-bottom:24px;">
+        <div class="admin-panel-card-head">
+          <h4>📅 Daily Channel Activity Breakdown</h4>
+          <span style="font-size:12px; color:var(--muted);" id="dailyBreakdownRangeText">Activity by date</span>
+        </div>
+        <div class="admin-table-wrap" style="max-height:280px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>🟢 WhatsApp (Added / Sent)</th>
+                <th>🔵 Email (Added / Sent)</th>
+                <th>🟣 Teams (Added / Sent)</th>
+                <th>Total Added</th>
+                <th>Total Alerts Dispatched</th>
+              </tr>
+            </thead>
+            <tbody id="channelDailyTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted);">Loading channel breakdown…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recipients Added in Range -->
+      <div class="admin-panel-card" style="margin-bottom:24px;">
+        <div class="admin-panel-card-head">
+          <h4>👥 Alert Recipients Added in Selected Range</h4>
+          <span class="badge-pill" id="recentRecipientsCountBadge">0</span>
+        </div>
+        <div class="admin-table-wrap" style="max-height:280px; overflow-y:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>Recipient / Destination</th>
+                <th>Account Owner</th>
+                <th>Date Added</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recentRecipientsTableBody">
+              <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--muted);">Loading recipients…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Dispatched Alerts Log Table -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head">
+          <h4>📜 Dispatched Alert Records</h4>
+          <div class="admin-filter-group">
+            <span style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Channel:</span>
+            <button type="button" class="filter-chip active" onclick="setAlertChannelFilter('all', this)">All</button>
+            <button type="button" class="filter-chip" onclick="setAlertChannelFilter('whatsapp', this)">🟢 WhatsApp</button>
+            <button type="button" class="filter-chip" onclick="setAlertChannelFilter('email', this)">🔵 Email</button>
+            <button type="button" class="filter-chip" onclick="setAlertChannelFilter('teams', this)">🟣 Teams</button>
+          </div>
+        </div>
+
+        <div class="admin-control-bar" style="margin-top:12px;">
+          <div class="admin-filter-group">
+            <span style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;">Severity:</span>
+            <button type="button" class="filter-chip active" onclick="setAlertStatusFilter('all', this)">All</button>
+            <button type="button" class="filter-chip" onclick="setAlertStatusFilter('warning', this)">Warning</button>
+            <button type="button" class="filter-chip" onclick="setAlertStatusFilter('critical', this)">Critical</button>
+            <button type="button" class="filter-chip" onclick="setAlertStatusFilter('expired', this)">Expired</button>
+            <button type="button" class="filter-chip" onclick="setAlertStatusFilter('test', this)">Test</button>
+          </div>
+          <div class="admin-search-wrapper">
+            <input type="text" id="alertSearchInput" class="admin-search-input" placeholder="🔍 Search domain, recipient, or user…">
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Channel</th>
+                <th>Recipient / Target</th>
+                <th>Domain</th>
+                <th>Account Owner</th>
+                <th>Severity</th>
+              </tr>
+            </thead>
+            <tbody id="globalAlertsTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="globalAlertsPagination"></div>
       </div>
     </div>
 
@@ -1086,7 +1257,10 @@ function switchAdminTab(tabName) {
   if (target) target.classList.add('active');
 
   if (tabName === 'certificates') loadGlobalCertificates();
-  if (tabName === 'alerts') loadGlobalAlerts();
+  if (tabName === 'alerts') {
+    loadChannelAnalytics();
+    loadGlobalAlerts();
+  }
   if (tabName === 'health') loadSystemHealth();
   if (tabName === 'whatsapp') loadAdminWhatsAppStatus();
 }
@@ -1287,9 +1461,13 @@ let certsCurrentPage = 1;
 let certsFilterStatus = 'all';
 let currentCertsList = [];
 
-// Global Alerts State
+// Global Alerts & Analytics State
 let alertsCurrentPage = 1;
 let alertsFilterStatus = 'all';
+let alertsFilterChannel = 'all';
+let analyticsPreset = '7d';
+let analyticsStartDate = '';
+let analyticsEndDate = '';
 
 async function checkAdminAuth() {
   try {
@@ -1562,49 +1740,242 @@ function exportCertsCsv() {
   downloadBlob(csv, 'sslalerts_certificates.csv', 'text/csv;charset=utf-8;');
 }
 
+// ==========================================
+// Multi-Channel Analytics (WhatsApp, Email, Teams)
+// ==========================================
+
+function setAnalyticsPreset(preset, btn) {
+  analyticsPreset = preset;
+  analyticsStartDate = '';
+  analyticsEndDate = '';
+  const startInput = document.getElementById('analyticsStartDate');
+  const endInput = document.getElementById('analyticsEndDate');
+  if (startInput) startInput.value = '';
+  if (endInput) endInput.value = '';
+
+  document.querySelectorAll('#tabAlerts [data-preset]').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  loadChannelAnalytics();
+  alertsCurrentPage = 1;
+  loadGlobalAlerts();
+}
+
+function applyCustomAnalyticsDate(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const startVal = document.getElementById('analyticsStartDate')?.value;
+  const endVal = document.getElementById('analyticsEndDate')?.value;
+
+  if (!startVal || !endVal) {
+    alert('Please select both a start date and an end date.');
+    return;
+  }
+
+  analyticsPreset = 'custom';
+  analyticsStartDate = startVal;
+  analyticsEndDate = endVal;
+
+  document.querySelectorAll('#tabAlerts [data-preset]').forEach(b => b.classList.remove('active'));
+
+  loadChannelAnalytics();
+  alertsCurrentPage = 1;
+  loadGlobalAlerts();
+}
+
+async function loadChannelAnalytics() {
+  let url = `/api/admin/channel-analytics?preset=${encodeURIComponent(analyticsPreset)}`;
+  if (analyticsPreset === 'custom' && analyticsStartDate && analyticsEndDate) {
+    url += `&startDate=${encodeURIComponent(analyticsStartDate)}&endDate=${encodeURIComponent(analyticsEndDate)}`;
+  }
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load channel analytics');
+
+    // Update range labels
+    const rangeText = `${data.range.startDate} to ${data.range.endDate}`;
+    const rangeLabel = document.getElementById('statRangeLabel');
+    if (rangeLabel) rangeLabel.textContent = analyticsPreset === '7d' ? 'Last 7 Days' : (analyticsPreset === '30d' ? 'Last 30 Days' : (analyticsPreset === 'today' ? 'Today' : rangeText));
+    const dailyRangeText = document.getElementById('dailyBreakdownRangeText');
+    if (dailyRangeText) dailyRangeText.textContent = `Showing activity from ${rangeText}`;
+
+    // Update WhatsApp Summary
+    document.getElementById('statWaRecipientsAdded').textContent = data.summary.whatsapp.recipientsAdded;
+    document.getElementById('statWaAlertsSent').textContent = data.summary.whatsapp.alertsSent;
+    document.getElementById('statWaTotalRecipients').textContent = data.summary.whatsapp.totalRecipients;
+    document.getElementById('statWaTotalAlerts').textContent = data.summary.whatsapp.totalAlertsSent;
+
+    // Update Email Summary
+    document.getElementById('statEmailRecipientsAdded').textContent = data.summary.email.recipientsAdded;
+    document.getElementById('statEmailAlertsSent').textContent = data.summary.email.alertsSent;
+    document.getElementById('statEmailTotalRecipients').textContent = data.summary.email.totalRecipients;
+    document.getElementById('statEmailTotalAlerts').textContent = data.summary.email.totalAlertsSent;
+
+    // Update Teams Summary
+    document.getElementById('statTeamsRecipientsAdded').textContent = data.summary.teams.recipientsAdded;
+    document.getElementById('statTeamsAlertsSent').textContent = data.summary.teams.alertsSent;
+    document.getElementById('statTeamsTotalRecipients').textContent = data.summary.teams.totalRecipients;
+    document.getElementById('statTeamsTotalAlerts').textContent = data.summary.teams.totalAlertsSent;
+
+    // Update Totals Card
+    document.getElementById('statTotalRecipientsAdded').textContent = data.summary.combined.totalRecipientsAdded;
+    document.getElementById('statTotalAlertsSent').textContent = data.summary.combined.totalAlertsSent;
+
+    // Render Daily Breakdown Table
+    const dailyTbody = document.getElementById('channelDailyTableBody');
+    if (dailyTbody) {
+      if (!data.dailyBreakdown || data.dailyBreakdown.length === 0) {
+        dailyTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted);">No alert or recipient activity recorded in this date range.</td></tr>`;
+      } else {
+        dailyTbody.innerHTML = data.dailyBreakdown.map(d => `
+          <tr>
+            <td style="font-weight:600; color:var(--navy);">${d.date}</td>
+            <td>
+              <span style="color:#16a34a; font-weight:600;">+${d.whatsappAdded}</span> added · 
+              <strong>${d.whatsappAlerts}</strong> alerts
+            </td>
+            <td>
+              <span style="color:#2563eb; font-weight:600;">+${d.emailAdded}</span> added · 
+              <strong>${d.emailAlerts}</strong> alerts
+            </td>
+            <td>
+              <span style="color:#7c3aed; font-weight:600;">+${d.teamsAdded}</span> added · 
+              <strong>${d.teamsAlerts}</strong> alerts
+            </td>
+            <td style="font-weight:700; color:var(--navy);">+${d.totalAdded}</td>
+            <td style="font-weight:700; color:#16a34a;">${d.totalAlerts}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // Render Recent Recipients Added
+    const recBadge = document.getElementById('recentRecipientsCountBadge');
+    if (recBadge) recBadge.textContent = data.recentRecipients ? data.recentRecipients.length : 0;
+
+    const recTbody = document.getElementById('recentRecipientsTableBody');
+    if (recTbody) {
+      if (!data.recentRecipients || data.recentRecipients.length === 0) {
+        recTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--muted);">No new recipients added during this date range.</td></tr>`;
+      } else {
+        recTbody.innerHTML = data.recentRecipients.map(r => {
+          let chBadge = '<span class="badge-pill" style="background:#dbeafe; color:#1d4ed8;">🔵 Email</span>';
+          if (r.channel === 'whatsapp') {
+            chBadge = '<span class="badge-pill" style="background:#dcfce7; color:#15803d;">🟢 WhatsApp</span>';
+          } else if (r.channel === 'teams') {
+            chBadge = '<span class="badge-pill" style="background:#ede9fe; color:#6d28d9;">🟣 Teams</span>';
+          }
+
+          const statusBadge = r.is_active
+            ? '<span class="pill pill-valid" style="font-size:11px;">Active</span>'
+            : '<span class="pill" style="background:#f1f5f9; color:#64748b; font-size:11px;">Paused</span>';
+
+          return `
+            <tr>
+              <td>${chBadge}</td>
+              <td style="font-family:monospace; font-weight:600; color:var(--navy);">${escapeHtml(r.target)}</td>
+              <td>
+                <a href="#" class="admin-user-email-link" onclick="openUserModal(${r.user_id}); return false;">
+                  ${escapeHtml(r.user_name || '—')} (${escapeHtml(r.user_email || '—')})
+                </a>
+              </td>
+              <td>${new Date(r.created_at).toLocaleString()}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load channel analytics:', err);
+  }
+}
+
 // Global Alerts Tab Logic
 async function loadGlobalAlerts() {
   const tbody = document.getElementById('globalAlertsTableBody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:24px; color:var(--muted);">Loading alerts log…</td></tr>';
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">Loading alerts log…</td></tr>';
 
   const q = encodeURIComponent((document.getElementById('alertSearchInput')?.value || '').trim());
   const status = encodeURIComponent(alertsFilterStatus);
+  const channel = encodeURIComponent(alertsFilterChannel);
+
+  let url = `/api/admin/alerts?page=${alertsCurrentPage}&limit=10&q=${q}&status=${status}&channel=${channel}`;
+  if (analyticsPreset === 'custom' && analyticsStartDate && analyticsEndDate) {
+    url += `&startDate=${encodeURIComponent(analyticsStartDate)}&endDate=${encodeURIComponent(analyticsEndDate)}`;
+  } else if (analyticsPreset === 'today') {
+    const today = new Date().toISOString().slice(0, 10);
+    url += `&startDate=${today}&endDate=${today}`;
+  } else if (analyticsPreset === 'yesterday') {
+    const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    url += `&startDate=${y}&endDate=${y}`;
+  } else if (analyticsPreset === '7d') {
+    const s = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
+    const e = new Date().toISOString().slice(0, 10);
+    url += `&startDate=${s}&endDate=${e}`;
+  } else if (analyticsPreset === '30d') {
+    const s = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+    const e = new Date().toISOString().slice(0, 10);
+    url += `&startDate=${s}&endDate=${e}`;
+  }
 
   try {
-    const res = await fetch(`/api/admin/alerts?page=${alertsCurrentPage}&limit=10&q=${q}&status=${status}`);
+    const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to load alerts');
 
-    document.getElementById('tabAlertsBadge').textContent = data.total;
+    const badgeEl = document.getElementById('tabAlertsBadge');
+    if (badgeEl) badgeEl.textContent = data.total;
 
     if (!data.alerts || data.alerts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:32px; color:var(--muted);">No alerts dispatched matching your query.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--muted);">No alerts dispatched matching your query and date filter.</td></tr>';
       document.getElementById('globalAlertsPagination').innerHTML = '';
       return;
     }
 
-    tbody.innerHTML = data.alerts.map(a => `
-      <tr>
-        <td>${new Date(a.sent_at + 'Z').toLocaleString()}</td>
-        <td><strong>${escapeHtml(a.hostname || '—')}</strong></td>
-        <td>
-          <a href="#" class="admin-user-email-link" onclick="openUserModal(${a.user_id}); return false;">
-            ${escapeHtml(a.user_name)} (${escapeHtml(a.user_email)})
-          </a>
-        </td>
-        <td><span class="pill pill-${a.status}">${a.status}</span></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = data.alerts.map(a => {
+      let chBadge = '<span class="badge-pill" style="background:#dbeafe; color:#1d4ed8; font-size:11px;">🔵 Email</span>';
+      if (a.channel === 'whatsapp') {
+        chBadge = '<span class="badge-pill" style="background:#dcfce7; color:#15803d; font-size:11px;">🟢 WhatsApp</span>';
+      } else if (a.channel === 'teams') {
+        chBadge = '<span class="badge-pill" style="background:#ede9fe; color:#6d28d9; font-size:11px;">🟣 Teams</span>';
+      }
+
+      return `
+        <tr>
+          <td>${new Date(a.sent_at).toLocaleString()}</td>
+          <td>${chBadge}</td>
+          <td style="font-family:monospace; color:var(--navy);">${escapeHtml(a.recipient || '—')}</td>
+          <td><strong>${escapeHtml(a.hostname || '—')}</strong></td>
+          <td>
+            <a href="#" class="admin-user-email-link" onclick="openUserModal(${a.user_id}); return false;">
+              ${escapeHtml(a.user_name || '—')} (${escapeHtml(a.user_email || '—')})
+            </a>
+          </td>
+          <td><span class="pill pill-${a.status}">${a.status}</span></td>
+        </tr>
+      `;
+    }).join('');
 
     renderPagination('globalAlertsPagination', data.page, data.totalPages, data.total, 10, 'goToAlertsPage');
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" style="color:#ef4444; padding:20px; text-align:center;">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444; padding:20px; text-align:center;">${err.message}</td></tr>`;
   }
+}
+
+function setAlertChannelFilter(channel, btn) {
+  alertsFilterChannel = channel;
+  document.querySelectorAll('#tabAlerts .admin-panel-card-head .filter-chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  alertsCurrentPage = 1;
+  loadGlobalAlerts();
 }
 
 function setAlertStatusFilter(status, btn) {
   alertsFilterStatus = status;
-  document.querySelectorAll('#tabAlerts .filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#tabAlerts .admin-control-bar .filter-chip').forEach(c => c.classList.remove('active'));
   if (btn) btn.classList.add('active');
   alertsCurrentPage = 1;
   loadGlobalAlerts();

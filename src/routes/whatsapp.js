@@ -168,6 +168,11 @@ router.post('/test', requireAuth, async (req, res) => {
       await db.execute('UPDATE whatsapp_recipients SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [recipientId]);
     }
 
+    await db.execute(
+      'INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (NULL, ?, "test", "whatsapp", ?)',
+      [req.userId, targetPhone]
+    ).catch(() => {});
+
     res.json({
       ok: true,
       message: `Test alert sent successfully to ${targetLabel} (${targetPhone})! Check your WhatsApp.`

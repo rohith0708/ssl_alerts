@@ -167,7 +167,7 @@ async function applyCheckResult(row, result) {
         consecutive_alerts = consecutive_alerts + 1
       WHERE id = ?
     `, [row.id]);
-    await db.execute('INSERT INTO alert_log (domain_id, user_id, status) VALUES (?, ?, ?)', [row.id, row.user_id, newStatus]);
+    await db.execute('INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (?, ?, ?, "email", ?)', [row.id, row.user_id, newStatus, recipients.join(', ')]);
     console.log(`[alerts] Sent ${newStatus} alert for ${row.hostname} to ${recipients.length} recipient(s): ${recipients.join(', ')}`);
   } catch (err) {
     console.error('[alerts] send failed for', row.hostname, err.message);
@@ -195,6 +195,7 @@ async function applyCheckResult(row, result) {
         isTest: false
       });
       await db.execute('UPDATE teams_graph_connections SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [teamsConn.id]);
+      await db.execute('INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (?, ?, ?, "teams", ?)', [row.id, row.user_id, newStatus, teamsConn.destination_name || 'Teams Channel']);
       console.log(`[alerts] Dispatched Teams alert for ${row.hostname} to ${teamsConn.destination_name}`);
     }
   } catch (teamsErr) {
@@ -225,6 +226,7 @@ async function applyCheckResult(row, result) {
             isTest: false
           });
           await db.execute('UPDATE whatsapp_recipients SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [recipient.id]);
+          await db.execute('INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (?, ?, ?, "whatsapp", ?)', [row.id, row.user_id, newStatus, recipient.phone_number]);
           console.log(`[alerts] Dispatched WhatsApp alert for ${row.hostname} to ${recipient.phone_number} (${recipient.label})`);
         } catch (waErr) {
           console.error(`[alerts] WhatsApp alert failed for ${recipient.phone_number}:`, waErr.message);

@@ -372,6 +372,11 @@ router.post('/test', requireAuth, async (req, res) => {
       WHERE id = ?
     `, [connection.id]);
 
+    await db.execute(
+      'INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (NULL, ?, "test", "teams", ?)',
+      [req.userId, connection.destination_name || 'Teams Channel']
+    ).catch(() => {});
+
     res.json({
       ok: true,
       message: `Test alert delivered successfully to ${connection.destination_name}! Check your Microsoft Teams.`

@@ -513,7 +513,7 @@ router.get('/certificates', async (req, res) => {
   }
 });
 
-// Global Alert Log across all users
+// Global Alert Log across all users with multi-channel and date filtering
 router.get('/alerts', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -521,19 +521,41 @@ router.get('/alerts', async (req, res) => {
     const offset = (page - 1) * limit;
     const query = (req.query.q || '').trim();
     const status = (req.query.status || '').trim();
+    const channel = (req.query.channel || '').trim();
+    const startDate = (req.query.startDate || '').trim();
+    const endDate = (req.query.endDate || '').trim();
 
     let whereClause = '1=1';
     const params = [];
 
     if (query) {
-      whereClause += ' AND (d.hostname LIKE ? OR u.email LIKE ? OR u.name LIKE ?)';
+      whereClause += ' AND (d.hostname LIKE ? OR u.email LIKE ? OR u.name LIKE ? OR a.recipient LIKE ?)';
       const term = `%${query}%`;
-      params.push(term, term, term);
+      params.push(term, term, term, term);
     }
 
     if (status && status !== 'all') {
       whereClause += ' AND a.status = ?';
       params.push(status);
+    }
+
+    if (channel && channel !== 'all') {
+      if (channel === 'email') {
+        whereClause += ' AND (a.channel = "email" OR a.channel IS NULL)';
+      } else {
+        whereClause += ' AND a.channel = ?';
+        params.push(channel);
+      }
+    }
+
+    if (startDate) {
+      whereClause += ' AND a.sent_at >= ?';
+      params.push(startDate + ' 00:00:00');
+    }
+
+    if (endDate) {
+      whereClause += ' AND a.sent_at <= ?';
+      params.push(endDate + ' 23:59:59');
     }
 
     const countRow = await db.getOne(`
@@ -546,7 +568,8 @@ router.get('/alerts', async (req, res) => {
     const total = countRow ? countRow.total : 0;
 
     const alerts = await db.getAll(`
-      SELECT a.id, a.status, a.sent_at, d.hostname, u.id AS user_id, u.name AS user_name, u.email AS user_email
+      SELECT a.id, a.status, COALESCE(a.channel, 'email') AS channel, a.recipient, a.sent_at,
+             d.hostname, u.id AS user_id, u.name AS user_name, u.email AS user_email
       FROM alert_log a
       LEFT JOIN domains d ON d.id = a.domain_id
       JOIN users u ON u.id = a.user_id
@@ -564,6 +587,254 @@ router.get('/alerts', async (req, res) => {
   } catch (err) {
     console.error('Error in /alerts:', err);
     res.status(500).json({ error: 'Failed to fetch alert log' });
+  }
+});
+
+// Multi-Channel Analytics (WhatsApp, Email, Teams) with Date Filtering
+router.get('/channel-analytics', async (req, res) => {
+  try {
+    let { preset, startDate, endDate } = req.query;
+    preset = preset || '7d';
+
+    const now = new Date();
+    let startStr = '';
+    let endStr = '';
+
+    if (preset === 'today') {
+      const today = now.toISOString().slice(0, 10);
+      startStr = `${today} 00:00:00`;
+      endStr = `${today} 23:59:59`;
+    } else if (preset === 'yesterday') {
+      const y = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+      startStr = `${y} 00:00:00`;
+      endStr = `${y} 23:59:59`;
+    } else if (preset === '7d') {
+      const s = new Date(now.getTime() - 6 * 86400000).toISOString().slice(0, 10);
+      const e = now.toISOString().slice(0, 10);
+      startStr = `${s} 00:00:00`;
+      endStr = `${e} 23:59:59`;
+    } else if (preset === '30d') {
+      const s = new Date(now.getTime() - 29 * 86400000).toISOString().slice(0, 10);
+      const e = now.toISOString().slice(0, 10);
+      startStr = `${s} 00:00:00`;
+      endStr = `${e} 23:59:59`;
+    } else if (preset === 'month') {
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      startStr = `${yyyy}-${mm}-01 00:00:00`;
+      endStr = now.toISOString().slice(0, 10) + ' 23:59:59';
+    } else if (preset === 'custom' && startDate && endDate) {
+      startStr = `${startDate} 00:00:00`;
+      endStr = `${endDate} 23:59:59`;
+    } else {
+      const s = new Date(now.getTime() - 6 * 86400000).toISOString().slice(0, 10);
+      const e = now.toISOString().slice(0, 10);
+      startStr = `${s} 00:00:00`;
+      endStr = `${e} 23:59:59`;
+    }
+
+    // 1. WhatsApp metrics
+    const waAddedRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM whatsapp_recipients WHERE created_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const waTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM whatsapp_recipients');
+    const waSentRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM alert_log WHERE channel = "whatsapp" AND sent_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const waSentTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM alert_log WHERE channel = "whatsapp"');
+
+    // 2. Email metrics
+    const emailAddedRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM notification_emails WHERE created_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const emailTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM notification_emails');
+    const emailSentRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM alert_log WHERE (channel = "email" OR channel IS NULL) AND sent_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const emailSentTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM alert_log WHERE (channel = "email" OR channel IS NULL)');
+
+    // 3. Teams metrics
+    const teamsAddedRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM teams_graph_connections WHERE created_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const teamsTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM teams_graph_connections');
+    const teamsSentRow = await db.getOne(
+      'SELECT COUNT(*) AS n FROM alert_log WHERE channel = "teams" AND sent_at BETWEEN ? AND ?',
+      [startStr, endStr]
+    );
+    const teamsSentTotalRow = await db.getOne('SELECT COUNT(*) AS n FROM alert_log WHERE channel = "teams"');
+
+    // 4. Daily Breakdown by Channel
+    const alertsByDay = await db.getAll(`
+      SELECT
+        DATE_FORMAT(sent_at, '%Y-%m-%d') AS day,
+        COALESCE(channel, 'email') AS channel,
+        COUNT(*) AS count
+      FROM alert_log
+      WHERE sent_at BETWEEN ? AND ?
+      GROUP BY day, channel
+      ORDER BY day DESC
+    `, [startStr, endStr]);
+
+    const waAddsByDay = await db.getAll(`
+      SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS count
+      FROM whatsapp_recipients
+      WHERE created_at BETWEEN ? AND ?
+      GROUP BY day
+    `, [startStr, endStr]);
+
+    const emailAddsByDay = await db.getAll(`
+      SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS count
+      FROM notification_emails
+      WHERE created_at BETWEEN ? AND ?
+      GROUP BY day
+    `, [startStr, endStr]);
+
+    const teamsAddsByDay = await db.getAll(`
+      SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS count
+      FROM teams_graph_connections
+      WHERE created_at BETWEEN ? AND ?
+      GROUP BY day
+    `, [startStr, endStr]);
+
+    const dayMap = {};
+    const ensureDay = (d) => {
+      if (!dayMap[d]) {
+        dayMap[d] = {
+          date: d,
+          whatsappAdded: 0,
+          whatsappAlerts: 0,
+          emailAdded: 0,
+          emailAlerts: 0,
+          teamsAdded: 0,
+          teamsAlerts: 0,
+          totalAlerts: 0,
+          totalAdded: 0
+        };
+      }
+    };
+
+    alertsByDay.forEach(r => {
+      ensureDay(r.day);
+      if (r.channel === 'whatsapp') dayMap[r.day].whatsappAlerts += r.count;
+      else if (r.channel === 'teams') dayMap[r.day].teamsAlerts += r.count;
+      else dayMap[r.day].emailAlerts += r.count;
+      dayMap[r.day].totalAlerts += r.count;
+    });
+
+    waAddsByDay.forEach(r => {
+      ensureDay(r.day);
+      dayMap[r.day].whatsappAdded += r.count;
+      dayMap[r.day].totalAdded += r.count;
+    });
+
+    emailAddsByDay.forEach(r => {
+      ensureDay(r.day);
+      dayMap[r.day].emailAdded += r.count;
+      dayMap[r.day].totalAdded += r.count;
+    });
+
+    teamsAddsByDay.forEach(r => {
+      ensureDay(r.day);
+      dayMap[r.day].teamsAdded += r.count;
+      dayMap[r.day].totalAdded += r.count;
+    });
+
+    const dailyBreakdown = Object.values(dayMap).sort((a, b) => b.date.localeCompare(a.date));
+
+    // 5. Recent Recipients Added in Range
+    const recentRecipients = await db.getAll(`
+      SELECT
+        'whatsapp' AS channel,
+        wr.id,
+        wr.phone_number AS target,
+        wr.label AS label,
+        wr.is_active,
+        wr.created_at,
+        u.id AS user_id,
+        u.name AS user_name,
+        u.email AS user_email
+      FROM whatsapp_recipients wr
+      JOIN users u ON u.id = wr.user_id
+      WHERE wr.created_at BETWEEN ? AND ?
+
+      UNION ALL
+
+      SELECT
+        'email' AS channel,
+        ne.id,
+        ne.email AS target,
+        'Alert Email' AS label,
+        1 AS is_active,
+        ne.created_at,
+        u.id AS user_id,
+        u.name AS user_name,
+        u.email AS user_email
+      FROM notification_emails ne
+      JOIN users u ON u.id = ne.user_id
+      WHERE ne.created_at BETWEEN ? AND ?
+
+      UNION ALL
+
+      SELECT
+        'teams' AS channel,
+        tg.id,
+        tg.destination_name AS target,
+        tg.destination_type AS label,
+        tg.is_active,
+        tg.created_at,
+        u.id AS user_id,
+        u.name AS user_name,
+        u.email AS user_email
+      FROM teams_graph_connections tg
+      JOIN users u ON u.id = tg.user_id
+      WHERE tg.created_at BETWEEN ? AND ?
+
+      ORDER BY created_at DESC
+      LIMIT 100
+    `, [startStr, endStr, startStr, endStr, startStr, endStr]);
+
+    res.json({
+      range: {
+        preset,
+        startDate: startStr.slice(0, 10),
+        endDate: endStr.slice(0, 10)
+      },
+      summary: {
+        whatsapp: {
+          recipientsAdded: waAddedRow ? waAddedRow.n : 0,
+          totalRecipients: waTotalRow ? waTotalRow.n : 0,
+          alertsSent: waSentRow ? waSentRow.n : 0,
+          totalAlertsSent: waSentTotalRow ? waSentTotalRow.n : 0
+        },
+        email: {
+          recipientsAdded: emailAddedRow ? emailAddedRow.n : 0,
+          totalRecipients: emailTotalRow ? emailTotalRow.n : 0,
+          alertsSent: emailSentRow ? emailSentRow.n : 0,
+          totalAlertsSent: emailSentTotalRow ? emailSentTotalRow.n : 0
+        },
+        teams: {
+          recipientsAdded: teamsAddedRow ? teamsAddedRow.n : 0,
+          totalRecipients: teamsTotalRow ? teamsTotalRow.n : 0,
+          alertsSent: teamsSentRow ? teamsSentRow.n : 0,
+          totalAlertsSent: teamsSentTotalRow ? teamsSentTotalRow.n : 0
+        },
+        combined: {
+          totalRecipientsAdded: (waAddedRow?.n || 0) + (emailAddedRow?.n || 0) + (teamsAddedRow?.n || 0),
+          totalAlertsSent: (waSentRow?.n || 0) + (emailSentRow?.n || 0) + (teamsSentRow?.n || 0)
+        }
+      },
+      dailyBreakdown,
+      recentRecipients
+    });
+  } catch (err) {
+    console.error('[Admin] Channel analytics error:', err);
+    res.status(500).json({ error: 'Failed to calculate channel analytics: ' + err.message });
   }
 });
 

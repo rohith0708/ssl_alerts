@@ -216,14 +216,26 @@ async function initSchema() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS alert_log (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      domain_id INT NOT NULL,
+      domain_id INT NULL,
       user_id INT NOT NULL,
       status VARCHAR(50) NOT NULL,
+      channel VARCHAR(20) NOT NULL DEFAULT 'email',
+      recipient VARCHAR(255) NULL,
       sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT fk_alert_log_domain FOREIGN KEY (domain_id) REFERENCES domains(id) ON DELETE CASCADE,
       CONSTRAINT fk_alert_log_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  try {
+    await pool.query("ALTER TABLE alert_log ADD COLUMN channel VARCHAR(20) NOT NULL DEFAULT 'email'");
+  } catch (_) {}
+  try {
+    await pool.query("ALTER TABLE alert_log ADD COLUMN recipient VARCHAR(255) NULL");
+  } catch (_) {}
+  try {
+    await pool.query("ALTER TABLE alert_log MODIFY COLUMN domain_id INT NULL");
+  } catch (_) {}
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS notification_emails (
