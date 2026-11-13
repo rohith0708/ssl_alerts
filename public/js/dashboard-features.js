@@ -75,14 +75,18 @@ function showSSLTools(e) {
 function showTeamsAlerts(e) {
   if (e && e.preventDefault) e.preventDefault();
   showSection('teamsAlerts');
+  // Always reload fresh from server — prevents stale data from a previous
+  // user session showing in another account without a full page reload.
   if (typeof loadTeamsStatus === 'function') loadTeamsStatus();
 }
 
 function showWhatsAppAlerts(e) {
   if (e && e.preventDefault) e.preventDefault();
   showSection('whatsappAlerts');
+  // Always reload fresh from server on every visit to this section.
   if (typeof loadWhatsAppGroupsSelect === 'function') loadWhatsAppGroupsSelect();
   if (typeof loadWhatsAppRecipients === 'function') loadWhatsAppRecipients();
+  if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
 }
 
 function showCertificates(e, tab = 'cert-generator-letsencrypt') {
@@ -2051,8 +2055,17 @@ async function loadTeamsStatus() {
     history.replaceState(null, null, window.location.pathname + '#teams-alerts');
   }
 
+  // Reset UI to a neutral loading state before fetching — prevents stale data
+  // from a previous user session bleeding into the current user's view.
+  notConnected.style.display = 'none';
+  connected.style.display = 'none';
+
   try {
     const res = await fetch('/api/integrations/teams/status');
+    if (!res.ok) {
+      notConnected.style.display = 'block';
+      return;
+    }
     const data = await res.json();
 
     if (data.connected && data.connection) {
@@ -2124,7 +2137,6 @@ async function loadTeamsStatus() {
     connected.style.display = 'none';
   }
 }
-
 async function connectTeamsWebhook(e) {
   if (e && e.preventDefault) e.preventDefault();
   const channelName = document.getElementById('teamsWebhookChannelName')?.value?.trim();
@@ -2345,6 +2357,7 @@ async function loadWhatsAppStatus() {
   const connectedState = document.getElementById('waConnectedState');
   const qrState = document.getElementById('waQrState');
   const connectedNumber = document.getElementById('waConnectedNumber');
+  const gatewayAdminSection = document.getElementById('waGatewayAdminSection');
 
   if (!badge) return;
 
@@ -2360,10 +2373,17 @@ async function loadWhatsAppStatus() {
       return;
     }
 
+    // Show or hide the admin-only gateway management panel (QR pairing, disconnect)
+    // Regular users see the gateway as "active shared infrastructure" — they only
+    // manage their own phone number recipients, not the gateway itself.
+    if (gatewayAdminSection) {
+      gatewayAdminSection.style.display = data.isAdmin ? 'block' : 'none';
+    }
+
     const isConnected = data.connected === true || data.state === 'connected' || data.status === 'open';
 
     if (isConnected) {
-      // WhatsApp is fully connected
+      // WhatsApp gateway is active
       if (waQrPollInterval) {
         clearInterval(waQrPollInterval);
         waQrPollInterval = null;
@@ -2373,15 +2393,19 @@ async function loadWhatsAppStatus() {
       badge.style.color = '#15803d';
       badge.style.border = '1px solid #bbf7d0';
 
-      if (subtext) subtext.textContent = 'WhatsApp gateway is paired and listening for alert dispatches.';
-      if (connectedNumber) {
-        const phone = data.user || data.number ? (String(data.user || data.number).startsWith('+') ? String(data.user || data.number) : '+' + String(data.user || data.number)) : 'Linked Device';
+      if (subtext) {
+        subtext.textContent = data.isAdmin
+          ? 'WhatsApp gateway is paired and listening for alert dispatches.'
+          : 'WhatsApp alerts are active. Add your phone numbers below to receive notifications.';
+      }
+      if (connectedNumber && data.user) {
+        const phone = String(data.user || '').startsWith('+') ? String(data.user) : '+' + String(data.user);
         connectedNumber.textContent = phone;
       }
-      if (connectedState) connectedState.style.display = 'block';
+      if (connectedState) connectedState.style.display = data.isAdmin && data.user ? 'block' : 'none';
       if (qrState) qrState.style.display = 'none';
     } else {
-      // Needs pairing or disconnected
+      // Admin view: gateway needs pairing
       badge.textContent = '● Needs Pairing';
       badge.style.background = '#fef9c3';
       badge.style.color = '#854d0e';
@@ -2389,9 +2413,9 @@ async function loadWhatsAppStatus() {
 
       if (subtext) subtext.textContent = 'Scan the QR code with WhatsApp on your phone to link alerting gateway.';
       if (connectedState) connectedState.style.display = 'none';
-      if (qrState) qrState.style.display = 'block';
+      if (qrState) qrState.style.display = data.isAdmin ? 'block' : 'none';
 
-      loadWhatsAppQR();
+      if (data.isAdmin) loadWhatsAppQR();
     }
   } catch (err) {
     console.error('Failed to load WhatsApp status:', err);
@@ -2503,6 +2527,10 @@ async function logoutWhatsAppGateway() {
 async function loadWhatsAppRecipients() {
   const tbody = document.getElementById('waRecipientsTableBody');
   if (!tbody) return;
+
+  // Clear stale rows immediately so a previous user's recipients never flash
+  // on screen while the fetch is in-flight.
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#94a3b8;">Loading recipients...</td></tr>';
 
   try {
     const res = await fetch('/api/integrations/whatsapp/recipients');

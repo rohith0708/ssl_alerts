@@ -747,7 +747,7 @@
         </div>
       </div>
 
-      <!-- Platform WhatsApp Status Banner for Customers -->
+      <!-- Platform WhatsApp Status Banner — badge updated dynamically by loadWhatsAppStatus() -->
       <div class="card" style="margin-bottom:24px; padding:18px 22px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;">
         <div style="display:flex; align-items:center; gap:14px;">
           <div style="width:42px; height:42px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -755,12 +755,33 @@
           </div>
           <div>
             <div style="font-weight:700; font-size:15px; color:#14532d;">WhatsApp Notifications Active</div>
-            <p style="margin:2px 0 0; font-size:13px; color:#166534;">
+            <p id="waGatewaySubtext" style="margin:2px 0 0; font-size:13px; color:#166534;">
               SSL expiry warnings and downtime alerts are dispatched automatically to your verified phone numbers via the official SSL Alerts WhatsApp bot.
             </p>
           </div>
         </div>
-        <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:12px; padding:4px 10px; border-radius:9999px;">● Gateway Online</span>
+        <span id="waStatusBadge" class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:12px; padding:4px 10px; border-radius:9999px;">● Gateway Online</span>
+      </div>
+
+      <!-- Admin-only: Gateway pairing panel (QR code, connected phone, disconnect button).
+           Hidden for regular users — they manage recipients only, not the shared gateway. -->
+      <div id="waGatewayAdminSection" style="display:none; margin-bottom:24px;">
+        <div class="card" style="padding:20px 24px; border-radius:12px; border:1px solid var(--border);">
+          <h3 style="margin:0 0 14px; font-size:15px; color:#0f172a;">Gateway Management <span style="font-size:12px; color:#64748b; font-weight:400;">(Admin only)</span></h3>
+          <!-- Connected phone info -->
+          <div id="waConnectedState" style="display:none; margin-bottom:12px;">
+            <span style="font-size:13px; color:#166534;">📱 Paired device: <strong id="waConnectedNumber"></strong></span>
+            <button type="button" onclick="logoutWhatsAppGateway()" class="btn" style="margin-left:16px; padding:5px 14px; font-size:12px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:6px;">Disconnect Gateway</button>
+          </div>
+          <!-- QR code pairing -->
+          <div id="waQrState" style="display:none;">
+            <p style="font-size:13px; color:#64748b; margin:0 0 12px;">Scan this QR code with WhatsApp on the gateway phone to pair the alert sender.</p>
+            <img id="waQrImg" src="" alt="WhatsApp QR Code" style="display:none; max-width:220px; border-radius:8px; border:1px solid #e2e8f0;">
+            <div id="waQrPlaceholder" style="font-size:13px; color:#94a3b8; padding:16px; background:#f8fafc; border-radius:8px; border:1px dashed #e2e8f0;">Starting WhatsApp engine... please wait.</div>
+            <div id="waQrPollStatus" style="font-size:12px; color:#64748b; margin-top:8px;"></div>
+            <button type="button" id="btnRefreshWaQr" onclick="loadWhatsAppQR()" class="btn" style="margin-top:10px; padding:5px 14px; font-size:12px;">↻ Refresh QR</button>
+          </div>
+        </div>
       </div>
 
       <!-- Recipients Card -->

@@ -1,6 +1,6 @@
 const express = require('express');
 const { db, PLANS } = require('../db');
-const { requireAuth } = require('../auth');
+const { requireAuth, requireAdmin } = require('../auth');
 const {
   getConnectionStatus,
   getQrCode,
@@ -21,12 +21,22 @@ function normalizePhone(raw) {
 
 /**
  * GET /api/integrations/whatsapp/gateway-status
- * Checks if the Evolution API instance is paired or needs QR scan
+ * Returns gateway status scoped to the current user.
+ * - Admins: get real Evolution API status (they manage the shared gateway).
+ * - Regular users: always get { connected: true, state: 'connected', userGateway: false }
+ *   because the gateway is shared infrastructure — they don't manage it, they
+ *   only manage their own recipient phone numbers.
  */
 router.get('/gateway-status', requireAuth, async (req, res) => {
   try {
-    const status = await getConnectionStatus();
-    res.json(status);
+    const user = await db.getOne('SELECT is_admin FROM users WHERE id = ?', [req.userId]);
+    if (user && user.is_admin) {
+      const status = await getConnectionStatus();
+      return res.json({ ...status, isAdmin: true });
+    }
+    // For regular users the gateway is managed centrally — always report as active
+    // so the UI shows the recipients form without exposing gateway internals.
+    return res.json({ connected: true, state: 'connected', isAdmin: false, userGateway: false });
   } catch (err) {
     console.error('[WhatsApp Route] Status error:', err);
     res.status(500).json({ connected: false, state: 'disconnected', error: err.message });
@@ -35,9 +45,10 @@ router.get('/gateway-status', requireAuth, async (req, res) => {
 
 /**
  * GET /api/integrations/whatsapp/qr
- * Returns live base64 QR code image for scanning in WhatsApp
+ * Admin-only: Returns live base64 QR code image for scanning in WhatsApp.
+ * Regular users cannot pair/unpair the shared gateway.
  */
-router.get('/qr', requireAuth, async (req, res) => {
+router.get('/qr', requireAuth, requireAdmin, async (req, res) => {
   try {
     const qrData = await getQrCode();
     res.json(qrData);
@@ -224,9 +235,10 @@ router.patch('/recipients/:id/toggle', requireAuth, async (req, res) => {
 
 /**
  * POST /api/integrations/whatsapp/logout
- * Logs out / resets the WhatsApp gateway session to pair a new number
+ * Admin-only: Logs out / resets the shared WhatsApp gateway session.
+ * Regular users cannot unpair the gateway as it is shared infrastructure.
  */
-router.post('/logout', requireAuth, async (req, res) => {
+router.post('/logout', requireAuth, requireAdmin, async (req, res) => {
   try {
     await logoutInstance();
     res.json({ ok: true, message: 'WhatsApp gateway disconnected. Scan QR to pair a new number.' });

@@ -37,7 +37,7 @@ router.get('/status', requireAuth, async (req, res) => {
              is_active, last_sent_at, last_status, last_error, created_at
       FROM teams_graph_connections
       WHERE user_id = ?
-      ORDER BY id DESC LIMIT 1
+      ORDER BY created_at DESC, id DESC LIMIT 1
     `, [req.userId]);
 
     res.json({
@@ -110,7 +110,7 @@ router.get('/callback', async (req, res) => {
 
     // 3. Immediately save connection to DB with a safe default destination
     // Saving NOW ensures the connection record exists even if destination queries have warnings
-    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ?', [userId]);
+    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [userId]);
     let connectionId;
 
     if (existing) {
@@ -218,7 +218,7 @@ router.post('/connect-webhook', requireAuth, async (req, res) => {
     });
 
     // Save webhook connection in DB
-    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
     const expiresFar = new Date(Date.now() + 10 * 365 * 86400000); // 10 years
 
     if (existing) {
@@ -263,6 +263,7 @@ router.get('/destinations', requireAuth, async (req, res) => {
   try {
     const connection = await db.getOne(`
       SELECT * FROM teams_graph_connections WHERE user_id = ?
+      ORDER BY id DESC LIMIT 1
     `, [req.userId]);
 
     if (!connection) {
@@ -316,7 +317,7 @@ router.post('/save-destination', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Destination type and destination ID are required.' });
     }
 
-    const connection = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const connection = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
     if (!connection) {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
@@ -349,7 +350,7 @@ router.post('/save-destination', requireAuth, async (req, res) => {
  */
 router.post('/test', requireAuth, async (req, res) => {
   try {
-    const connection = await db.getOne('SELECT * FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const connection = await db.getOne('SELECT * FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
     if (!connection) {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
@@ -418,7 +419,7 @@ router.delete('/disconnect', requireAuth, async (req, res) => {
  */
 router.patch('/toggle', requireAuth, async (req, res) => {
   try {
-    const connection = await db.getOne('SELECT id, is_active FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const connection = await db.getOne('SELECT id, is_active FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
     if (!connection) {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
