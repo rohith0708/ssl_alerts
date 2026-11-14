@@ -30,12 +30,25 @@ function setAuthCookie(res, token) {
     httpOnly: true,
     sameSite: 'lax',
     secure: COOKIE_SECURE,
-    maxAge: SESSION_MS
+    maxAge: SESSION_MS,
+    path: '/'
   });
 }
 
 function clearAuthCookie(res) {
-  res.clearCookie(COOKIE_NAME);
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: COOKIE_SECURE,
+    path: '/'
+  };
+  res.clearCookie(COOKIE_NAME, cookieOptions);
+  // Also send explicit expired cookie to force deletion across all browser engines
+  res.cookie(COOKIE_NAME, '', {
+    ...cookieOptions,
+    expires: new Date(0),
+    maxAge: 0
+  });
 }
 
 // Middleware: requires a valid session, attaches req.userId

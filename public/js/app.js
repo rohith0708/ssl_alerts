@@ -869,11 +869,16 @@ document.getElementById('saveRenewedCertBtn')?.addEventListener('click', async (
 });
 
 // ---------------- Sidebar / logout / upgrade ----------------
-document.getElementById('logoutLink').addEventListener('click', async (e) => {
-  e.preventDefault();
-  await fetch('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/login.html';
-});
+const logoutLinkEl = document.getElementById('logoutLink');
+if (logoutLinkEl) {
+  logoutLinkEl.addEventListener('click', async (e) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    window.location.href = '/login.html?logout=1';
+  });
+}
 
 // Body scroll locking helper to prevent background scroll bleeding on mobile/desktop
 let bodyScrollLocks = 0;

@@ -30,8 +30,8 @@ function showSection(sectionName, updateHash = true) {
     sslTools: 'SSL Tools',
     certificates: 'Certificate Generator',
     alertEmails: 'Alert Email Recipients',
-    teamsAlerts: 'Microsoft Teams Alerts',
-    whatsappAlerts: 'WhatsApp Alerts',
+    teamsAlerts: 'Alert Microsoft Teams',
+    whatsappAlerts: 'Alert WhatsApp',
     dnsLookup: 'DNS Lookup',
     docs: 'Documentation'
   };
