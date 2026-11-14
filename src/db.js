@@ -346,6 +346,31 @@ async function initSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
+  // Visitor & Activity Analytics Table (Option 1)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS visitor_activity_log (
+      id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NULL,
+      session_id VARCHAR(64) NOT NULL,
+      ip_address VARCHAR(45) NOT NULL,
+      country VARCHAR(100) NULL DEFAULT 'Unknown',
+      user_agent VARCHAR(255) NULL,
+      device_type VARCHAR(20) NOT NULL DEFAULT 'desktop',
+      browser VARCHAR(50) NOT NULL DEFAULT 'Other',
+      os VARCHAR(50) NOT NULL DEFAULT 'Other',
+      path VARCHAR(255) NOT NULL,
+      referrer VARCHAR(255) NULL,
+      action_type VARCHAR(50) NOT NULL DEFAULT 'page_view',
+      metadata JSON NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_val_created (created_at),
+      INDEX idx_val_user (user_id),
+      INDEX idx_val_session (session_id),
+      INDEX idx_val_path (path),
+      INDEX idx_val_action (action_type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
   // Seed default admin user: admin@sslalerts.info / admin@sslalerts
   try {
     const adminEmail = 'admin@sslalerts.info';

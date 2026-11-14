@@ -18,6 +18,7 @@ const jwt = require('jsonwebtoken');
 const { COOKIE_NAME, JWT_SECRET } = require('./src/auth');
 const { db } = require('./src/db');
 const { securityHeadersMiddleware } = require('./src/security');
+const { trackPageViewMiddleware, trackAction } = require('./src/analyticsTracker');
 
 const app = express();
 app.disable('x-powered-by');
@@ -31,6 +32,32 @@ app.post('/api/billing/dodo/webhook', express.raw({ type: 'application/json' }),
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(trackPageViewMiddleware);
+
+// Client-side analytics event beacon (for tracking interactive buttons/tabs)
+app.post('/api/analytics/track', (req, res) => {
+  const { action, path: eventPath, metadata } = req.body || {};
+  if (!action) return res.status(400).json({ error: 'Missing action' });
+
+  let userId = null;
+  const token = req.cookies?.[COOKIE_NAME];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userId = decoded?.uid || null;
+    } catch (_) {}
+  }
+
+  trackAction({
+    req,
+    userId,
+    actionType: String(action),
+    path: eventPath || req.headers['referer'] || '/',
+    metadata
+  });
+
+  res.json({ ok: true });
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/domains', domainRoutes);

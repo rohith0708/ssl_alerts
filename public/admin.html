@@ -675,6 +675,9 @@ html, body {
       <button type="button" class="admin-tab-btn" onclick="switchAdminTab('whatsapp')">
         📱 WhatsApp Gateway
       </button>
+      <button type="button" class="admin-tab-btn" onclick="switchAdminTab('analytics')">
+        📊 Live Visitors &amp; Activity
+      </button>
       <button type="button" class="admin-tab-btn" onclick="switchAdminTab('health')">
         ⚡ System &amp; Database Health
       </button>
@@ -1122,6 +1125,114 @@ html, body {
         <div id="adminWaTestResult" style="margin-top:12px; font-size:13px;"></div>
       </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: LIVE VISITORS & ACTIVITY ANALYTICS  -->
+    <!-- ========================================== -->
+    <div class="admin-tab-content" id="tabAnalytics">
+      <!-- Live Overview KPIs -->
+      <div class="health-grid" style="margin-bottom:24px;">
+        <div class="health-card" style="border-top:3px solid #10b981;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#059669; font-weight:700;">🟢 Online Right Now</div>
+            <span class="badge-pill" style="background:#ecfdf5; color:#059669; font-size:11px;">Active &lt; 15m</span>
+          </div>
+          <div class="value" id="statLiveActiveNow" style="color:#059669; font-size:32px;">0</div>
+          <div class="desc"><strong id="statLiveActiveUsers">0</strong> logged-in customer accounts</div>
+        </div>
+
+        <div class="health-card" style="border-top:3px solid #3b82f6;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#2563eb; font-weight:700;">📅 Unique Visitors Today</div>
+            <span class="badge-pill" style="background:#eff6ff; color:#2563eb; font-size:11px;">Today</span>
+          </div>
+          <div class="value" id="statTodayVisitors" style="color:#2563eb; font-size:32px;">0</div>
+          <div class="desc"><strong id="statTodayViews">0</strong> total page views generated</div>
+        </div>
+
+        <div class="health-card" style="border-top:3px solid #8b5cf6;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="title" style="color:#7c3aed; font-weight:700;">📈 Total Period Traffic</div>
+            <select id="analyticsDaysSelect" onchange="loadVisitorAnalytics()" style="padding:2px 8px; font-size:11px; border:1px solid var(--line); border-radius:6px; background:#fff;">
+              <option value="7" selected>Last 7 Days</option>
+              <option value="14">Last 14 Days</option>
+              <option value="30">Last 30 Days</option>
+            </select>
+          </div>
+          <div class="value" id="statPeriodVisitors" style="color:#7c3aed; font-size:32px;">0</div>
+          <div class="desc"><strong id="statPeriodViews">0</strong> page views across selected period</div>
+        </div>
+      </div>
+
+      <!-- Top Pages & Breakdown Row -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:20px; margin-bottom:24px;">
+        <!-- Top Pages Table -->
+        <div class="admin-panel-card" style="margin-bottom:0;">
+          <div class="admin-panel-card-head">
+            <h4>📄 Top Visited Pages &amp; Sections</h4>
+          </div>
+          <div class="admin-table-wrap" style="max-height:300px; overflow-y:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Page / Route</th>
+                  <th style="text-align:right;">Views</th>
+                  <th style="text-align:right;">Uniques</th>
+                </tr>
+              </thead>
+              <tbody id="topPagesTableBody">
+                <tr><td colspan="3" style="text-align:center; padding:16px; color:var(--muted);">Loading pages...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Geography & Devices Breakdown -->
+        <div class="admin-panel-card" style="margin-bottom:0;">
+          <div class="admin-panel-card-head">
+            <h4>🌍 Visitor Location &amp; Devices</h4>
+          </div>
+          <div style="padding:4px 0 12px;">
+            <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Top Countries:</div>
+            <div id="countriesBreakdown" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;">
+              <span style="font-size:12px; color:var(--muted);">Loading countries...</span>
+            </div>
+            <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Devices &amp; Platforms:</div>
+            <div id="devicesBreakdown" style="display:flex; flex-wrap:wrap; gap:8px;">
+              <span style="font-size:12px; color:var(--muted);">Loading devices...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Activity Stream (What are people doing?) -->
+      <div class="admin-panel-card">
+        <div class="admin-panel-card-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h4 style="margin:0 0 4px;">⚡ Live Activity &amp; Action Stream</h4>
+            <div style="font-size:12px; color:var(--muted);">Real-time stream of what visitors and users are currently doing on sslalerts.info</div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="loadVisitorActivityFeed()">🔄 Refresh Feed</button>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Who (Visitor / User)</th>
+                <th>Action &amp; Path</th>
+                <th>Country</th>
+                <th>Device / Browser</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="activityFeedTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted);">Loading activity stream...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -1475,6 +1586,10 @@ function switchAdminTab(tabName) {
   }
   if (tabName === 'health') loadSystemHealth();
   if (tabName === 'whatsapp') loadAdminWhatsAppStatus();
+  if (tabName === 'analytics') {
+    loadVisitorAnalytics();
+    loadVisitorActivityFeed();
+  }
 }
 
 // WhatsApp Gateway Admin State & Handlers
@@ -3032,6 +3147,144 @@ sidebarOverlay?.addEventListener('touchmove', (e) => {
   e.preventDefault();
 }, { passive: false });
 sidebar?.querySelectorAll('nav a').forEach(a => a.addEventListener('click', closeAdminSidebar));
+
+// ==========================================
+// VISITOR & REAL-TIME ANALYTICS CLIENT LOGIC
+// ==========================================
+let visitorAnalyticsTimer = null;
+
+async function loadVisitorAnalytics() {
+  const days = document.getElementById('analyticsDaysSelect')?.value || 7;
+  try {
+    const res = await fetch(`/api/admin/analytics/overview?days=${days}`);
+    if (!res.ok) throw new Error('Failed to load visitor overview');
+    const data = await res.json();
+
+    document.getElementById('statLiveActiveNow').textContent = data.activeNow;
+    document.getElementById('statLiveActiveUsers').textContent = data.activeUsersNow;
+    document.getElementById('statTodayVisitors').textContent = data.todayVisitors;
+    document.getElementById('statTodayViews').textContent = data.todayViews;
+    document.getElementById('statPeriodVisitors').textContent = data.periodVisitors;
+    document.getElementById('statPeriodViews').textContent = data.periodViews;
+
+    // Render Top Pages
+    const pagesTbody = document.getElementById('topPagesTableBody');
+    if (pagesTbody) {
+      if (!data.topPages || data.topPages.length === 0) {
+        pagesTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:16px; color:var(--muted);">No page view activity recorded yet.</td></tr>';
+      } else {
+        pagesTbody.innerHTML = data.topPages.map(p => `
+          <tr>
+            <td><code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:12px; color:var(--navy);">${safe(p.path)}</code></td>
+            <td style="text-align:right; font-weight:700; color:var(--navy);">${p.views}</td>
+            <td style="text-align:right; color:var(--muted);">${p.unique_visitors}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // Render Countries
+    const countriesDiv = document.getElementById('countriesBreakdown');
+    if (countriesDiv) {
+      if (!data.topCountries || data.topCountries.length === 0) {
+        countriesDiv.innerHTML = '<span style="font-size:12px; color:var(--muted);">No country data recorded yet.</span>';
+      } else {
+        countriesDiv.innerHTML = data.topCountries.map(c => `
+          <span style="background:#f8fafc; border:1px solid var(--line); border-radius:6px; padding:3px 8px; font-size:12px; color:var(--navy); display:inline-flex; align-items:center; gap:6px;">
+            <span>🏳️ ${safe(c.country)}</span>
+            <strong style="color:#0284c7;">${c.visits}</strong>
+          </span>
+        `).join('');
+      }
+    }
+
+    // Render Devices
+    const devicesDiv = document.getElementById('devicesBreakdown');
+    if (devicesDiv) {
+      if (!data.devices || data.devices.length === 0) {
+        devicesDiv.innerHTML = '<span style="font-size:12px; color:var(--muted);">No device data recorded yet.</span>';
+      } else {
+        devicesDiv.innerHTML = data.devices.map(d => `
+          <span style="background:#f8fafc; border:1px solid var(--line); border-radius:6px; padding:3px 8px; font-size:12px; color:var(--navy); display:inline-flex; align-items:center; gap:6px;">
+            <span>${d.device_type === 'mobile' ? '📱 Mobile' : (d.device_type === 'tablet' ? '📟 Tablet' : '💻 Desktop')}</span>
+            <strong style="color:#7c3aed;">${d.count}</strong>
+          </span>
+        `).join('');
+      }
+    }
+  } catch (err) {
+    console.warn('[Analytics Error]:', err.message);
+  }
+}
+
+async function loadVisitorActivityFeed() {
+  const tbody = document.getElementById('activityFeedTableBody');
+  if (!tbody) return;
+
+  try {
+    const res = await fetch('/api/admin/analytics/feed?limit=50');
+    if (!res.ok) throw new Error('Failed to load activity stream');
+    const data = await res.json();
+    const feed = data.feed || [];
+
+    if (feed.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">No visitor activities recorded yet. Traffic will appear here in real time as people browse.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = feed.map(item => {
+      const isUser = !!item.user_id;
+      const whoLabel = isUser
+        ? `<strong style="color:#0284c7;">👤 ${safe(item.user_name || item.user_email)}</strong> <span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:1px 5px; border-radius:4px;">${safe(item.user_plan || 'user')}</span>`
+        : `<span style="color:var(--muted);">🕶️ Guest Visitor</span>`;
+
+      const actionBadge = item.action_type === 'page_view'
+        ? `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-size:11px;">Viewed Page</span>`
+        : `<span style="background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">⚡ ${safe(item.action_type)}</span>`;
+
+      let metaText = '—';
+      if (item.metadata) {
+        try {
+          const m = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+          metaText = `<code style="font-size:11px; color:#475569;">${safe(JSON.stringify(m))}</code>`;
+        } catch (_) {
+          metaText = safe(String(item.metadata));
+        }
+      }
+
+      const timeAgo = formatTimeAgo(new Date(item.created_at));
+
+      return `
+        <tr>
+          <td style="white-space:nowrap; font-size:12px; color:var(--muted);">${timeAgo}</td>
+          <td>${whoLabel}</td>
+          <td>
+            ${actionBadge}
+            <code style="margin-left:6px; font-size:12px; color:var(--navy);">${safe(item.path)}</code>
+          </td>
+          <td><span style="font-size:12px;">🏳️ ${safe(item.country || 'Unknown')}</span></td>
+          <td style="font-size:12px; color:var(--muted);">
+            ${item.device_type === 'mobile' ? '📱' : '💻'} ${safe(item.browser)} on ${safe(item.os)}
+          </td>
+          <td>${metaText}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:16px; color:#ef4444;">Error loading activity feed: ${safe(err.message)}</td></tr>`;
+  }
+}
+
+function formatTimeAgo(date) {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 15) return 'just now';
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${Math.floor(diffHours / 24)}d ago`;
+}
 
 // Initial boot
 checkAdminAuth();

@@ -1113,5 +1113,121 @@ router.post('/whatsapp/test', async (req, res) => {
   }
 });
 
+// ==========================================
+// VISITOR & REAL-TIME ANALYTICS (TAB 6)
+// ==========================================
+router.get('/analytics/overview', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days, 10) || 7;
+
+    // Active in last 15 mins
+    const activeVisitors = await db.getOne(`
+      SELECT COUNT(DISTINCT session_id) AS n, COUNT(DISTINCT user_id) AS active_users
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+    `);
+
+    // Today vs Period totals
+    const todayStats = await db.getOne(`
+      SELECT COUNT(*) AS page_views, COUNT(DISTINCT session_id) AS unique_visitors
+      FROM visitor_activity_log
+      WHERE created_at >= CURDATE()
+    `);
+
+    const periodStats = await db.getOne(`
+      SELECT COUNT(*) AS total_views, COUNT(DISTINCT session_id) AS total_visitors
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+    `, [days]);
+
+    // Top pages
+    const topPages = await db.getAll(`
+      SELECT path, COUNT(*) AS views, COUNT(DISTINCT session_id) AS unique_visitors
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY path
+      ORDER BY views DESC
+      LIMIT 10
+    `, [days]);
+
+    // Traffic by day
+    const trafficByDay = await db.getAll(`
+      SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
+             COUNT(*) AS views,
+             COUNT(DISTINCT session_id) AS visitors
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
+      ORDER BY day ASC
+    `, [days]);
+
+    // Top Countries
+    const topCountries = await db.getAll(`
+      SELECT COALESCE(NULLIF(country, ''), 'Unknown') AS country, COUNT(*) AS visits
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY country
+      ORDER BY visits DESC
+      LIMIT 8
+    `, [days]);
+
+    // Device breakdown
+    const devices = await db.getAll(`
+      SELECT device_type, COUNT(*) AS count
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY device_type
+    `, [days]);
+
+    // Top Referrers
+    const referrers = await db.getAll(`
+      SELECT COALESCE(NULLIF(referrer, ''), 'Direct / Bookmark') AS ref, COUNT(*) AS count
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      GROUP BY ref
+      ORDER BY count DESC
+      LIMIT 8
+    `, [days]);
+
+    res.json({
+      activeNow: activeVisitors?.n || 0,
+      activeUsersNow: activeVisitors?.active_users || 0,
+      todayViews: todayStats?.page_views || 0,
+      todayVisitors: todayStats?.unique_visitors || 0,
+      periodViews: periodStats?.total_views || 0,
+      periodVisitors: periodStats?.total_visitors || 0,
+      topPages,
+      trafficByDay,
+      topCountries,
+      devices,
+      referrers
+    });
+  } catch (err) {
+    console.error('[Admin Analytics] Overview error:', err);
+    res.status(500).json({ error: 'Failed to load visitor analytics: ' + err.message });
+  }
+});
+
+router.get('/analytics/feed', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+
+    const feed = await db.getAll(`
+      SELECT val.id, val.action_type, val.path, val.country, val.device_type, val.browser,
+             val.os, val.ip_address, val.metadata, val.created_at,
+             u.id AS user_id, u.name AS user_name, u.email AS user_email, u.plan AS user_plan
+      FROM visitor_activity_log val
+      LEFT JOIN users u ON u.id = val.user_id
+      ORDER BY val.id DESC
+      LIMIT ?
+    `, [limit]);
+
+    res.json({ feed });
+  } catch (err) {
+    console.error('[Admin Analytics] Feed error:', err);
+    res.status(500).json({ error: 'Failed to load live activity feed: ' + err.message });
+  }
+});
+
 module.exports = router;
 

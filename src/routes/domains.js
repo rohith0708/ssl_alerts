@@ -4,6 +4,7 @@ const { db } = require('../db');
 const { requireAuth } = require('../auth');
 const { checkDomain, checkPastedCertificate, checkCertRow } = require('../certChecker');
 const { applyCheckResult } = require('../scheduler');
+const { trackAction } = require('../analyticsTracker');
 
 const router = express.Router();
 
@@ -146,6 +147,15 @@ router.post('/', async (req, res) => {
 
     const domain = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [info.insertId, req.userId]);
     res.status(201).json({ domain });
+
+    // Track activity in analytics
+    trackAction({
+      req,
+      userId: req.userId,
+      actionType: 'add_domain',
+      path: '/dashboard',
+      metadata: { hostname, port }
+    });
 
     // Background immediate check
     checkDomain(hostname, port)
