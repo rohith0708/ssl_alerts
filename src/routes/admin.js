@@ -1189,6 +1189,28 @@ router.get('/analytics/overview', async (req, res) => {
       LIMIT 8
     `, [days]);
 
+    // Currently Active Pages (Real-time in last 15 min)
+    const activePagesNow = await db.getAll(`
+      SELECT path, COUNT(DISTINCT session_id) AS active_visitors, COUNT(*) AS hits
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+      GROUP BY path
+      ORDER BY active_visitors DESC
+      LIMIT 6
+    `);
+
+    // Conversion Funnel & Business Intent Signals
+    const funnelStats = await db.getOne(`
+      SELECT 
+        COUNT(DISTINCT CASE WHEN path = '/' THEN session_id END) AS landing_visitors,
+        COUNT(DISTINCT CASE WHEN path LIKE '%/tools%' OR path LIKE '%/ssltools%' OR path LIKE '%/dns%' THEN session_id END) AS tools_visitors,
+        COUNT(DISTINCT CASE WHEN path LIKE '%/signup%' OR path LIKE '%/register%' THEN session_id END) AS signup_intent,
+        COUNT(DISTINCT CASE WHEN action_type = 'add_domain' THEN session_id END) AS domain_added_actions,
+        COUNT(DISTINCT CASE WHEN path LIKE '%/account%' OR path LIKE '%/billing%' THEN session_id END) AS account_billing_visitors
+      FROM visitor_activity_log
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+    `, [days]);
+
     res.json({
       activeNow: activeVisitors?.n || 0,
       activeUsersNow: activeVisitors?.active_users || 0,
@@ -1197,6 +1219,8 @@ router.get('/analytics/overview', async (req, res) => {
       periodViews: periodStats?.total_views || 0,
       periodVisitors: periodStats?.total_visitors || 0,
       topPages,
+      activePagesNow,
+      funnelStats,
       trafficByDay,
       topCountries,
       devices,
