@@ -896,7 +896,10 @@
             <a href="#groups" onclick="scrollDocSection(event, 'groups')">Groups — creating &amp; choosing</a>
             <a href="#filtering" onclick="scrollDocSection(event, 'filtering')">Filtering your list</a>
             <a href="#statuses" onclick="scrollDocSection(event, 'statuses')">Understanding statuses</a>
-            <a href="#alerts" onclick="scrollDocSection(event, 'alerts')">Alerts &amp; acknowledging</a>
+            <a href="#alerts" onclick="scrollDocSection(event, 'alerts')">Alert Channels Overview</a>
+            <a href="#alert-email" onclick="scrollDocSection(event, 'alert-email')">Email Alerts</a>
+            <a href="#alert-teams" onclick="scrollDocSection(event, 'alert-teams')">Microsoft Teams Alerts</a>
+            <a href="#alert-whatsapp" onclick="scrollDocSection(event, 'alert-whatsapp')">WhatsApp Alerts</a>
             <a href="#plans" onclick="scrollDocSection(event, 'plans')">Plans &amp; billing</a>
             <a href="#account" onclick="scrollDocSection(event, 'account')">Your account</a>
             <a href="#faq" onclick="scrollDocSection(event, 'faq')">FAQ</a>
@@ -1030,28 +1033,88 @@
             </section>
 
             <section id="alerts" class="docs-section">
-              <h2>Alerts &amp; acknowledging</h2>
-              <p>The moment a certificate enters Warning, Critical, or Expired, you get an email immediately. If it's still unresolved, you'll get another email <strong>every 30 minutes</strong> — deliberately persistent, so it can't quietly get lost in an inbox.</p>
+              <h2>Alert Channels &amp; Acknowledging</h2>
+              <p>The moment a certificate enters Warning, Critical, or Expired status, SSL Alerts immediately dispatches alerts across your configured channels (<strong>Email</strong>, <strong>Microsoft Teams</strong>, and <strong>WhatsApp</strong>). If unresolved, critical reminders continue at your plan's configured interval so expiry issues can never slip through unnoticed.</p>
               <ul class="docs-list">
-                <li>Click <strong>Acknowledge</strong> on that certificate's row to pause the repeats while you deal with it.</li>
-                <li>Click <strong>Acknowledge</strong> on that certificate's row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside the alert email) to pause repeat reminders without logging in.</li>
-                <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your inbox.</li>
-                <li><strong>Warning vs Critical:</strong> Certificates in Warning (8–30 days) receive a calm daily reminder (every 24h). Critical certificates (&lt;7 days) trigger at your plan's rapid alert interval.</li>
+                <li><strong>One-Click Acknowledgment:</strong> Click <strong>Acknowledge</strong> on any certificate row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside the alert email) to pause repeat reminders without logging in.</li>
+                <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your team from alert fatigue.</li>
+                <li><strong>Warning vs Critical Intervals:</strong> Certificates in Warning (8–30 days) receive a calm daily reminder (every 24h). Critical certificates (&lt;7 days) trigger at your plan's rapid alert interval (from 3 hours down to 10 minutes).</li>
                 <li><strong>Internal Certificate Updates:</strong> If an internal certificate is renewed, click <strong>Update Cert</strong> on its row to paste the new PEM and refresh its validity dates immediately.</li>
-                <li>If the status gets worse (Warning → Critical) or changes again after being acknowledged, alerts automatically resume — so acknowledging one problem can never accidentally silence a different, future one.</li>
+                <li><strong>State Change Re-Alerts:</strong> If a certificate's status escalates (e.g. Warning → Critical or Expired) after being acknowledged, alerts immediately resume so new problems are never silenced.</li>
+                <li><strong>Domain Group Filtering:</strong> You can route alerts for specific domain groups (e.g. Production vs Staging or Client A vs Client B) to dedicated email inboxes, Teams channels, or WhatsApp phone numbers.</li>
+              </ul>
+            </section>
+
+            <section id="alert-email" class="docs-section">
+              <h2>Email Alerts</h2>
+              <p>Email alerts are enabled by default for your primary account email. You can also add additional team member emails to distribute alerts across your engineering and operations teams.</p>
+              <h3>How to Add &amp; Configure Alert Emails:</h3>
+              <ol class="docs-list">
+                <li>Navigate to <strong>Alert Emails</strong> in the left sidebar.</li>
+                <li>Type your team member's email address in the <strong>Recipient Email</strong> field.</li>
+                <li>Select a <strong>Domain Group</strong>: choose <em>All Domains (Global)</em> to receive alerts for everything, or select a specific group (e.g. <em>Production</em>) to receive only group-specific notifications.</li>
+                <li>Click <strong>Add Recipient</strong>.</li>
+              </ol>
+              <ul class="docs-list">
+                <li><strong>Instant Snooze Links:</strong> Every alert email contains a secure, 1-click snooze button so on-call engineers can acknowledge alerts from any mobile device without logging in.</li>
+                <li><strong>Pause / Resume:</strong> Toggle alert delivery for any specific recipient at any time using the <strong>Pause</strong> and <strong>Resume</strong> buttons.</li>
+                <li><strong>Plan Limits:</strong> Each plan includes dedicated recipient quotas (e.g., 1 recipient on Micro, 3 on Starter, 5 on Growth, etc.).</li>
+              </ul>
+            </section>
+
+            <section id="alert-teams" class="docs-section">
+              <h2>Microsoft Teams Alerts</h2>
+              <p>Connect your Microsoft 365 organization account to receive real-time, rich Adaptive Card notifications directly into Microsoft Teams.</p>
+              <h3>How to Connect Microsoft Teams:</h3>
+              <ol class="docs-list">
+                <li>Navigate to <strong>Alert Microsoft Teams</strong> in the left sidebar.</li>
+                <li>Click <strong>Connect with Microsoft Teams</strong>. You will be redirected to Microsoft's secure login page.</li>
+                <li>Sign in with your Microsoft 365 work/school account and grant permissions to send messages to your chats and channels.</li>
+                <li>Once connected, select where alerts should be delivered from the <strong>Where should alerts go?</strong> dropdown:
+                  <ul class="docs-list" style="margin-top:6px;">
+                    <li><strong>Team Channels:</strong> Route alerts to a shared channel (e.g. <code>#ssl-alerts</code> or <code>#devops</code>) for entire engineering teams.</li>
+                    <li><strong>Group Chats:</strong> Send alerts to an existing group chat (e.g. <code>tst</code> or <code>Operations</code>).</li>
+                    <li><strong>Direct Messages:</strong> Deliver private, direct 1-on-1 notifications to you or specific colleagues.</li>
+                  </ul>
+                </li>
+                <li>Optionally assign a <strong>Domain Group</strong> to route specific domain alerts to specific channels or chats.</li>
+                <li>Click <strong>Add Destination</strong>.</li>
+                <li>Click <strong>Test</strong> on any configured destination to verify instant delivery in Microsoft Teams.</li>
+              </ol>
+              <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:12px 16px; margin:16px 0; font-size:13px; line-height:1.6;">
+                <strong>💡 Personal Microsoft Accounts (@gmail.com, @outlook.com):</strong> Microsoft Graph messaging APIs require an organization/business account for automated chat sending. To receive alerts on a personal account, invite your personal email into an organizational Group Chat (e.g. <code>tst</code>) or Team Channel, and connect with your organization account!
+              </div>
+            </section>
+
+            <section id="alert-whatsapp" class="docs-section">
+              <h2>WhatsApp Alerts</h2>
+              <p>Receive instantaneous, urgent SSL expiry warnings and downtime alerts directly on WhatsApp for maximum on-call visibility.</p>
+              <h3>How to Connect WhatsApp Recipients:</h3>
+              <ol class="docs-list">
+                <li>Navigate to <strong>Alert WhatsApp</strong> in the left sidebar.</li>
+                <li>Enter the recipient's phone number in full international E.164 format including country code:
+                  <br>Examples: <code>+91 98765 43210</code> (India), <code>+1 555 123 4567</code> (US/Canada), <code>+44 7700 900077</code> (UK).
+                </li>
+                <li>Select a <strong>Domain Group</strong>: choose <em>All Domains (Global)</em> to monitor all infrastructure, or pick a specific client/environment group.</li>
+                <li>Click <strong>Add WhatsApp Number</strong>.</li>
+                <li>Click the <strong>Test</strong> button next to the phone number. A test alert will be delivered directly to your WhatsApp app within seconds.</li>
+              </ol>
+              <ul class="docs-list">
+                <li><strong>Powered by Evolution API:</strong> Fast, enterprise-grade message delivery with automated retries and delivery tracking.</li>
+                <li><strong>Control at your fingertips:</strong> Pause or resume any WhatsApp number instantly with the click of a button.</li>
               </ul>
             </section>
 
             <section id="plans" class="docs-section">
               <h2>Plans &amp; billing</h2>
               <ul class="docs-list">
-                <li><strong>Free Trial (30 Days) ($0)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals, 30 days access.</li>
-                <li><strong>Micro ($2/month — Limited Time Offer, Reg. $4)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals.</li>
-                <li><strong>Starter ($5/month — Limited Time Offer, Reg. $10)</strong> — 20 domains / certificates, up to 3 alert recipients, 2-hour critical alert intervals.</li>
-                <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 5 alert recipients, 1-hour critical alert intervals.</li>
-                <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 10 alert recipients, 30-min critical alert intervals.</li>
-                <li><strong>Agency ($50/month)</strong> — 500 domains / certificates, up to 25 alert recipients, 10-min critical alert intervals.</li>
-                <li><strong>Enterprise Plan (&gt;500 domains)</strong> — Custom quotas, dedicated checking workers, 24/7 SLA, and invoice billing. Contact <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.</li>
+                <li><strong>Free Trial (30 Days) ($0)</strong> — 5 domains / certificates, 1 Email, WhatsApp &amp; Teams alert recipient, 3-hour expiry alert intervals, 30 days access.</li>
+                <li><strong>Micro ($2/month — Limited Time Offer, Reg. $4)</strong> — 5 domains / certificates, 1 Email, WhatsApp &amp; Teams alert recipient, 3-hour expiry alert intervals.</li>
+                <li><strong>Starter ($5/month — Limited Time Offer, Reg. $10)</strong> — 20 domains / certificates, up to 3 Email, WhatsApp &amp; Teams alert recipients, 2-hour critical alert intervals.</li>
+                <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 5 Email, WhatsApp &amp; Teams alert recipients, 1-hour critical alert intervals.</li>
+                <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 10 Email, WhatsApp &amp; Teams alert recipients, 30-min critical alert intervals.</li>
+                <li><strong>Agency ($50/month)</strong> — 500 domains / certificates, up to 25 Email, WhatsApp &amp; Teams alert recipients, 10-min critical alert intervals.</li>
+                <li><strong>Enterprise Plan (&gt;500 domains)</strong> — 500+ domains / certificates, up to 50+ Email, WhatsApp &amp; Teams alert recipients, custom alert intervals, dedicated checking workers, 24/7 SLA, and invoice billing. Contact <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.</li>
               </ul>
               <p>Public domains and internal certificates count the same toward your plan's limit. Checkout is handled securely through <strong>Dodo Payments</strong> (supporting international credit/debit cards, Google Pay, Apple Pay, and local currencies).</p>
 

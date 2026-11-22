@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { db } = require('../db');
+const { db, PLANS } = require('../db');
 const { requireAuth, JWT_SECRET } = require('../auth');
 const {
   getAuthUrl,
@@ -294,8 +294,21 @@ router.post('/add-destination', requireAuth, async (req, res) => {
     const countRow = await db.getOne('SELECT COUNT(*) as n FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
     const totalCount = countRow ? countRow.n : 0;
 
+    // Check user plan recipient limits
+    const user = await db.getOne('SELECT plan, is_admin FROM users WHERE id = ?', [req.userId]);
+    const planConfig = (user && PLANS[user.plan]) || PLANS.trial;
+    const maxRecipients = (user && user.is_admin) ? 1000 : (planConfig.recipientLimit || 1);
+
     // If there is only 1 row and it is unconfigured/placeholder (e.g. destination_id = 'me' without last_sent_at)
-    if (totalCount === 1 && (primary.destination_id === 'me' && !primary.last_sent_at)) {
+    const isFirstPlaceholder = (totalCount === 1 && (primary.destination_id === 'me' && !primary.last_sent_at));
+
+    if (!isFirstPlaceholder && totalCount >= maxRecipients) {
+      return res.status(403).json({
+        error: `Your ${planConfig.label} plan allows up to ${maxRecipients} alert recipient destination${maxRecipients === 1 ? '' : 's'}. Upgrade your plan to add more Teams destinations.`
+      });
+    }
+
+    if (isFirstPlaceholder) {
       await db.execute(`
         UPDATE teams_graph_connections SET
           destination_type = ?,

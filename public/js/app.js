@@ -290,7 +290,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>5</strong> domains monitored',
         'Daily SSL expiry checks',
-        '<strong>1</strong> email alert recipient',
+        '<strong>1</strong> Email, WhatsApp & Teams alert recipient',
         '3-hour expiry alert intervals',
         'Let\'s Encrypt & self-signed cert generation with storage',
         'Status filters (warning/critical/healthy)',
@@ -304,7 +304,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>5</strong> domains monitored',
         'Daily SSL expiry checks',
-        '<strong>1</strong> email alert recipient',
+        '<strong>1</strong> Email, WhatsApp & Teams alert recipient',
         '3-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -318,7 +318,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>20</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>3</strong> email recipients',
+        'Up to <strong>3</strong> Email, WhatsApp & Teams alert recipients',
         '2-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -332,7 +332,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>50</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>5</strong> email recipients',
+        'Up to <strong>5</strong> Email, WhatsApp & Teams alert recipients',
         '1-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -346,7 +346,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>100</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>10</strong> email recipients',
+        'Up to <strong>10</strong> Email, WhatsApp & Teams alert recipients',
         '30-min expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -360,7 +360,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>500</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>25</strong> email recipients',
+        'Up to <strong>25</strong> Email, WhatsApp & Teams alert recipients',
         '10-min expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -374,7 +374,7 @@ function setupGuestUI(plans) {
       features: [
         '<strong>500+</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>50+</strong> email recipients',
+        'Up to <strong>50+</strong> Email, WhatsApp & Teams alert recipients',
         'Custom expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
