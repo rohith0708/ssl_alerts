@@ -315,6 +315,9 @@ async function initSchema() {
 
   // Safe migrations for teams_graph_connections
   try {
+    await pool.query('ALTER TABLE teams_graph_connections ADD COLUMN group_id INT NULL AFTER user_id');
+  } catch (_) {}
+  try {
     await pool.query('ALTER TABLE teams_graph_connections MODIFY COLUMN destination_id TEXT NOT NULL');
   } catch (_) {}
   try {

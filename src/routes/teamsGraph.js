@@ -48,19 +48,35 @@ router.get('/status', requireAuth, async (req, res) => {
       });
     }
 
-    // Configured destinations for this user
-    const recipients = await db.getAll(`
-      SELECT t.id, t.destination_type, t.destination_id, t.destination_name, t.team_id,
-             t.group_id, t.is_active, t.last_sent_at, t.last_status, t.last_error, t.created_at,
-             g.name AS group_name
-      FROM teams_graph_connections t
-      LEFT JOIN \`groups\` g ON g.id = t.group_id AND g.user_id = t.user_id
-      WHERE t.user_id = ?
-      ORDER BY t.id DESC
-    `, [req.userId]);
+    // Configured destinations for this user (with fallback if group_id column is being migrated)
+    let recipients = [];
+    try {
+      recipients = await db.getAll(`
+        SELECT t.id, t.destination_type, t.destination_id, t.destination_name, t.team_id,
+               t.group_id, t.is_active, t.last_sent_at, t.last_status, t.last_error, t.created_at,
+               g.name AS group_name
+        FROM teams_graph_connections t
+        LEFT JOIN \`groups\` g ON g.id = t.group_id
+        WHERE t.user_id = ?
+        ORDER BY t.id DESC
+      `, [req.userId]);
+    } catch (sqlErr) {
+      console.warn('[teamsGraph] Fallback query for destinations:', sqlErr.message);
+      recipients = await db.getAll(`
+        SELECT t.id, t.destination_type, t.destination_id, t.destination_name, t.team_id,
+               NULL AS group_id, t.is_active, t.last_sent_at, t.last_status, t.last_error, t.created_at,
+               NULL AS group_name
+        FROM teams_graph_connections t
+        WHERE t.user_id = ?
+        ORDER BY t.id DESC
+      `, [req.userId]).catch(() => []);
+    }
 
     // User's domain groups for dropdown
-    const groups = await db.getAll('SELECT id, name FROM `groups` WHERE user_id = ? ORDER BY name ASC', [req.userId]);
+    let groups = [];
+    try {
+      groups = await db.getAll('SELECT id, name FROM `groups` WHERE user_id = ? ORDER BY name ASC', [req.userId]);
+    } catch (_) {}
 
     res.json({
       connected: true,

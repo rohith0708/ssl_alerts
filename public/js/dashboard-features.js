@@ -2102,7 +2102,7 @@ async function loadTeamsStatus() {
       renderTeamsDestinationsTable(data.recipients || []);
 
       // Load available channels/chats into destination dropdown
-      loadTeamsDestinations();
+      loadTeamsDestinations().catch(e => console.warn('Destinations load error:', e));
     } else {
       notConnected.style.display = 'block';
       connected.style.display = 'none';
