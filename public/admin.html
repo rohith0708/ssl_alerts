@@ -3451,7 +3451,6 @@ async function loadVisitorActivityFeed() {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">No visitor activities recorded for this period.</td></tr>';
       return;
     }
-    }
 
     tbody.innerHTML = feed.map(item => {
       const isUser = !!item.user_id;
