@@ -26,14 +26,6 @@
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span>Monitor Domains</span>
       </a>
-      <a href="#ssl-tools" data-section="sslTools" onclick="showSSLTools(event)">
-        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        <span>SSL Tools</span>
-      </a>
-      <a href="#certificates" data-section="certificates" onclick="showCertificates(event)">
-        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-        <span>Certificate Generator</span>
-      </a>
       <a href="#alert-emails" data-section="alertEmails" onclick="handleAlertEmailsNav(event)">
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         <span>Alert Emails</span>
@@ -46,9 +38,17 @@
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
         <span>Alert WhatsApp</span>
       </a>
+      <a href="#ssl-tools" data-section="sslTools" onclick="showSSLTools(event)">
+        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span>SSL Tools</span>
+      </a>
       <a href="#dns-lookup" data-section="dnsLookup" onclick="showDNSLookup(event)">
         <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>
         <span>DNS Lookup</span>
+      </a>
+      <a href="#certificates" data-section="certificates" onclick="showCertificates(event)">
+        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+        <span>Certificate Generator</span>
       </a>
 
       <div class="sidebar-nav-divider"></div>
@@ -689,7 +689,7 @@
 
         <!-- Personal Account Notice Banner -->
         <div id="teamsPersonalNotice" style="margin-bottom:20px; padding:12px 16px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:13px; color:#92400e; line-height:1.5;">
-          <strong>💡 Using Personal Microsoft Accounts?</strong> Personal accounts (@gmail.com, @outlook.com) cannot receive direct API messages due to Microsoft Graph licensing. To send alerts to a personal user, add them to a <strong>Group Chat</strong> (e.g. <em>tst</em>) or <strong>Team Channel</strong>, and add that group below!
+          <strong>💡 Personal Microsoft Accounts (@gmail.com, @outlook.com):</strong> Microsoft Graph messaging APIs require an organization/business account for automated chat sending. To receive alerts on a personal account, invite your personal email into an organizational Group Chat (e.g. <em>tst</em>) or Team Channel, and connect with your organization account!
         </div>
 
         <!-- Add Alert Destination Bar -->
