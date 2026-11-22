@@ -1190,11 +1190,14 @@ html, body {
 
         <div class="health-card" style="border-top:3px solid #ec4899;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="title" style="color:#db2777; font-weight:700;">🚀 Signups &amp; Domain Actions</div>
+            <div class="title" style="color:#db2777; font-weight:700;">🚀 Registered Users &amp; Signups</div>
             <span class="badge-pill" style="background:#fce7f3; color:#be185d; font-size:11px;">Conversion</span>
           </div>
-          <div class="value" id="statFunnelSignup" style="color:#db2777; font-size:28px;">0</div>
-          <div class="desc"><strong id="statFunnelDomains">0</strong> domains added to monitoring</div>
+          <div style="display:flex; align-items:baseline; gap:6px;">
+            <div class="value" id="statFunnelSignup" style="color:#db2777; font-size:28px;">0</div>
+            <span style="font-size:12px; color:var(--muted); font-weight:600;">registered users</span>
+          </div>
+          <div class="desc"><strong id="statSignupVisitors">0</strong> visited /signup · <strong id="statFunnelDomains">0</strong> domains added</div>
         </div>
       </div>
 
@@ -3213,7 +3216,11 @@ async function loadVisitorAnalytics() {
     if (data.funnelStats) {
       document.getElementById('statFunnelLanding').textContent = data.funnelStats.landing_visitors || 0;
       document.getElementById('statFunnelTools').textContent = data.funnelStats.tools_visitors || 0;
-      document.getElementById('statFunnelSignup').textContent = data.funnelStats.signup_intent || 0;
+      const totalUsers = data.funnelStats.total_users !== undefined ? data.funnelStats.total_users : (data.funnelStats.completed_signups || 0);
+      document.getElementById('statFunnelSignup').textContent = totalUsers;
+      const signupVisits = data.funnelStats.signup_intent || 0;
+      const elSignupVisits = document.getElementById('statSignupVisitors');
+      if (elSignupVisits) elSignupVisits.textContent = signupVisits;
       document.getElementById('statFunnelDomains').textContent = data.funnelStats.domain_added_actions || 0;
     }
 

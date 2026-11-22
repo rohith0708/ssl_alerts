@@ -1211,6 +1211,19 @@ router.get('/analytics/overview', async (req, res) => {
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
     `, [days]);
 
+    // Actual registered users count
+    const userCountRow = await db.getOne(`
+      SELECT 
+        COUNT(*) AS total_users,
+        COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) AS period_users
+      FROM users
+    `, [days]);
+
+    if (funnelStats) {
+      funnelStats.completed_signups = userCountRow ? userCountRow.period_users : 0;
+      funnelStats.total_users = userCountRow ? userCountRow.total_users : 0;
+    }
+
     res.json({
       activeNow: activeVisitors?.n || 0,
       activeUsersNow: activeVisitors?.active_users || 0,
