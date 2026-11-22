@@ -1134,6 +1134,28 @@ html, body {
     <!-- TAB 6: LIVE VISITORS & ACTIVITY ANALYTICS  -->
     <!-- ========================================== -->
     <div class="admin-tab-content" id="tabAnalytics">
+      <!-- Date Filter Control Bar -->
+      <div class="admin-panel-card" style="margin-bottom:20px; padding:16px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:0.5px; margin-right:4px;">Date Filter:</span>
+            <button type="button" class="filter-chip" id="chipVisitorToday" onclick="filterVisitorPreset('today', this)">Today</button>
+            <button type="button" class="filter-chip" id="chipVisitorYesterday" onclick="filterVisitorPreset('yesterday', this)">Yesterday</button>
+            <button type="button" class="filter-chip active" id="chipVisitor7d" onclick="filterVisitorPreset('7d', this)">Last 7 Days</button>
+            <button type="button" class="filter-chip" id="chipVisitor30d" onclick="filterVisitorPreset('30d', this)">Last 30 Days</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <label for="visitorSpecificDate" style="font-size:12px; color:var(--navy); font-weight:700;">Filter Specific Date:</label>
+            <input type="date" id="visitorSpecificDate" onchange="filterVisitorBySpecificDate(this.value)" style="padding:6px 10px; border:1px solid var(--line); border-radius:6px; font-size:12px; background:#fff; font-weight:600; cursor:pointer;">
+            <button type="button" id="btnResetVisitorDate" class="btn btn-ghost btn-sm" onclick="filterVisitorPreset('7d')" style="display:none; font-size:11px; padding:5px 10px; color:#dc2626;">✕ Reset to Last 7 Days</button>
+          </div>
+        </div>
+        <div id="visitorActiveDateBanner" style="display:none; margin-top:12px; padding:10px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; font-size:12px; color:#1e40af; font-weight:600; justify-content:space-between; align-items:center;">
+          <span>📅 Currently viewing analytics for: <strong id="visitorActiveDateText" style="color:#1d4ed8;">Nov 23, 2026</strong></span>
+          <a href="javascript:void(0)" onclick="filterVisitorPreset('7d')" style="color:#2563eb; text-decoration:underline; font-size:11px; font-weight:700;">Show All / Last 7 Days →</a>
+        </div>
+      </div>
+
       <!-- Live Overview KPIs -->
       <div class="health-grid" style="margin-bottom:24px;">
         <div class="health-card" style="border-top:3px solid #10b981;">
@@ -1156,12 +1178,8 @@ html, body {
 
         <div class="health-card" style="border-top:3px solid #8b5cf6;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="title" style="color:#7c3aed; font-weight:700;">📈 Total Period Traffic</div>
-            <select id="analyticsDaysSelect" onchange="loadVisitorAnalytics()" style="padding:2px 8px; font-size:11px; border:1px solid var(--line); border-radius:6px; background:#fff;">
-              <option value="7" selected>Last 7 Days</option>
-              <option value="14">Last 14 Days</option>
-              <option value="30">Last 30 Days</option>
-            </select>
+            <div class="title" id="statPeriodTitle" style="color:#7c3aed; font-weight:700;">📈 Total Period Traffic</div>
+            <span class="badge-pill" id="statPeriodBadge" style="background:#f3e8ff; color:#7c3aed; font-size:11px; font-weight:700;">Last 7 Days</span>
           </div>
           <div class="value" id="statPeriodVisitors" style="color:#7c3aed; font-size:32px;">0</div>
           <div class="desc"><strong id="statPeriodViews">0</strong> page views across selected period</div>
@@ -1198,6 +1216,20 @@ html, body {
             <span style="font-size:12px; color:var(--muted); font-weight:600;">registered users</span>
           </div>
           <div class="desc"><strong id="statSignupVisitors">0</strong> visited /signup · <strong id="statFunnelDomains">0</strong> domains added</div>
+        </div>
+      </div>
+
+      <!-- Daily Traffic History & Interactive Date Clicker -->
+      <div class="admin-panel-card" style="margin-bottom:24px;">
+        <div class="admin-panel-card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h4 style="margin:0 0 4px;">📅 Daily Traffic Breakdown — Click any Date to Inspect</h4>
+            <div style="font-size:12px; color:var(--muted);">Click any date below to inspect full visitor metrics, top pages, traffic sources, and action logs for that day.</div>
+          </div>
+          <span class="badge-pill" style="background:#eff6ff; color:#2563eb; font-size:11px; font-weight:700;">Click Any Day Below</span>
+        </div>
+        <div id="dailyTrafficChips" style="display:flex; flex-wrap:wrap; gap:10px; padding:12px 0 4px;">
+          <span style="font-size:12px; color:var(--muted);">Loading daily traffic calendar...</span>
         </div>
       </div>
 
@@ -3190,6 +3222,7 @@ sidebar?.querySelectorAll('nav a').forEach(a => a.addEventListener('click', clos
 // VISITOR & REAL-TIME ANALYTICS CLIENT LOGIC
 // ==========================================
 let visitorAnalyticsTimer = null;
+let currentVisitorFilter = { type: 'preset', value: '7d' };
 
 function handleAdminSidebarNav(e, tabName) {
   if (e && e.preventDefault) e.preventDefault();
@@ -3198,12 +3231,91 @@ function handleAdminSidebarNav(e, tabName) {
   switchAdminTab(tabName);
 }
 
+function filterVisitorPreset(preset, btn) {
+  currentVisitorFilter = { type: 'preset', value: preset };
+
+  ['chipVisitorToday', 'chipVisitorYesterday', 'chipVisitor7d', 'chipVisitor30d'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+  else if (preset === 'today') document.getElementById('chipVisitorToday')?.classList.add('active');
+  else if (preset === 'yesterday') document.getElementById('chipVisitorYesterday')?.classList.add('active');
+  else if (preset === '7d') document.getElementById('chipVisitor7d')?.classList.add('active');
+  else if (preset === '30d') document.getElementById('chipVisitor30d')?.classList.add('active');
+
+  const dateInput = document.getElementById('visitorSpecificDate');
+  if (dateInput) dateInput.value = '';
+
+  const banner = document.getElementById('visitorActiveDateBanner');
+  if (banner) banner.style.display = 'none';
+
+  const resetBtn = document.getElementById('btnResetVisitorDate');
+  if (resetBtn) resetBtn.style.display = 'none';
+
+  loadVisitorAnalytics();
+  loadVisitorActivityFeed();
+}
+
+function filterVisitorBySpecificDate(dateStr) {
+  if (!dateStr) return;
+  currentVisitorFilter = { type: 'date', value: dateStr };
+
+  ['chipVisitorToday', 'chipVisitorYesterday', 'chipVisitor7d', 'chipVisitor30d'].forEach(id => {
+    document.getElementById(id)?.classList.remove('active');
+  });
+
+  const dateInput = document.getElementById('visitorSpecificDate');
+  if (dateInput) dateInput.value = dateStr;
+
+  const d = new Date(dateStr + 'T00:00:00');
+  const formatted = isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+
+  const banner = document.getElementById('visitorActiveDateBanner');
+  const bannerText = document.getElementById('visitorActiveDateText');
+  if (banner && bannerText) {
+    banner.style.display = 'flex';
+    bannerText.textContent = formatted;
+  }
+
+  const resetBtn = document.getElementById('btnResetVisitorDate');
+  if (resetBtn) resetBtn.style.display = 'inline-block';
+
+  loadVisitorAnalytics();
+  loadVisitorActivityFeed();
+}
+
 async function loadVisitorAnalytics() {
-  const days = document.getElementById('analyticsDaysSelect')?.value || 7;
+  let url = '/api/admin/analytics/overview';
+  if (currentVisitorFilter.type === 'date') {
+    url += `?date=${encodeURIComponent(currentVisitorFilter.value)}`;
+  } else if (currentVisitorFilter.type === 'preset') {
+    if (currentVisitorFilter.value === 'today') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      url += `?date=${todayStr}`;
+    } else if (currentVisitorFilter.value === 'yesterday') {
+      const y = new Date(Date.now() - 86400000);
+      const yStr = y.toISOString().slice(0, 10);
+      url += `?date=${yStr}`;
+    } else if (currentVisitorFilter.value === '30d') {
+      url += '?days=30';
+    } else {
+      url += '?days=7';
+    }
+  }
+
   try {
-    const res = await fetch(`/api/admin/analytics/overview?days=${days}`);
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to load visitor overview');
     const data = await res.json();
+
+    const periodTitle = document.getElementById('statPeriodTitle');
+    const periodBadge = document.getElementById('statPeriodBadge');
+    if (periodTitle) {
+      periodTitle.textContent = data.selectedDate ? `📈 Traffic on ${data.selectedDateLabel}` : '📈 Total Period Traffic';
+    }
+    if (periodBadge) {
+      periodBadge.textContent = data.selectedDateLabel || 'Selected Period';
+    }
 
     document.getElementById('statLiveActiveNow').textContent = data.activeNow;
     document.getElementById('statLiveActiveUsers').textContent = data.activeUsersNow;
@@ -3222,6 +3334,35 @@ async function loadVisitorAnalytics() {
       const elSignupVisits = document.getElementById('statSignupVisitors');
       if (elSignupVisits) elSignupVisits.textContent = signupVisits;
       document.getElementById('statFunnelDomains').textContent = data.funnelStats.domain_added_actions || 0;
+    }
+
+    // Render Daily Traffic History Cards (Clickable Date Buttons)
+    const dailyContainer = document.getElementById('dailyTrafficChips');
+    if (dailyContainer && Array.isArray(data.trafficByDay)) {
+      if (data.trafficByDay.length === 0) {
+        dailyContainer.innerHTML = '<span style="font-size:12px; color:var(--muted);">No daily traffic records found.</span>';
+      } else {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        dailyContainer.innerHTML = data.trafficByDay.map(dayItem => {
+          const d = new Date(dayItem.day + 'T00:00:00');
+          const dayLabel = isNaN(d.getTime()) ? dayItem.day : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+          const isSelected = (currentVisitorFilter.type === 'date' && currentVisitorFilter.value === dayItem.day) || (currentVisitorFilter.type === 'preset' && currentVisitorFilter.value === 'today' && dayItem.day === todayStr);
+          const isToday = (dayItem.day === todayStr);
+
+          return `
+            <button type="button" class="daily-traffic-pill ${isSelected ? 'active' : ''}" onclick="filterVisitorBySpecificDate('${dayItem.day}')" style="cursor:pointer; text-align:left; padding:8px 14px; border:1.5px solid ${isSelected ? '#3b82f6' : 'var(--line)'}; border-radius:8px; background:${isSelected ? '#eff6ff' : '#fff'}; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.15s ease;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:12px; font-weight:700; color:${isSelected ? '#1d4ed8' : 'var(--navy)'};">📅 ${dayLabel}</span>
+                ${isToday ? '<span style="font-size:10px; background:#dcfce7; color:#15803d; font-weight:700; padding:1px 5px; border-radius:4px;">Today</span>' : ''}
+                ${isSelected ? '<span style="font-size:10px; background:#bfdbfe; color:#1e40af; font-weight:700; padding:1px 5px; border-radius:4px;">Viewing</span>' : ''}
+              </div>
+              <div style="font-size:11px; color:var(--muted); margin-top:3px;">
+                <strong style="color:${isSelected ? '#2563eb' : 'var(--navy)'}; font-weight:700;">${dayItem.visitors}</strong> visitors · <strong>${dayItem.views}</strong> views
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
     }
 
     // Render Top & Currently Active Pages
@@ -3293,14 +3434,23 @@ async function loadVisitorActivityFeed() {
   if (!tbody) return;
 
   try {
-    const res = await fetch('/api/admin/analytics/feed?limit=50');
+    let url = '/api/admin/analytics/feed?limit=50';
+    if (currentVisitorFilter.type === 'date') {
+      url += `&date=${encodeURIComponent(currentVisitorFilter.value)}`;
+    } else if (currentVisitorFilter.type === 'preset' && currentVisitorFilter.value === 'today') {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      url += `&date=${todayStr}`;
+    }
+
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to load activity stream');
     const data = await res.json();
     const feed = data.feed || [];
 
     if (feed.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">No visitor activities recorded yet. Traffic will appear here in real time as people browse.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--muted);">No visitor activities recorded for this period.</td></tr>';
       return;
+    }
     }
 
     tbody.innerHTML = feed.map(item => {

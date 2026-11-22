@@ -1118,7 +1118,27 @@ router.post('/whatsapp/test', async (req, res) => {
 // ==========================================
 router.get('/analytics/overview', async (req, res) => {
   try {
-    const days = parseInt(req.query.days, 10) || 7;
+    const { date, startDate, endDate } = req.query;
+    let whereClause = '';
+    let whereParams = [];
+    let isSingleDate = false;
+    let selectedDateLabel = '';
+
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      whereClause = 'DATE(created_at) = ?';
+      whereParams = [date];
+      isSingleDate = true;
+      selectedDateLabel = date;
+    } else if (startDate && endDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate) && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      whereClause = 'DATE(created_at) >= ? AND DATE(created_at) <= ?';
+      whereParams = [startDate, endDate];
+      selectedDateLabel = `${startDate} to ${endDate}`;
+    } else {
+      const days = parseInt(req.query.days, 10) || 7;
+      whereClause = 'created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)';
+      whereParams = [days];
+      selectedDateLabel = `Last ${days} Days`;
+    }
 
     // Active in last 15 mins
     const activeVisitors = await db.getOne(`
@@ -1137,57 +1157,57 @@ router.get('/analytics/overview', async (req, res) => {
     const periodStats = await db.getOne(`
       SELECT COUNT(*) AS total_views, COUNT(DISTINCT session_id) AS total_visitors
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-    `, [days]);
+      WHERE ${whereClause}
+    `, whereParams);
 
     // Top pages
     const topPages = await db.getAll(`
       SELECT path, COUNT(*) AS views, COUNT(DISTINCT session_id) AS unique_visitors
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      WHERE ${whereClause}
       GROUP BY path
       ORDER BY views DESC
       LIMIT 10
-    `, [days]);
+    `, whereParams);
 
-    // Traffic by day
+    // Traffic by day (last 30 days for calendar/date picker)
     const trafficByDay = await db.getAll(`
       SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
              COUNT(*) AS views,
              COUNT(DISTINCT session_id) AS visitors
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d')
-      ORDER BY day ASC
-    `, [days]);
+      ORDER BY day DESC
+    `);
 
     // Top Countries
     const topCountries = await db.getAll(`
       SELECT COALESCE(NULLIF(country, ''), 'Unknown') AS country, COUNT(*) AS visits
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      WHERE ${whereClause}
       GROUP BY country
       ORDER BY visits DESC
       LIMIT 8
-    `, [days]);
+    `, whereParams);
 
     // Device breakdown
     const devices = await db.getAll(`
-      SELECT device_type, COUNT(*) AS count
+      SELECT COALESCE(NULLIF(device_type, ''), 'Desktop') AS device_type, COUNT(*) AS count
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      WHERE ${whereClause}
       GROUP BY device_type
-    `, [days]);
+    `, whereParams);
 
     // Top Referrers
     const referrers = await db.getAll(`
       SELECT COALESCE(NULLIF(referrer, ''), 'Direct / Bookmark') AS ref, COUNT(*) AS count
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+      WHERE ${whereClause}
       GROUP BY ref
       ORDER BY count DESC
       LIMIT 8
-    `, [days]);
+    `, whereParams);
 
     // Currently Active Pages (Real-time in last 15 min)
     const activePagesNow = await db.getAll(`
@@ -1208,16 +1228,16 @@ router.get('/analytics/overview', async (req, res) => {
         COUNT(DISTINCT CASE WHEN action_type = 'add_domain' THEN session_id END) AS domain_added_actions,
         COUNT(DISTINCT CASE WHEN path LIKE '%/account%' OR path LIKE '%/billing%' THEN session_id END) AS account_billing_visitors
       FROM visitor_activity_log
-      WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-    `, [days]);
+      WHERE ${whereClause}
+    `, whereParams);
 
     // Actual registered users count
     const userCountRow = await db.getOne(`
       SELECT 
         COUNT(*) AS total_users,
-        COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) THEN 1 END) AS period_users
+        COUNT(CASE WHEN ${whereClause} THEN 1 END) AS period_users
       FROM users
-    `, [days]);
+    `, whereParams);
 
     if (funnelStats) {
       funnelStats.completed_signups = userCountRow ? userCountRow.period_users : 0;
@@ -1225,6 +1245,8 @@ router.get('/analytics/overview', async (req, res) => {
     }
 
     res.json({
+      selectedDate: isSingleDate ? date : null,
+      selectedDateLabel,
       activeNow: activeVisitors?.n || 0,
       activeUsersNow: activeVisitors?.active_users || 0,
       todayViews: todayStats?.page_views || 0,
@@ -1248,6 +1270,17 @@ router.get('/analytics/overview', async (req, res) => {
 router.get('/analytics/feed', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const { date } = req.query;
+
+    let whereSql = '';
+    let params = [];
+
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      whereSql = 'WHERE DATE(val.created_at) = ?';
+      params.push(date);
+    }
+
+    params.push(limit);
 
     const feed = await db.getAll(`
       SELECT val.id, val.action_type, val.path, val.country, val.device_type, val.browser,
@@ -1255,9 +1288,10 @@ router.get('/analytics/feed', async (req, res) => {
              u.id AS user_id, u.name AS user_name, u.email AS user_email, u.plan AS user_plan
       FROM visitor_activity_log val
       LEFT JOIN users u ON u.id = val.user_id
+      ${whereSql}
       ORDER BY val.id DESC
       LIMIT ?
-    `, [limit]);
+    `, params);
 
     res.json({ feed });
   } catch (err) {
