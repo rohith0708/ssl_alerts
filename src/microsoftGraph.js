@@ -127,11 +127,12 @@ async function ensureValidAccessToken(connection) {
       access_token = ?,
       refresh_token = ?,
       token_expires_at = ?
-    WHERE id = ?
+    WHERE user_id = ? OR id = ?
   `, [
     refreshed.accessToken,
     refreshed.refreshToken,
     newExpiresAt,
+    connection.user_id,
     connection.id
   ]);
 

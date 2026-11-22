@@ -27,22 +27,50 @@ function getRedirectUri(req) {
 
 /**
  * GET /api/integrations/teams/status
- * Returns connection status for logged-in user
+ * Returns connection status, user profile, configured destinations and available groups
  */
 router.get('/status', requireAuth, async (req, res) => {
   try {
-    const connection = await db.getOne(`
+    const primary = await db.getOne(`
       SELECT id, ms_user_id, ms_user_name, ms_user_email,
-             destination_type, destination_id, destination_name, team_id,
-             is_active, last_sent_at, last_status, last_error, created_at
+             access_token, is_active, created_at
       FROM teams_graph_connections
-      WHERE user_id = ?
-      ORDER BY created_at DESC, id DESC LIMIT 1
+      WHERE user_id = ? AND access_token IS NOT NULL AND access_token != 'webhook'
+      ORDER BY id DESC LIMIT 1
     `, [req.userId]);
 
+    if (!primary) {
+      return res.json({
+        connected: false,
+        user: null,
+        recipients: [],
+        groups: []
+      });
+    }
+
+    // Configured destinations for this user
+    const recipients = await db.getAll(`
+      SELECT t.id, t.destination_type, t.destination_id, t.destination_name, t.team_id,
+             t.group_id, t.is_active, t.last_sent_at, t.last_status, t.last_error, t.created_at,
+             g.name AS group_name
+      FROM teams_graph_connections t
+      LEFT JOIN \`groups\` g ON g.id = t.group_id AND g.user_id = t.user_id
+      WHERE t.user_id = ?
+      ORDER BY t.id DESC
+    `, [req.userId]);
+
+    // User's domain groups for dropdown
+    const groups = await db.getAll('SELECT id, name FROM `groups` WHERE user_id = ? ORDER BY name ASC', [req.userId]);
+
     res.json({
-      connected: !!connection,
-      connection: connection || null
+      connected: true,
+      user: {
+        id: primary.ms_user_id,
+        name: primary.ms_user_name,
+        email: primary.ms_user_email
+      },
+      recipients: recipients || [],
+      groups: groups || []
     });
   } catch (err) {
     console.error('[teamsGraph] Error checking status:', err);
@@ -188,81 +216,13 @@ router.get('/callback', async (req, res) => {
 });
 
 /**
- * POST /api/integrations/teams/connect-webhook
- * Connects Teams channel via Incoming Webhook URL
- */
-router.post('/connect-webhook', requireAuth, async (req, res) => {
-  try {
-    const { webhookUrl, channelName } = req.body;
-
-    if (!webhookUrl || typeof webhookUrl !== 'string') {
-      return res.status(400).json({ error: 'Please enter a valid Microsoft Teams Webhook URL.' });
-    }
-
-    const trimmedUrl = webhookUrl.trim();
-    if (!trimmedUrl.startsWith('https://')) {
-      return res.status(400).json({ error: 'Webhook URL must start with https://' });
-    }
-
-    const name = (channelName && channelName.trim()) || 'Teams Channel';
-
-    // Verify webhook by sending a lightweight test card
-    await sendWebhookAlert({
-      webhookUrl: trimmedUrl,
-      hostname: 'sslalerts.info',
-      daysLeft: 14,
-      status: 'warning',
-      validTo: new Date(Date.now() + 14 * 86400000).toUTCString(),
-      intervalText: 'This is a test notification verifying your Microsoft Teams channel connection.',
-      isTest: true
-    });
-
-    // Save webhook connection in DB
-    const existing = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
-    const expiresFar = new Date(Date.now() + 10 * 365 * 86400000); // 10 years
-
-    if (existing) {
-      await db.execute(`
-        UPDATE teams_graph_connections SET
-          ms_user_id = 'webhook',
-          ms_user_name = ?,
-          ms_user_email = 'webhook@teams.local',
-          access_token = 'webhook',
-          refresh_token = 'webhook',
-          token_expires_at = ?,
-          destination_type = 'webhook',
-          destination_id = ?,
-          destination_name = ?,
-          team_id = NULL,
-          is_active = 1,
-          last_sent_at = NOW(),
-          last_status = 'ok',
-          last_error = NULL
-        WHERE id = ?
-      `, [name, expiresFar, trimmedUrl, name, existing.id]);
-    } else {
-      await db.execute(`
-        INSERT INTO teams_graph_connections
-          (user_id, ms_user_id, ms_user_name, ms_user_email, access_token, refresh_token, token_expires_at, destination_type, destination_id, destination_name, is_active, last_sent_at, last_status)
-        VALUES (?, 'webhook', ?, 'webhook@teams.local', 'webhook', 'webhook', ?, 'webhook', ?, ?, 1, NOW(), 'ok')
-      `, [req.userId, name, expiresFar, trimmedUrl, name]);
-    }
-
-    res.json({ ok: true, message: `Connected successfully! A verification alert was delivered to ${name}.` });
-  } catch (err) {
-    console.error('[teamsGraph] Webhook connection error:', err);
-    res.status(400).json({ error: err.message || 'Failed to verify Teams Webhook URL. Please check the URL and try again.' });
-  }
-});
-
-/**
  * GET /api/integrations/teams/destinations
- * Returns available chats, groups, and channels for user to select
+ * Returns available chats, groups, and channels from Microsoft Graph for user to select
  */
 router.get('/destinations', requireAuth, async (req, res) => {
   try {
     const connection = await db.getOne(`
-      SELECT * FROM teams_graph_connections WHERE user_id = ?
+      SELECT * FROM teams_graph_connections WHERE user_id = ? AND access_token IS NOT NULL AND access_token != 'webhook'
       ORDER BY id DESC LIMIT 1
     `, [req.userId]);
 
@@ -270,94 +230,197 @@ router.get('/destinations', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
 
-    if (connection.destination_type === 'webhook') {
-      return res.json({
-        destinations: [{
-          type: 'webhook',
-          id: connection.destination_id,
-          name: `📢 Webhook: ${connection.destination_name}`,
-          rawName: connection.destination_name
-        }],
-        currentDestination: {
-          type: 'webhook',
-          id: connection.destination_id,
-          name: connection.destination_name
-        }
-      });
-    }
-
     const { ensureValidAccessToken } = require('../microsoftGraph');
     const token = await ensureValidAccessToken(connection);
     const destinations = await getDestinations(token);
 
-    res.json({
-      destinations,
-      currentDestination: {
-        type: connection.destination_type,
-        id: connection.destination_id,
-        name: connection.destination_name,
-        teamId: connection.team_id
-      }
-    });
+    res.json({ destinations });
   } catch (err) {
     console.error('[teamsGraph] Error loading destinations:', err);
-    res.status(500).json({ error: 'Failed to retrieve Teams chats and channels.' });
+    res.status(500).json({ error: 'Failed to retrieve Teams chats and channels: ' + err.message });
   }
 });
 
 /**
- * POST /api/integrations/teams/save-destination
- * Saves user-selected destination
+ * POST /api/integrations/teams/add-destination
+ * Adds a new alert destination with optional domain group routing
+ */
+router.post('/add-destination', requireAuth, async (req, res) => {
+  try {
+    const { destinationType, destinationId, destinationName, teamId, groupId } = req.body;
+
+    if (!destinationId) {
+      return res.status(400).json({ error: 'Please select a destination from the list.' });
+    }
+
+    const primary = await db.getOne(`
+      SELECT * FROM teams_graph_connections
+      WHERE user_id = ? AND access_token IS NOT NULL AND access_token != 'webhook'
+      ORDER BY id DESC LIMIT 1
+    `, [req.userId]);
+
+    if (!primary) {
+      return res.status(400).json({ error: 'Microsoft Teams is not connected. Please connect with Microsoft first.' });
+    }
+
+    const assignedGroupId = groupId ? Number(groupId) : null;
+
+    // Check if this destination already exists for the same group
+    const existing = await db.getOne(`
+      SELECT id FROM teams_graph_connections
+      WHERE user_id = ? AND destination_id = ? AND (group_id <=> ?)
+    `, [req.userId, destinationId, assignedGroupId]);
+
+    if (existing) {
+      return res.status(409).json({ error: 'This destination is already configured for the selected domain group.' });
+    }
+
+    const countRow = await db.getOne('SELECT COUNT(*) as n FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const totalCount = countRow ? countRow.n : 0;
+
+    // If there is only 1 row and it is unconfigured/placeholder (e.g. destination_id = 'me' without last_sent_at)
+    if (totalCount === 1 && (primary.destination_id === 'me' && !primary.last_sent_at)) {
+      await db.execute(`
+        UPDATE teams_graph_connections SET
+          destination_type = ?,
+          destination_id = ?,
+          destination_name = ?,
+          team_id = ?,
+          group_id = ?,
+          is_active = 1,
+          last_status = NULL,
+          last_error = NULL
+        WHERE id = ?
+      `, [
+        destinationType || 'chat',
+        destinationId,
+        destinationName || 'Teams Destination',
+        teamId || null,
+        assignedGroupId,
+        primary.id
+      ]);
+    } else {
+      await db.execute(`
+        INSERT INTO teams_graph_connections
+          (user_id, group_id, ms_user_id, ms_user_name, ms_user_email, access_token, refresh_token, token_expires_at, destination_type, destination_id, destination_name, team_id, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `, [
+        req.userId,
+        assignedGroupId,
+        primary.ms_user_id,
+        primary.ms_user_name,
+        primary.ms_user_email,
+        primary.access_token,
+        primary.refresh_token,
+        primary.token_expires_at,
+        destinationType || 'chat',
+        destinationId,
+        destinationName || 'Teams Destination',
+        teamId || null
+      ]);
+    }
+
+    res.json({ ok: true, message: `Added "${destinationName || 'Teams Destination'}" to alert destinations.` });
+  } catch (err) {
+    console.error('[teamsGraph] Add destination error:', err);
+    res.status(500).json({ error: 'Failed to add destination: ' + err.message });
+  }
+});
+
+/**
+ * Legacy alias for save-destination
  */
 router.post('/save-destination', requireAuth, async (req, res) => {
+  return router.handle({ ...req, url: '/add-destination', method: 'POST' }, res);
+});
+
+/**
+ * DELETE /api/integrations/teams/destination/:id
+ * Deletes a configured destination
+ */
+router.delete('/destination/:id', requireAuth, async (req, res) => {
   try {
-    const { destinationType, destinationId, destinationName, teamId } = req.body;
-
-    if (!destinationType || !destinationId) {
-      return res.status(400).json({ error: 'Destination type and destination ID are required.' });
+    const id = req.params.id;
+    const dest = await db.getOne('SELECT id FROM teams_graph_connections WHERE id = ? AND user_id = ?', [id, req.userId]);
+    if (!dest) {
+      return res.status(404).json({ error: 'Destination not found.' });
     }
 
-    const connection = await db.getOne('SELECT id FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
-    if (!connection) {
-      return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
+    const countRow = await db.getOne('SELECT COUNT(*) as n FROM teams_graph_connections WHERE user_id = ?', [req.userId]);
+    const totalCount = countRow ? countRow.n : 0;
+
+    if (totalCount <= 1) {
+      // If it's the last destination, keep the connection tokens but reset to placeholder
+      await db.execute(`
+        UPDATE teams_graph_connections SET
+          destination_id = 'me',
+          destination_name = 'Direct Message (Me)',
+          destination_type = 'dm',
+          group_id = NULL,
+          last_sent_at = NULL,
+          last_status = NULL,
+          last_error = NULL
+        WHERE id = ?
+      `, [id]);
+    } else {
+      await db.execute('DELETE FROM teams_graph_connections WHERE id = ? AND user_id = ?', [id, req.userId]);
     }
 
-    await db.execute(`
-      UPDATE teams_graph_connections SET
-        destination_type = ?,
-        destination_id = ?,
-        destination_name = ?,
-        team_id = ?
-      WHERE id = ?
-    `, [
-      destinationType,
-      destinationId,
-      destinationName || destinationId,
-      teamId || null,
-      connection.id
-    ]);
-
-    res.json({ ok: true, message: 'Alert destination updated successfully.' });
+    res.json({ ok: true, message: 'Destination removed successfully.' });
   } catch (err) {
-    console.error('[teamsGraph] Error saving destination:', err);
-    res.status(500).json({ error: 'Failed to update alert destination.' });
+    console.error('[teamsGraph] Delete destination error:', err);
+    res.status(500).json({ error: 'Failed to delete destination.' });
+  }
+});
+
+/**
+ * PATCH /api/integrations/teams/destination/:id/toggle
+ * Enables or pauses a specific Teams destination
+ */
+router.patch('/destination/:id/toggle', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const dest = await db.getOne('SELECT id, is_active FROM teams_graph_connections WHERE id = ? AND user_id = ?', [id, req.userId]);
+    if (!dest) {
+      return res.status(404).json({ error: 'Destination not found.' });
+    }
+
+    const newActive = dest.is_active ? 0 : 1;
+    await db.execute('UPDATE teams_graph_connections SET is_active = ? WHERE id = ?', [newActive, id]);
+
+    res.json({ ok: true, isActive: newActive === 1 });
+  } catch (err) {
+    console.error('[teamsGraph] Toggle destination error:', err);
+    res.status(500).json({ error: 'Failed to toggle destination.' });
   }
 });
 
 /**
  * POST /api/integrations/teams/test
- * Sends a live test alert into the user's chosen chat / channel
+ * Sends a live test alert to a specific Teams destination (or first active one)
  */
 router.post('/test', requireAuth, async (req, res) => {
   try {
-    const connection = await db.getOne('SELECT * FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
+    const { id } = req.body;
+    let connection;
+
+    if (id) {
+      connection = await db.getOne('SELECT * FROM teams_graph_connections WHERE id = ? AND user_id = ?', [id, req.userId]);
+    } else {
+      connection = await db.getOne(`
+        SELECT * FROM teams_graph_connections
+        WHERE user_id = ? AND destination_id != 'me' AND access_token IS NOT NULL
+        ORDER BY id DESC LIMIT 1
+      `, [req.userId]);
+    }
+
     if (!connection) {
-      return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
+      return res.status(404).json({ error: 'No configured Teams destination found. Please add a destination first.' });
     }
 
     await sendTeamsAlert({
       connection,
-      hostname: 'example.com',
+      hostname: 'sslalerts.info',
       daysLeft: 14,
       status: 'warning',
       validTo: new Date(Date.now() + 14 * 86400000).toUTCString(),
@@ -375,7 +438,7 @@ router.post('/test', requireAuth, async (req, res) => {
 
     await db.execute(
       'INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (NULL, ?, "test", "teams", ?)',
-      [req.userId, connection.destination_name || 'Teams Channel']
+      [req.userId, connection.destination_name || 'Teams Destination']
     ).catch(() => {});
 
     res.json({
@@ -384,15 +447,17 @@ router.post('/test', requireAuth, async (req, res) => {
     });
   } catch (err) {
     console.error('[teamsGraph] Test alert failed:', err);
-    await db.execute(`
-      UPDATE teams_graph_connections SET
-        last_status = 'error',
-        last_error = ?
-      WHERE user_id = ?
-    `, [err.message, req.userId]);
+    if (req.body.id) {
+      await db.execute(`
+        UPDATE teams_graph_connections SET
+          last_status = 'error',
+          last_error = ?
+        WHERE id = ? AND user_id = ?
+      `, [err.message, req.body.id, req.userId]).catch(() => {});
+    }
 
     const friendlyError = err.message.includes('valid license')
-      ? 'Your Microsoft account is a personal/free account which lacks a Microsoft 365 Business license for Graph API messages. Please click Disconnect and use the Channel Webhook URL option (works completely free with zero license requirements!).'
+      ? 'Your Microsoft account is a personal/free account which lacks a Microsoft 365 Business license for direct Graph API messages. Please create a shared Group Chat (e.g. "tst") with an organization account and add that group here.'
       : `Failed to send test alert: ${err.message}`;
 
     res.status(500).json({ error: friendlyError });
@@ -401,7 +466,7 @@ router.post('/test', requireAuth, async (req, res) => {
 
 /**
  * DELETE /api/integrations/teams/disconnect
- * Disconnects Microsoft Teams integration
+ * Disconnects Microsoft Teams integration completely (removes all destinations)
  */
 router.delete('/disconnect', requireAuth, async (req, res) => {
   try {
@@ -415,17 +480,17 @@ router.delete('/disconnect', requireAuth, async (req, res) => {
 
 /**
  * PATCH /api/integrations/teams/toggle
- * Enables or disables Teams alerts
+ * Pauses or enables all Teams alerts
  */
 router.patch('/toggle', requireAuth, async (req, res) => {
   try {
-    const connection = await db.getOne('SELECT id, is_active FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
-    if (!connection) {
+    const row = await db.getOne('SELECT is_active FROM teams_graph_connections WHERE user_id = ? ORDER BY id DESC LIMIT 1', [req.userId]);
+    if (!row) {
       return res.status(404).json({ error: 'Microsoft Teams is not connected.' });
     }
 
-    const newActive = connection.is_active ? 0 : 1;
-    await db.execute('UPDATE teams_graph_connections SET is_active = ? WHERE id = ?', [newActive, connection.id]);
+    const newActive = row.is_active ? 0 : 1;
+    await db.execute('UPDATE teams_graph_connections SET is_active = ? WHERE user_id = ?', [newActive, req.userId]);
 
     res.json({ ok: true, isActive: newActive === 1 });
   } catch (err) {

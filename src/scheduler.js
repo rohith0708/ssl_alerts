@@ -175,32 +175,37 @@ async function applyCheckResult(row, result) {
 
   // Dispatch Microsoft Teams alerts if connected
   try {
-    const teamsConn = await db.getOne(`
+    const teamsRecipients = await db.getAll(`
       SELECT * FROM teams_graph_connections
       WHERE user_id = ? AND is_active = 1
         AND (group_id IS NULL OR group_id = ?)
-      ORDER BY id DESC LIMIT 1
     `, [row.user_id, row.group_id || null]);
 
-    if (teamsConn) {
+    if (teamsRecipients && teamsRecipients.length > 0) {
       const { sendTeamsAlert } = require('./microsoftGraph');
-      await sendTeamsAlert({
-        connection: teamsConn,
-        hostname: row.hostname,
-        daysLeft: result.daysLeft,
-        status: newStatus,
-        validTo: result.validTo,
-        ackUrl,
-        intervalText,
-        isTest: false
-      });
-      await db.execute('UPDATE teams_graph_connections SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [teamsConn.id]);
-      await db.execute('INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (?, ?, ?, "teams", ?)', [row.id, row.user_id, newStatus, teamsConn.destination_name || 'Teams Channel']);
-      console.log(`[alerts] Dispatched Teams alert for ${row.hostname} to ${teamsConn.destination_name}`);
+      for (const teamsConn of teamsRecipients) {
+        try {
+          await sendTeamsAlert({
+            connection: teamsConn,
+            hostname: row.hostname,
+            daysLeft: result.daysLeft,
+            status: newStatus,
+            validTo: result.validTo,
+            ackUrl,
+            intervalText,
+            isTest: false
+          });
+          await db.execute('UPDATE teams_graph_connections SET last_sent_at = NOW(), last_status = "ok", last_error = NULL WHERE id = ?', [teamsConn.id]);
+          await db.execute('INSERT INTO alert_log (domain_id, user_id, status, channel, recipient) VALUES (?, ?, ?, "teams", ?)', [row.id, row.user_id, newStatus, teamsConn.destination_name || 'Teams Channel']);
+          console.log(`[alerts] Dispatched Teams alert for ${row.hostname} to ${teamsConn.destination_name}`);
+        } catch (singleErr) {
+          console.error(`[alerts] Teams alert failed for destination ${teamsConn.destination_name}:`, singleErr.message);
+          await db.execute('UPDATE teams_graph_connections SET last_status = "error", last_error = ? WHERE id = ?', [singleErr.message, teamsConn.id]).catch(() => {});
+        }
+      }
     }
   } catch (teamsErr) {
-    console.error(`[alerts] Teams alert failed for ${row.hostname}:`, teamsErr.message);
-    await db.execute('UPDATE teams_graph_connections SET last_status = "error", last_error = ? WHERE user_id = ?', [teamsErr.message, row.user_id]).catch(() => {});
+    console.error(`[alerts] Teams alert error for ${row.hostname}:`, teamsErr.message);
   }
 
   // Dispatch WhatsApp alerts if recipients configured

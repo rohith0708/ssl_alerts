@@ -1979,10 +1979,13 @@ window.handleHashRoute = handleHashRoute;
 window.loadTeamsStatus = loadTeamsStatus;
 window.loadTeamsDestinations = loadTeamsDestinations;
 window.saveTeamsDestination = saveTeamsDestination;
+window.addTeamsDestination = addTeamsDestination;
+window.deleteTeamsDestination = deleteTeamsDestination;
+window.toggleTeamsDestination = toggleTeamsDestination;
+window.testTeamsDestination = testTeamsDestination;
 window.testTeamsAlert = testTeamsAlert;
 window.disconnectTeams = disconnectTeams;
 window.toggleTeamsActive = toggleTeamsActive;
-window.connectTeamsWebhook = connectTeamsWebhook;
 window.showWhatsAppAlerts = showWhatsAppAlerts;
 window.loadWhatsAppGroupsSelect = loadWhatsAppGroupsSelect;
 window.loadWhatsAppStatus = loadWhatsAppStatus;
@@ -2027,9 +2030,6 @@ async function loadTeamsStatus() {
           <div>
             <div style="font-weight:700; font-size:14px; margin-bottom:4px;">⚠️ Microsoft Teams Notice</div>
             <div style="font-size:13px; line-height:1.5;">${safeEsc(decodedError)}</div>
-            <div style="margin-top:8px; font-size:12px; color:#b91c1c;">
-              <strong>Tip:</strong> If your organization restricts third-party OAuth apps or you are using a personal account, you can connect in 30 seconds using the <strong>Channel Webhook URL</strong> option below without needing Azure admin consent!
-            </div>
           </div>
           <button type="button" onclick="document.getElementById('teamsAlertBanner').style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer; color:#991b1b; padding:0 4px;">✕</button>
         </div>
@@ -2046,7 +2046,7 @@ async function loadTeamsStatus() {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
           <div>
             <div style="font-weight:700; font-size:14px; margin-bottom:4px;">🎉 Microsoft Teams Connected Successfully!</div>
-            <div style="font-size:13px;">Your integration is now active. Send a test notification below to verify alert delivery.</div>
+            <div style="font-size:13px;">Add your team channels, group chats, or direct messages below to start receiving alerts.</div>
           </div>
           <button type="button" onclick="document.getElementById('teamsAlertBanner').style.display='none'" style="background:none; border:none; font-size:18px; cursor:pointer; color:#166534; padding:0 4px;">✕</button>
         </div>
@@ -2055,8 +2055,7 @@ async function loadTeamsStatus() {
     history.replaceState(null, null, window.location.pathname + '#teams-alerts');
   }
 
-  // Reset UI to a neutral loading state before fetching — prevents stale data
-  // from a previous user session bleeding into the current user's view.
+  // Reset to clean state
   notConnected.style.display = 'none';
   connected.style.display = 'none';
 
@@ -2068,8 +2067,7 @@ async function loadTeamsStatus() {
     }
     const data = await res.json();
 
-    if (data.connected && data.connection) {
-      const conn = data.connection;
+    if (data.connected && data.user) {
       notConnected.style.display = 'none';
       connected.style.display = 'block';
 
@@ -2077,56 +2075,34 @@ async function loadTeamsStatus() {
       const emailEl = document.getElementById('teamsAccountEmail');
       const activeBadge = document.getElementById('teamsActiveBadge');
       const btnToggle = document.getElementById('btnToggleTeamsActive');
-      const destWrap = document.getElementById('teamsDestinationWrap');
-      const currentDestEl = document.getElementById('teamsCurrentDestinationText');
-      const iconWrap = document.getElementById('teamsConnectedIconWrap');
+      const groupSelect = document.getElementById('teamsGroupSelect');
 
-      const isWebhook = conn.destination_type === 'webhook';
+      if (nameEl) nameEl.textContent = data.user.name || 'Microsoft Account';
+      if (emailEl) emailEl.textContent = data.user.email || '';
 
-      if (nameEl) nameEl.textContent = conn.ms_user_name || (isWebhook ? 'Teams Webhook Channel' : 'Microsoft Account');
-      if (emailEl) emailEl.textContent = isWebhook ? 'Channel Webhook Integration' : (conn.ms_user_email || '');
-
-      if (iconWrap) {
-        iconWrap.style.background = isWebhook ? '#ecfdf5' : '#f0f2fe';
-        iconWrap.innerHTML = isWebhook
-          ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
-          : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5059cb" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>';
+      const allActive = (data.recipients || []).length === 0 || (data.recipients || []).some(r => r.is_active);
+      if (activeBadge) {
+        activeBadge.textContent = allActive ? '● Active' : '⏸️ Paused';
+        activeBadge.style.background = allActive ? '#dcfce7' : '#fef3c7';
+        activeBadge.style.color = allActive ? '#15803d' : '#b45309';
+        activeBadge.style.borderColor = allActive ? '#bbf7d0' : '#fde68a';
+      }
+      if (btnToggle) {
+        btnToggle.textContent = allActive ? 'Pause All' : 'Resume All';
       }
 
-      if (conn.is_active) {
-        if (activeBadge) {
-          activeBadge.textContent = isWebhook ? '● Active (Webhook)' : '● Active (OAuth)';
-          activeBadge.style.background = '#dcfce7';
-          activeBadge.style.color = '#15803d';
-          activeBadge.style.borderColor = '#bbf7d0';
-        }
-        if (btnToggle) btnToggle.textContent = 'Pause Alerts';
-      } else {
-        if (activeBadge) {
-          activeBadge.textContent = '⏸️ Paused';
-          activeBadge.style.background = '#fef3c7';
-          activeBadge.style.color = '#b45309';
-          activeBadge.style.borderColor = '#fde68a';
-        }
-        if (btnToggle) btnToggle.textContent = 'Resume Alerts';
+      // Populate Domain Groups dropdown
+      if (groupSelect) {
+        const groups = data.groups || [];
+        groupSelect.innerHTML = '<option value="">All Domains (Global)</option>' +
+          groups.map(g => `<option value="${safeEsc(g.id)}">${safeEsc(g.name)}</option>`).join('');
       }
 
-      try {
-        if (isWebhook) {
-          if (destWrap) destWrap.style.display = 'none';
-          if (currentDestEl) {
-            currentDestEl.innerHTML = `Delivering alerts to Teams channel: <strong>${safeEsc(conn.destination_name || 'Channel Webhook')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
-          }
-        } else {
-          if (destWrap) destWrap.style.display = 'block';
-          if (currentDestEl) {
-            currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(conn.destination_name || 'Direct Message')}</strong>${conn.last_sent_at ? ` · Last alert sent: ${new Date(conn.last_sent_at).toLocaleString()}` : ''}`;
-          }
-          loadTeamsDestinations(conn.destination_id).catch(e => console.warn('Non-critical destinations fetch warning:', e));
-        }
-      } catch (renderErr) {
-        console.warn('Teams destination text render error:', renderErr);
-      }
+      // Render Configured Destinations Table
+      renderTeamsDestinationsTable(data.recipients || []);
+
+      // Load available channels/chats into destination dropdown
+      loadTeamsDestinations();
     } else {
       notConnected.style.display = 'block';
       connected.style.display = 'none';
@@ -2137,41 +2113,71 @@ async function loadTeamsStatus() {
     connected.style.display = 'none';
   }
 }
-async function connectTeamsWebhook(e) {
-  if (e && e.preventDefault) e.preventDefault();
-  const channelName = document.getElementById('teamsWebhookChannelName')?.value?.trim();
-  const webhookUrl = document.getElementById('teamsWebhookUrl')?.value?.trim();
-  const btn = document.getElementById('btnConnectTeamsWebhook');
 
-  if (!webhookUrl) {
-    alert('Please enter your Teams Webhook URL.');
+function renderTeamsDestinationsTable(recipients) {
+  const tbody = document.getElementById('teamsDestinationsTableBody');
+  const countEl = document.getElementById('teamsDestCount');
+  if (!tbody) return;
+
+  // Filter out empty placeholder rows
+  const validRecipients = (recipients || []).filter(r => r.destination_id && r.destination_id !== 'me');
+
+  if (countEl) {
+    countEl.textContent = `${validRecipients.length} configured`;
+  }
+
+  if (validRecipients.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align:center; padding:32px 16px; color:#94a3b8;">
+          No Teams alert destinations added yet. Use the form above to add a group chat, channel, or direct message.
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Verifying Webhook...</span>';
-  }
+  tbody.innerHTML = validRecipients.map(r => {
+    const isChannel = r.destination_type === 'channel';
+    const isDm = r.destination_type === 'dm';
+    const icon = isChannel ? '📢' : (isDm ? '👤' : '👥');
 
-  try {
-    const res = await fetch('/api/integrations/teams/connect-webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ webhookUrl, channelName })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to verify webhook');
+    const statusBadge = r.is_active
+      ? '<span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-size:11px; padding:2px 8px; border-radius:9999px;">● Active</span>'
+      : '<span class="badge" style="background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; font-size:11px; padding:2px 8px; border-radius:9999px;">⏸️ Paused</span>';
 
-    alert('🎉 ' + data.message);
-    loadTeamsStatus();
-  } catch (err) {
-    alert('Failed to connect Teams Webhook: ' + err.message);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<span>🔗 Connect & Test Webhook</span>';
-    }
-  }
+    const lastSent = r.last_sent_at
+      ? `<span title="${new Date(r.last_sent_at).toLocaleString()}">${new Date(r.last_sent_at).toLocaleDateString()}</span>`
+      : '<span style="color:#94a3b8;">Never</span>';
+
+    const groupName = r.group_name
+      ? `<span class="badge" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:11px; padding:2px 8px; border-radius:6px;">${safeEsc(r.group_name)}</span>`
+      : '<span style="color:#64748b; font-size:12px;">All Domains (Global)</span>';
+
+    return `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:12px 16px; font-weight:600; color:#0f172a;">
+          <span style="margin-right:6px;">${icon}</span>${safeEsc(r.destination_name || 'Teams Chat')}
+        </td>
+        <td style="padding:12px 16px;">${groupName}</td>
+        <td style="padding:12px 16px;">${statusBadge}</td>
+        <td style="padding:12px 16px; font-size:12px; color:#64748b;">${lastSent}</td>
+        <td style="padding:12px 16px; text-align:right;">
+          <div style="display:inline-flex; gap:6px; align-items:center;">
+            <button class="btn btn-secondary" onclick="testTeamsDestination(${r.id})" id="btnTestTeams_${r.id}" style="padding:4px 10px; font-size:11px; white-space:nowrap;" title="Send Test Alert">
+              ⚡ Test
+            </button>
+            <button class="btn btn-outline" onclick="toggleTeamsDestination(${r.id})" style="padding:4px 10px; font-size:11px;">
+              ${r.is_active ? 'Pause' : 'Resume'}
+            </button>
+            <button class="btn btn-outline" onclick="deleteTeamsDestination(${r.id})" style="padding:4px 8px; font-size:11px; color:#ef4444; border-color:#fca5a5;" title="Remove Destination">
+              ✕
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function loadTeamsDestinations(selectedId) {
@@ -2189,12 +2195,12 @@ async function loadTeamsDestinations(selectedId) {
 
     const destinations = data.destinations || [];
     if (destinations.length === 0) {
-      select.innerHTML = '<option value="me" data-type="dm">👤 Direct Message (Private to Me)</option>';
+      select.innerHTML = '<option value="">No chats or channels found</option>';
       return;
     }
 
     select.innerHTML = destinations.map(d => {
-      const isSel = (d.id === selectedId) || (selectedId === 'me' && d.id === 'me');
+      const isSel = (d.id === selectedId);
       return `<option value="${safeEsc(d.id)}" data-type="${safeEsc(d.type)}" data-name="${safeEsc(d.rawName || d.name)}" data-team="${safeEsc(d.teamId || '')}" ${isSel ? 'selected' : ''}>${safeEsc(d.name)}</option>`;
     }).join('');
   } catch (err) {
@@ -2203,14 +2209,16 @@ async function loadTeamsDestinations(selectedId) {
   }
 }
 
-async function saveTeamsDestination() {
+async function addTeamsDestination(e) {
+  if (e && e.preventDefault) e.preventDefault();
   const select = document.getElementById('teamsDestinationSelect');
-  const btn = document.getElementById('btnSaveTeamsDestination');
+  const groupSelect = document.getElementById('teamsGroupSelect');
+  const btn = document.getElementById('btnAddTeamsDestination');
   if (!select) return;
 
   const selectedOpt = select.options[select.selectedIndex];
   if (!selectedOpt || !selectedOpt.value) {
-    alert('Please select a destination first.');
+    alert('Please select a destination from the list first.');
     return;
   }
 
@@ -2218,93 +2226,102 @@ async function saveTeamsDestination() {
   const destinationType = selectedOpt.getAttribute('data-type') || 'chat';
   const destinationName = selectedOpt.getAttribute('data-name') || selectedOpt.text;
   const teamId = selectedOpt.getAttribute('data-team') || null;
+  const groupId = groupSelect ? (groupSelect.value || null) : null;
 
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'Saving...';
+    btn.innerHTML = '<span>Saving...</span>';
   }
 
   try {
-    const res = await fetch('/api/integrations/teams/save-destination', {
+    const res = await fetch('/api/integrations/teams/add-destination', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         destinationId,
         destinationType,
         destinationName,
-        teamId
+        teamId,
+        groupId
       })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to save destination');
+    if (!res.ok) throw new Error(data.error || 'Failed to add destination');
 
-    const currentDestEl = document.getElementById('teamsCurrentDestinationText');
-    if (currentDestEl) {
-      currentDestEl.innerHTML = `Current destination: <strong>${safeEsc(destinationName)}</strong>`;
-    }
-    alert('Alert destination updated to: ' + destinationName);
+    alert('🎉 ' + data.message);
+    loadTeamsStatus();
   } catch (err) {
-    alert('Failed to save destination: ' + err.message);
+    alert('Failed to add destination: ' + err.message);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = 'Save Destination';
+      btn.innerHTML = '<span>+ Add Destination</span>';
     }
   }
 }
 
-async function testTeamsAlert() {
-  const btn = document.getElementById('btnTestTeams');
-  const statusEl = document.getElementById('teamsTestStatus');
+async function deleteTeamsDestination(id) {
+  if (!confirm('Are you sure you want to remove this alert destination?')) {
+    return;
+  }
+  try {
+    const res = await fetch(`/api/integrations/teams/destination/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete');
+    loadTeamsStatus();
+  } catch (err) {
+    alert('Failed to delete: ' + err.message);
+  }
+}
 
+async function toggleTeamsDestination(id) {
+  try {
+    const res = await fetch(`/api/integrations/teams/destination/${id}/toggle`, { method: 'PATCH' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to toggle destination');
+    loadTeamsStatus();
+  } catch (err) {
+    alert('Failed to toggle destination: ' + err.message);
+  }
+}
+
+async function testTeamsDestination(id) {
+  const btn = document.getElementById(`btnTestTeams_${id}`);
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Sending test alert...</span>';
-  }
-  if (statusEl) {
-    statusEl.textContent = 'Connecting to Microsoft Teams...';
-    statusEl.style.color = 'var(--text-muted)';
+    btn.textContent = '⏳ Testing...';
   }
 
   try {
     const res = await fetch('/api/integrations/teams/test', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to send test alert');
-
-    if (statusEl) {
-      statusEl.textContent = '✅ ' + (data.message || 'Test alert delivered! Check your Teams.');
-      statusEl.style.color = '#15803d';
-    }
+    alert('✅ ' + data.message);
+    loadTeamsStatus();
   } catch (err) {
-    if (statusEl) {
-      if (err.message.includes('valid license') || err.message.includes('license')) {
-        statusEl.innerHTML = `
-          <div style="margin-top:10px; padding:12px 16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#991b1b; font-size:13px; line-height:1.5;">
-            <div style="font-weight:700; margin-bottom:4px;">⚠️ Personal Account Limitation:</div>
-            Microsoft Graph API requires a paid Microsoft 365 Business license to post messages via OAuth. Free/personal accounts (@gmail.com, @outlook.com) cannot use Graph chat APIs.
-            <div style="margin-top:8px;">
-              👉 <strong>Solution:</strong> Click <strong>Disconnect</strong> above and connect via <strong>Channel Webhook URL</strong>. Webhooks work completely free with any Teams channel without requiring a Microsoft 365 paid license!
-            </div>
-          </div>
-        `;
-      } else {
-        statusEl.textContent = '❌ ' + err.message;
-        statusEl.style.color = '#ef4444';
-      }
-    }
+    alert('❌ ' + err.message);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<span>⚡ Send Test Alert to Teams</span>';
+      btn.textContent = '⚡ Test';
     }
   }
 }
 
+async function saveTeamsDestination() {
+  return addTeamsDestination();
+}
+
+async function testTeamsAlert() {
+  return testTeamsDestination();
+}
+
 async function disconnectTeams() {
-  if (!confirm('Are you sure you want to disconnect Microsoft Teams? SSL alerts will no longer be sent to Teams.')) {
+  if (!confirm('Are you sure you want to disconnect Microsoft Teams? All Teams alert destinations will be removed.')) {
     return;
   }
   try {
