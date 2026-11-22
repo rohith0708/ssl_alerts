@@ -163,15 +163,56 @@ async function getDestinations(accessToken) {
   const destinations = [];
 
   // 1. Fetch user's chats (1-on-1 and Group chats)
-  // Note: Omit $expand=members because Chat.ReadBasic does not have permission to expand members
+  let myId = null;
+  let myName = null;
   try {
-    const resChats = await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=50', {
+    const meRes = await fetch('https://graph.microsoft.com/v1.0/me', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (meRes.ok) {
+      const meData = await meRes.json();
+      myId = meData.id;
+      myName = meData.displayName;
+    }
+  } catch (_) {}
+
+  try {
+    // Attempt to fetch chats with expanded members
+    let resChats = await fetch('https://graph.microsoft.com/v1.0/me/chats?$expand=members&$top=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
+    let dataChats;
     if (resChats.ok) {
-      const dataChats = await resChats.json();
-      const chats = dataChats.value || [];
+      dataChats = await resChats.json();
+    } else {
+      // Fallback without $expand if tenant policy rejects expansion
+      resChats = await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=50', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (resChats.ok) {
+        dataChats = await resChats.json();
+      }
+    }
+
+    if (dataChats && dataChats.value) {
+      const chats = dataChats.value;
+
+      // For any 1-on-1 chats that lack member details, fetch members in parallel (up to 20)
+      const oneOnOneChats = chats.filter(c => c.chatType === 'oneOnOne' && (!c.members || c.members.length === 0)).slice(0, 20);
+      if (oneOnOneChats.length > 0) {
+        await Promise.allSettled(oneOnOneChats.map(async (chat) => {
+          try {
+            const mRes = await fetch(`https://graph.microsoft.com/v1.0/chats/${chat.id}/members`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (mRes.ok) {
+              const mData = await mRes.json();
+              chat.members = mData.value || [];
+            }
+          } catch (_) {}
+        }));
+      }
 
       for (const chat of chats) {
         if (chat.chatType === 'group') {
@@ -184,12 +225,22 @@ async function getDestinations(accessToken) {
             rawName: name
           });
         } else if (chat.chatType === 'oneOnOne') {
+          // Identify the other participant in the 1-on-1 chat
+          let otherPersonName = '';
+          if (Array.isArray(chat.members) && chat.members.length > 0) {
+            const other = chat.members.find(m => m.userId !== myId && m.displayName !== myName) || chat.members[0];
+            if (other && other.displayName) {
+              otherPersonName = other.displayName;
+            }
+          }
+
+          const label = otherPersonName ? `👤 DM: ${otherPersonName}` : '👤 Direct Message';
           destinations.push({
             type: 'dm',
             id: chat.id,
             teamId: null,
-            name: `👤 Direct Message`,
-            rawName: 'Direct Message'
+            name: label,
+            rawName: otherPersonName ? `DM: ${otherPersonName}` : 'Direct Message'
           });
         }
       }
@@ -239,8 +290,8 @@ async function getDestinations(accessToken) {
     console.warn('[microsoftGraph] Error fetching teams:', err.message);
   }
 
-  // Ensure default Direct Message exists in destination list
-  if (!destinations.some(d => d.type === 'dm')) {
+  // Always ensure Direct Message (Private to Me) is pinned at the top of the destination list
+  if (!destinations.some(d => d.id === 'me')) {
     destinations.unshift({
       type: 'dm',
       id: 'me',
@@ -491,16 +542,37 @@ async function sendTeamsAlert({
   let postUrl;
   let destinationId = connection.destination_id;
 
-  // If user selected "dm" and destination_id is 'me', attempt to resolve to an existing chat thread
+  // If user selected "dm" and destination_id is 'me', resolve or create 1-on-1 chat with oneself
   if (connection.destination_type === 'dm' && destinationId === 'me') {
     try {
-      const resRecent = await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=1', {
+      const meRes = await fetch('https://graph.microsoft.com/v1.0/me', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (resRecent.ok) {
-        const recentData = await resRecent.json();
-        if (recentData.value && recentData.value.length > 0) {
-          destinationId = recentData.value[0].id;
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        const myId = meData.id;
+
+        const chatRes = await fetch('https://graph.microsoft.com/v1.0/chats', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chatType: 'oneOnOne',
+            members: [
+              {
+                '@odata.type': '#microsoft.graph.aadUserConversationMember',
+                roles: ['owner'],
+                'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${myId}')`
+              }
+            ]
+          })
+        });
+
+        if (chatRes.ok) {
+          const chatData = await chatRes.json();
+          destinationId = chatData.id;
           await db.execute('UPDATE teams_graph_connections SET destination_id = ? WHERE id = ?', [destinationId, connection.id]);
         }
       }
