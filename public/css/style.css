@@ -160,16 +160,16 @@ img, svg { display: block; max-width: 100%; }
   color: #FFFFFF !important;
   margin-bottom: 3px;
 }
-.hero-title-sub1 {
+.hero-title-sub1,
+.hero-title-sub2,
+.hero-title-sub3 {
   display: block;
-  font-size: 29px;
+  font-size: 26px;
   font-weight: 800;
   margin-bottom: 3px;
 }
-.hero-title-sub2 {
-  display: block;
-  font-size: 29px;
-  font-weight: 800;
+.hero-title-sub3 {
+  margin-bottom: 0;
 }
 .hero-title-gradient {
   background: linear-gradient(135deg, #00A896 0%, #028090 45%, #0A2740 100%);
@@ -2148,7 +2148,7 @@ footer.site-footer {
   .hero { padding: 32px 0 24px; }
   .hero h1 { font-size: 24px; }
   .hero-title-main { font-size: 24px; }
-  .hero-title-sub1, .hero-title-sub2 { font-size: 19px; }
+  .hero-title-sub1, .hero-title-sub2, .hero-title-sub3 { font-size: 18px; }
   .hero .lede { font-size: 15px; margin-left: auto; margin-right: auto; }
   .hero-badge { margin-bottom: 12px; }
   .section { padding: 36px 0; }
