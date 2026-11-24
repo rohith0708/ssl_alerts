@@ -300,11 +300,11 @@ function setupGuestUI(plans) {
     micro: {
       label: 'Micro',
       subtitle: 'Good for personal projects & portfolios',
-      price: 2, originalPrice: 4, domainLimit: 5, recipientLimit: 1, criticalIntervalMinutes: 180, badge: 'LIMITED TIME OFFER',
+      price: 2, originalPrice: 4, domainLimit: 10, recipientLimit: 5, criticalIntervalMinutes: 180, badge: 'LIMITED TIME OFFER',
       features: [
-        '<strong>5</strong> domains monitored',
+        '<strong>10</strong> domains monitored',
         'Daily SSL expiry checks',
-        '<strong>1</strong> Email, WhatsApp & Teams alert recipient',
+        'Up to <strong>5</strong> Email, WhatsApp & Teams alert recipients',
         '3-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -314,11 +314,11 @@ function setupGuestUI(plans) {
     starter: {
       label: 'Starter',
       subtitle: 'Good for early-stage startups & individual developers',
-      price: 5, originalPrice: 10, domainLimit: 20, recipientLimit: 3, criticalIntervalMinutes: 120, badge: 'LIMITED TIME OFFER',
+      price: 5, originalPrice: 10, domainLimit: 20, recipientLimit: 10, criticalIntervalMinutes: 120, badge: 'LIMITED TIME OFFER',
       features: [
         '<strong>20</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>3</strong> Email, WhatsApp & Teams alert recipients',
+        'Up to <strong>10</strong> Email, WhatsApp & Teams alert recipients',
         '2-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -328,11 +328,11 @@ function setupGuestUI(plans) {
     growth: {
       label: 'Growth',
       subtitle: 'Good for growing companies with multiple subdomains',
-      price: 10, originalPrice: 0, domainLimit: 50, recipientLimit: 5, criticalIntervalMinutes: 60,
+      price: 10, originalPrice: 0, domainLimit: 50, recipientLimit: 15, criticalIntervalMinutes: 60,
       features: [
         '<strong>50</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>5</strong> Email, WhatsApp & Teams alert recipients',
+        'Up to <strong>15</strong> Email, WhatsApp & Teams alert recipients',
         '1-hour expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',
@@ -342,11 +342,11 @@ function setupGuestUI(plans) {
     pro: {
       label: 'Pro',
       subtitle: 'Good for businesses with large web infrastructure',
-      price: 20, originalPrice: 0, domainLimit: 100, recipientLimit: 10, criticalIntervalMinutes: 30,
+      price: 20, originalPrice: 0, domainLimit: 100, recipientLimit: 20, criticalIntervalMinutes: 30,
       features: [
         '<strong>100</strong> domains monitored',
         'Daily SSL expiry checks',
-        'Up to <strong>10</strong> Email, WhatsApp & Teams alert recipients',
+        'Up to <strong>20</strong> Email, WhatsApp & Teams alert recipients',
         '30-min expiry alert intervals',
         'Cert generator with storage',
         'Status filters & SSL tools',

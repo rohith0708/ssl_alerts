@@ -111,6 +111,7 @@ async function initSchema() {
   try {
     await pool.query('ALTER TABLE users MODIFY domain_limit BIGINT NOT NULL DEFAULT 5');
     await pool.query("UPDATE users SET domain_limit = 5 WHERE plan = 'trial' AND domain_limit < 5");
+    await pool.query("UPDATE users SET domain_limit = 10 WHERE plan = 'micro' AND domain_limit < 10");
   } catch (_) {}
   try {
     await pool.query('ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0');
@@ -438,15 +439,15 @@ const PLANS = {
     price: 2,
     originalPrice: 4,
     badge: 'LIMITED TIME OFFER',
-    domainLimit: 5,
-    recipientLimit: 1,
+    domainLimit: 10,
+    recipientLimit: 5,
     criticalIntervalMinutes: 180,
     warningIntervalMinutes: 1440,
     support: 'Standard',
     features: [
-      '<strong>5</strong> domains monitored',
+      '<strong>10</strong> domains monitored',
       'Daily SSL expiry checks',
-      '<strong>1</strong> Email, WhatsApp & Teams alert recipient',
+      'Up to <strong>5</strong> Email, WhatsApp & Teams alert recipients',
       '3-hour expiry alert intervals',
       'Cert generator with storage',
       'Status filters & SSL tools',
@@ -460,14 +461,14 @@ const PLANS = {
     originalPrice: 10,
     badge: 'LIMITED TIME OFFER',
     domainLimit: 20,
-    recipientLimit: 3,
+    recipientLimit: 10,
     criticalIntervalMinutes: 120,
     warningIntervalMinutes: 1440,
     support: 'Enhanced',
     features: [
       '<strong>20</strong> domains monitored',
       'Daily SSL expiry checks',
-      'Up to <strong>3</strong> Email, WhatsApp & Teams alert recipients',
+      'Up to <strong>10</strong> Email, WhatsApp & Teams alert recipients',
       '2-hour expiry alert intervals',
       'Cert generator with storage',
       'Status filters & SSL tools',
@@ -480,14 +481,14 @@ const PLANS = {
     price: 10,
     originalPrice: 0,
     domainLimit: 50,
-    recipientLimit: 5,
+    recipientLimit: 15,
     criticalIntervalMinutes: 60,
     warningIntervalMinutes: 1440,
     support: 'Enhanced',
     features: [
       '<strong>50</strong> domains monitored',
       'Daily SSL expiry checks',
-      'Up to <strong>5</strong> Email, WhatsApp & Teams alert recipients',
+      'Up to <strong>15</strong> Email, WhatsApp & Teams alert recipients',
       '1-hour expiry alert intervals',
       'Cert generator with storage',
       'Status filters & SSL tools',
@@ -500,14 +501,14 @@ const PLANS = {
     price: 20,
     originalPrice: 0,
     domainLimit: 100,
-    recipientLimit: 10,
+    recipientLimit: 20,
     criticalIntervalMinutes: 30,
     warningIntervalMinutes: 1440,
     support: 'Premium',
     features: [
       '<strong>100</strong> domains monitored',
       'Daily SSL expiry checks',
-      'Up to <strong>10</strong> Email, WhatsApp & Teams alert recipients',
+      'Up to <strong>20</strong> Email, WhatsApp & Teams alert recipients',
       '30-min expiry alert intervals',
       'Cert generator with storage',
       'Status filters & SSL tools',
