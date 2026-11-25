@@ -80,6 +80,7 @@ img, svg { display: block; max-width: 100%; }
   font-weight: 600;
   font-size: 15px;
   text-decoration: none;
+  white-space: nowrap;
   transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
 }
 .btn:active { transform: translateY(1px); }
@@ -1629,14 +1630,17 @@ body.modal-open {
   flex-shrink: 0;
 }
 .domain-list-header .col-hdr-renewal {
-  width: 170px;
+  width: 160px;
   text-align: center;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .domain-list-header .col-hdr-actions {
-  width: 170px;
+  min-width: 190px;
+  width: 190px;
   text-align: right;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .domain-row {
@@ -1652,36 +1656,42 @@ body.modal-open {
   flex: 1;
   min-width: 0;
 }
+.domain-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
 .domain-col-status {
   width: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .domain-col-renewal {
-  width: 170px;
+  width: 160px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .domain-col-actions {
-  width: 170px;
+  min-width: 190px;
+  width: 190px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
-.domain-col-mobile-hdr {
-  display: none;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 4px;
+.domain-col-actions .btn {
+  white-space: nowrap !important;
+  flex-shrink: 0;
 }
 .pill {
   font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.4px;
@@ -2233,19 +2243,41 @@ footer.site-footer {
   }
 
   .domain-row {
-    flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 16px;
+    border-radius: 12px;
   }
   .domain-row .spacer { display: none; }
   .domain-list-header { display: none !important; }
-  .domain-col-status,
-  .domain-col-renewal,
-  .domain-col-actions {
+  .domain-meta-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
     width: 100%;
-    justify-content: flex-start;
-    align-items: flex-start;
   }
-  .domain-col-mobile-hdr {
-    display: inline-block;
+  .domain-col-status,
+  .domain-col-renewal {
+    width: auto !important;
+    justify-content: flex-start;
+  }
+  .domain-col-actions {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .domain-col-actions .btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 13px;
   }
 
   .account-grid { grid-template-columns: 1fr; gap: 16px; }

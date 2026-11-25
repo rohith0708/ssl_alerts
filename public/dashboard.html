@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — SSL Alerts</title>
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-<link rel="stylesheet" href="/css/style.css?v=20261125-renewal-v3">
+<link rel="stylesheet" href="/css/style.css?v=20261126-ui-v1">
 </head>
 <body>
 <div class="app-shell">
@@ -162,7 +162,7 @@
       <form class="add-domain-form" id="addDomainForm">
         <input type="text" id="hostnameInput" placeholder="example.com" required>
         <select id="groupSelect"></select>
-        <select id="renewalTypeSelect" title="Renewal Configuration Type">
+        <select id="renewalTypeSelect" title="Renewal Type" aria-label="Renewal Type">
           <option value="automatic">Automatic Renewal</option>
           <option value="manual">Manual Renewal</option>
         </select>
@@ -216,7 +216,7 @@
         <div class="domain-list-header">
           <span class="col-hdr-domain">Domain / Host</span>
           <span class="col-hdr-status">Status</span>
-          <span class="col-hdr-renewal">Renewal Configuration Type</span>
+          <span class="col-hdr-renewal">Renewal Type</span>
           <span class="col-hdr-actions">Actions</span>
         </div>
         <div class="domain-list" id="domainList"></div>
@@ -1932,7 +1932,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="/js/app.js?v=20261125-renewal-v3"></script>
+<script src="/js/app.js?v=20261126-ui-v1"></script>
 <script src="/js/dashboard-features.js?v=20261111-v1"></script>
 </body>
 </html>

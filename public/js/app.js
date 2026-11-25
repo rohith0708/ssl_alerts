@@ -104,14 +104,15 @@ function domainRowHTML(d) {
           ${ackHint}
         </div>
       </div>
-      <div class="domain-col-status">
-        <span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>
-      </div>
-      <div class="domain-col-renewal">
-        <span class="domain-col-mobile-hdr">Renewal Configuration:</span>
-        <span class="pill pill-renewal ${renewalType === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" data-action="toggle-renewal" title="Click to toggle between Automatic Renewal and Manual Renewal">
-          ${renewalType === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}
-        </span>
+      <div class="domain-meta-badges">
+        <div class="domain-col-status">
+          <span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>
+        </div>
+        <div class="domain-col-renewal">
+          <span class="pill pill-renewal ${renewalType === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" data-action="toggle-renewal" title="Click to toggle between Automatic Renewal and Manual Renewal">
+            ${renewalType === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}
+          </span>
+        </div>
       </div>
       <div class="domain-col-actions">
         ${isAlertable && !d.alert_acknowledged
