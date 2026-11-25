@@ -90,11 +90,12 @@ function domainRowHTML(d) {
     : '';
 
   const isInternal = d.source === 'internal';
+  const renewalType = (d.renewal_type === 'manual') ? 'manual' : 'automatic';
 
   return `
     <div class="domain-row" data-id="${d.id}">
       <span class="dot" style="background:${dotColor(status)}"></span>
-      <div>
+      <div class="domain-col-main">
         <div class="host">${escapeHtml(d.hostname)}${!isInternal && d.port !== 443 ? ':' + d.port : ''}</div>
         <div class="meta">${escapeHtml(detail)}</div>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
@@ -103,13 +104,21 @@ function domainRowHTML(d) {
           ${ackHint}
         </div>
       </div>
-      <div class="spacer"></div>
-      <span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>
-      <span class="pill pill-renewal ${d.renewal_type === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" data-action="toggle-renewal" title="Click to toggle between Automatic and Manual renewal">${d.renewal_type === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}</span>
-      ${isAlertable && !d.alert_acknowledged
-        ? `<button class="btn btn-accent btn-sm" data-action="ack">Acknowledge</button>` : ''}
-      ${isInternal ? `<button class="btn btn-ghost btn-sm" data-action="update-cert" title="Update or renew this internal certificate">Update Cert</button>` : `<button class="btn btn-ghost btn-sm" data-action="check">Re-check</button>`}
-      <button class="btn btn-danger btn-sm" data-action="delete">Remove</button>
+      <div class="domain-col-status">
+        <span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>
+      </div>
+      <div class="domain-col-renewal">
+        <span class="domain-col-mobile-hdr">Renewal Configuration:</span>
+        <span class="pill pill-renewal ${renewalType === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" data-action="toggle-renewal" title="Click to toggle between Automatic Renewal and Manual Renewal">
+          ${renewalType === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}
+        </span>
+      </div>
+      <div class="domain-col-actions">
+        ${isAlertable && !d.alert_acknowledged
+          ? `<button class="btn btn-accent btn-sm" data-action="ack">Acknowledge</button>` : ''}
+        ${isInternal ? `<button class="btn btn-ghost btn-sm" data-action="update-cert" title="Update or renew this internal certificate">Update Cert</button>` : `<button class="btn btn-ghost btn-sm" data-action="check">Re-check</button>`}
+        <button class="btn btn-danger btn-sm" data-action="delete">Remove</button>
+      </div>
     </div>`;
 }
 
@@ -138,6 +147,11 @@ function renderDomains() {
   const listEl = document.getElementById('domainList');
   const inGroup = allDomains.filter(matchesGroupFilter);   // scoped by the selected group
   const visible = inGroup.filter(matchesStatusFilter);      // then narrowed by status
+
+  const hdrEl = document.querySelector('.domain-list-header');
+  if (hdrEl) {
+    hdrEl.style.display = (visible.length > 0) ? 'flex' : 'none';
+  }
 
   if (allDomains.length === 0) {
     listEl.innerHTML = `
