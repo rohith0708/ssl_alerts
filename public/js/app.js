@@ -679,7 +679,13 @@ document.getElementById('addDomainForm').addEventListener('submit', async (e) =>
   const groupId = Number(selVal);
   if (!hostname) return;
   const renewalSelect = document.getElementById('renewalTypeSelect');
-  const renewalType = renewalSelect ? renewalSelect.value : 'automatic';
+  const renewalVal = renewalSelect ? renewalSelect.value : '';
+  if (!renewalVal) {
+    toast('Please select a renewal type (Automatic or Manual Renewal).', true);
+    renewalSelect?.focus();
+    return;
+  }
+  const renewalType = renewalVal === 'manual' ? 'manual' : 'automatic';
   try {
     const res = await fetch('/api/domains', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -694,6 +700,7 @@ document.getElementById('addDomainForm').addEventListener('submit', async (e) =>
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     input.value = '';
+    if (renewalSelect) renewalSelect.value = '';
     toast(`Added ${hostname} — checking now.`);
     loadDomains();
     loadGroups();
@@ -721,6 +728,8 @@ document.getElementById('cancelInternalCertBtn').addEventListener('click', () =>
   internalPanel.style.display = 'none';
   document.getElementById('internalPemInput').value = '';
   document.getElementById('internalLabelInput').value = '';
+  const sel = document.getElementById('internalRenewalTypeSelect');
+  if (sel) sel.value = '';
 });
 
 document.getElementById('saveInternalCertBtn').addEventListener('click', async (e) => {
@@ -746,7 +755,15 @@ document.getElementById('saveInternalCertBtn').addEventListener('click', async (
   if (!pem) return toast('Paste a certificate first.', true);
 
   const internalRenewalSelect = document.getElementById('internalRenewalTypeSelect');
-  const renewalType = internalRenewalSelect ? internalRenewalSelect.value : 'automatic';
+  const renewalVal = internalRenewalSelect ? internalRenewalSelect.value : '';
+  if (!renewalVal) {
+    btn.disabled = false;
+    btn.textContent = 'Save & Monitor Certificate';
+    toast('Please select a renewal type (Automatic or Manual Renewal).', true);
+    internalRenewalSelect?.focus();
+    return;
+  }
+  const renewalType = renewalVal === 'manual' ? 'manual' : 'automatic';
 
   btn.disabled = true;
   btn.textContent = 'Checking…';
@@ -766,6 +783,7 @@ document.getElementById('saveInternalCertBtn').addEventListener('click', async (
 
     document.getElementById('internalPemInput').value = '';
     document.getElementById('internalLabelInput').value = '';
+    if (internalRenewalSelect) internalRenewalSelect.value = '';
     internalPanel.style.display = 'none';
     toast(`Added ${data.domain.hostname} — now monitored.`);
     loadDomains();

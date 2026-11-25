@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — SSL Alerts</title>
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-<link rel="stylesheet" href="/css/style.css?v=20261126-ui-v1">
+<link rel="stylesheet" href="/css/style.css?v=20261126-ui-v2">
 </head>
 <body>
 <div class="app-shell">
@@ -162,7 +162,8 @@
       <form class="add-domain-form" id="addDomainForm">
         <input type="text" id="hostnameInput" placeholder="example.com" required>
         <select id="groupSelect"></select>
-        <select id="renewalTypeSelect" title="Renewal Type" aria-label="Renewal Type">
+        <select id="renewalTypeSelect" title="Select Renewal Type" aria-label="Select Renewal Type" required>
+          <option value="" disabled selected>Select renewal type</option>
           <option value="automatic">Automatic Renewal</option>
           <option value="manual">Manual Renewal</option>
         </select>
@@ -193,8 +194,9 @@
           <label for="internalPemInput">Certificate Content (PEM)</label>
           <textarea id="internalPemInput" rows="7" spellcheck="false"
             placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDJzCCAg+gAwIBAgIUStUbUXUazdfWj65LmF4VpGr...&#10;-----END CERTIFICATE-----"></textarea>
-          <label for="internalRenewalTypeSelect">Renewal of SSL</label>
+          <label for="internalRenewalTypeSelect">Select Renewal Type</label>
           <select id="internalRenewalTypeSelect" style="width:100%; margin-bottom:14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); font-size:14px;">
+            <option value="" disabled selected>Select renewal type</option>
             <option value="automatic">Automatic Renewal</option>
             <option value="manual">Manual Renewal</option>
           </select>
@@ -1932,7 +1934,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="/js/app.js?v=20261126-ui-v1"></script>
+<script src="/js/app.js?v=20261126-ui-v2"></script>
 <script src="/js/dashboard-features.js?v=20261111-v1"></script>
 </body>
 </html>

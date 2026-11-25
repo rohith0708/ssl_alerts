@@ -1459,7 +1459,7 @@ body.landing-page-3d .plan-card .plan-subtitle {
 .add-domain-form input:focus { outline: 2px solid var(--teal); outline-offset: 1px; border-color: transparent; }
 .add-domain-form select {
   padding: 12px 14px; border-radius: 8px; border: 1px solid var(--line); font-size: 14px;
-  background: var(--paper); color: var(--ink); min-width: 140px; max-width: 190px;
+  background: var(--paper); color: var(--ink); min-width: 170px; max-width: 215px;
 }
 .new-group-row {
   display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
