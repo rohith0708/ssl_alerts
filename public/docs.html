@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Documentation — SSL Alerts</title>
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-<link rel="stylesheet" href="/css/style.css?v=32">
+<link rel="stylesheet" href="/css/style.css?v=20261126-filter-v1">
 </head>
 <body>
 
@@ -36,12 +36,13 @@
     <a href="#getting-started">Getting started</a>
     <a href="#add-domain">Adding a public domain</a>
     <a href="#add-internal">Adding an internal certificate</a>
+    <a href="#renewal-types">SSL Renewal Types</a>
     <a href="#cert-generator">Certificate Generator</a>
     <a href="#ssl-tools">SSL Tools</a>
     <a href="#groups">Groups — creating &amp; choosing</a>
     <a href="#filtering">Filtering your list</a>
     <a href="#statuses">Understanding statuses</a>
-    <a href="#alerts">Alerts &amp; acknowledging</a>
+    <a href="#alerts">Alerts (Email, WhatsApp &amp; Teams)</a>
     <a href="#plans">Plans &amp; billing</a>
     <a href="#account">Your account</a>
     <a href="#faq">FAQ</a>
@@ -78,6 +79,33 @@
         <li><strong>Which group should you choose?</strong> Same guidance as below — if you're not sure yet, leave it in <strong>General</strong>. If this cert belongs to a specific client or environment you already track separately, put it in that group instead.</li>
       </ul>
       <p>One honest limitation: because there's no live handshake for internal certs, we can only track the certificate's expiry date — not whether it's been revoked or whether the chain is still trusted.</p>
+    </section>
+
+    <section id="renewal-types" class="docs-section">
+      <h2>SSL Renewal Types (Automatic vs. Manual Renewal)</h2>
+      <p>Every website and infrastructure environment handles SSL renewals differently. SSL Alerts lets you specify whether a domain uses automated certificate renewal (e.g. Let's Encrypt, Certbot, Cloudflare, cPanel AutoSSL) or manual renewal (e.g. custom corporate CA, DigiCert, annual multi-year certificates).</p>
+
+      <h3>1. Choosing Renewal Type when Adding a Domain</h3>
+      <p>When adding a public domain or internal certificate, select your renewal preference right after choosing the group:</p>
+      <ul class="docs-list">
+        <li><strong>Automatic Renewal:</strong> For domains where an ACME client, CDN, or hosting provider automatically renews certificates prior to expiration. If an automated renewal job fails or silently breaks, SSL Alerts detects it and alerts you immediately before an outage occurs.</li>
+        <li><strong>Manual Renewal:</strong> For certificates that require human procurement, payment, CSR re-signing, or web server deployment.</li>
+      </ul>
+
+      <h3>2. Dedicated Renewal Column &amp; Interactive Toggle</h3>
+      <p>In your Monitored Domains table, every row displays a dedicated <strong>Renewal Type</strong> column right next to the certificate health status:</p>
+      <ul class="docs-list">
+        <li><span class="pill pill-renewal pill-renewal-auto">Automatic Renewal</span> — Indicates automated certificate lifecycle.</li>
+        <li><span class="pill pill-renewal pill-renewal-manual">Manual Renewal</span> — Indicates manual lifecycle tracking.</li>
+        <li><strong>1-Click Toggle:</strong> Click the renewal pill on any domain at any time to instantly switch between Automatic Renewal and Manual Renewal without needing to remove or re-add the domain.</li>
+      </ul>
+
+      <h3>3. Filtering by Renewal Type</h3>
+      <p>Above your domain list, use the <strong>Filter by renewal:</strong> dropdown alongside <strong>Filter by group:</strong> to filter your view:</p>
+      <ul class="docs-list">
+        <li>View only <strong>Manual Renewal</strong> certificates across a specific group (e.g. <em>Client Sites</em> or <em>Production</em>) to prepare maintenance schedules and procurement.</li>
+        <li>Combine status filters (such as <strong>Expiring soon</strong> or <strong>Critical</strong>) with Renewal Type filters to quickly identify automated systems that failed to renew in time.</li>
+      </ul>
     </section>
 
     <section id="cert-generator" class="docs-section">
@@ -160,7 +188,13 @@
 
     <section id="filtering" class="docs-section">
       <h2>Filtering your list</h2>
-      <p>The four stat cards at the top of your dashboard — <strong>Monitored</strong>, <strong>Healthy</strong>, <strong>Expiring soon</strong>, <strong>Critical / expired</strong> — are clickable. Click one to filter your list down to just that status; click it again (or <strong>Monitored</strong>) to clear the filter. Combine this with the group dropdown to answer questions like "what's critical in my Production group right now?" in two clicks.</p>
+      <p>SSL Alerts provides multi-dimensional filtering to quickly navigate your certificate portfolio:</p>
+      <ul class="docs-list">
+        <li><strong>Status Stat Cards:</strong> Click <strong>Monitored</strong>, <strong>Healthy</strong>, <strong>Expiring soon</strong>, or <strong>Critical / expired</strong> at the top of your dashboard to filter by health status.</li>
+        <li><strong>Filter by Group:</strong> Select a specific group (e.g., <em>Production</em>, <em>Client Sites</em>, or <em>General</em>) to isolate related certificates.</li>
+        <li><strong>Filter by Renewal Type:</strong> Use the <strong>Filter by renewal:</strong> dropdown to view only <em>Automatic Renewal</em> or <em>Manual Renewal</em> certificates.</li>
+      </ul>
+      <p>These filters can be combined effortlessly — for example, selecting <strong>General</strong> in Group filter and <strong>Manual Renewal</strong> in Renewal filter shows only manual certificates within that group in seconds.</p>
     </section>
 
     <section id="statuses" class="docs-section">
@@ -175,14 +209,35 @@
     </section>
 
     <section id="alerts" class="docs-section">
-      <h2>Alerts &amp; acknowledging</h2>
-      <p>The moment a certificate enters Warning, Critical, or Expired, you get an email immediately. If it's still unresolved, you'll get another email <strong>every 30 minutes</strong> — deliberately persistent, so it can't quietly get lost in an inbox.</p>
+      <h2>Alerts &amp; Notification Channels (Email, WhatsApp &amp; Teams)</h2>
+      <p>Never miss an expiring certificate. SSL Alerts supports multi-channel notification routing directly to your preferred communication tools:</p>
+
+      <h3>1. Email Alerts</h3>
       <ul class="docs-list">
-        <li>Click <strong>Acknowledge</strong> on that certificate's row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside the alert email) to pause repeat reminders without logging in.</li>
-        <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your inbox.</li>
+        <li>Add multiple notification email recipients from the <strong>Alert Emails</strong> tab.</li>
+        <li>Alerts include certificate validity dates, issuer information, days remaining, and direct 1-click snooze links.</li>
+      </ul>
+
+      <h3>2. WhatsApp Alerts</h3>
+      <ul class="docs-list">
+        <li>Receive instant WhatsApp messages the moment an SSL certificate reaches Warning, Critical, or Expired status.</li>
+        <li>Connect multiple WhatsApp phone numbers with international country codes (e.g. <code>+1...</code>, <code>+91...</code>) from <strong>Alert WhatsApp</strong>.</li>
+        <li>Optionally route WhatsApp alerts globally or to specific domain groups.</li>
+      </ul>
+
+      <h3>3. Microsoft Teams Alerts</h3>
+      <ul class="docs-list">
+        <li>Connect your Microsoft 365 or Organizational Teams workspace via 1-click Microsoft OAuth sign-in.</li>
+        <li>Route alerts directly to 1-on-1 chats, group chats, or team channels.</li>
+        <li><strong>Personal Microsoft Accounts (@gmail.com, @outlook.com):</strong> Microsoft Graph messaging APIs require an organization/business account for automated chat sending. To receive alerts on a personal account, invite your personal email into an organizational Group Chat (e.g. <em>tst</em>) or Team Channel, and connect with your organization account!</li>
+      </ul>
+
+      <h3>4. Acknowledging &amp; Snoozing</h3>
+      <ul class="docs-list">
+        <li>Click <strong>Acknowledge</strong> on that certificate's row (or tap <strong>Acknowledge &amp; Snooze</strong> directly inside alerts) to pause repeat reminders without logging in.</li>
+        <li><strong>Auto-Snooze Protection:</strong> If an alert triggers 5 consecutive times without acknowledgment, notifications automatically throttle back to every 4 hours to protect your team channels.</li>
         <li><strong>Warning vs Critical:</strong> Certificates in Warning (8–30 days) receive a calm daily reminder (every 24h). Critical certificates (&lt;7 days) trigger at your plan's rapid alert interval.</li>
         <li><strong>Internal Certificate Updates:</strong> If an internal certificate is renewed, click <strong>Update Cert</strong> on its row to paste the new PEM and refresh its validity dates immediately.</li>
-        <li>If the status gets worse (Warning → Critical) or changes again after being acknowledged, alerts automatically resume — so acknowledging one problem can never accidentally silence a different, future one.</li>
       </ul>
     </section>
 
@@ -190,10 +245,10 @@
       <h2>Plans &amp; billing</h2>
       <ul class="docs-list">
         <li><strong>Free Trial (30 Days) ($0)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals, 30 days access.</li>
-        <li><strong>Micro ($2/month — Limited Time Offer, Reg. $4)</strong> — 5 domains / certificates, 1 alert recipient, 3-hour expiry alert intervals.</li>
-        <li><strong>Starter ($5/month — Limited Time Offer, Reg. $10)</strong> — 20 domains / certificates, up to 3 alert recipients, 2-hour critical alert intervals.</li>
-        <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 5 alert recipients, 1-hour critical alert intervals.</li>
-        <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 10 alert recipients, 30-min critical alert intervals.</li>
+        <li><strong>Micro ($2/month — Limited Time Offer, Reg. $4)</strong> — 10 domains / certificates, 5 alert recipients (Email, WhatsApp, Microsoft Teams), 3-hour expiry alert intervals.</li>
+        <li><strong>Starter ($5/month — Limited Time Offer, Reg. $10)</strong> — 20 domains / certificates, up to 10 alert recipients, 2-hour critical alert intervals.</li>
+        <li><strong>Growth ($10/month)</strong> — 50 domains / certificates, up to 15 alert recipients, 1-hour critical alert intervals.</li>
+        <li><strong>Pro ($20/month)</strong> — 100 domains / certificates, up to 20 alert recipients, 30-min critical alert intervals.</li>
         <li><strong>Agency ($50/month)</strong> — 500 domains / certificates, up to 25 alert recipients, 10-min critical alert intervals.</li>
         <li><strong>Enterprise Plan (&gt;500 domains)</strong> — Custom quotas, dedicated checking workers, 24/7 SLA, and invoice billing. Contact <a href="mailto:support@sslalerts.info">support@sslalerts.info</a>.</li>
       </ul>
