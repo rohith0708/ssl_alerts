@@ -105,6 +105,7 @@ function domainRowHTML(d) {
       </div>
       <div class="spacer"></div>
       <span class="pill pill-${status}">${STATUS_LABEL[status] || status}</span>
+      <span class="pill pill-renewal ${d.renewal_type === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" data-action="toggle-renewal" title="Click to toggle between Automatic and Manual renewal">${d.renewal_type === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}</span>
       ${isAlertable && !d.alert_acknowledged
         ? `<button class="btn btn-accent btn-sm" data-action="ack">Acknowledge</button>` : ''}
       ${isInternal ? `<button class="btn btn-ghost btn-sm" data-action="update-cert" title="Update or renew this internal certificate">Update Cert</button>` : `<button class="btn btn-ghost btn-sm" data-action="check">Re-check</button>`}
@@ -662,10 +663,12 @@ document.getElementById('addDomainForm').addEventListener('submit', async (e) =>
   }
   const groupId = Number(selVal);
   if (!hostname) return;
+  const renewalSelect = document.getElementById('renewalTypeSelect');
+  const renewalType = renewalSelect ? renewalSelect.value : 'automatic';
   try {
     const res = await fetch('/api/domains', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hostname, group_id: groupId })
+      body: JSON.stringify({ hostname, group_id: groupId, renewal_type: renewalType })
     });
     if (res.status === 401) {
       if (typeof showAuthModal === 'function') {
@@ -727,12 +730,15 @@ document.getElementById('saveInternalCertBtn').addEventListener('click', async (
 
   if (!pem) return toast('Paste a certificate first.', true);
 
+  const internalRenewalSelect = document.getElementById('internalRenewalTypeSelect');
+  const renewalType = internalRenewalSelect ? internalRenewalSelect.value : 'automatic';
+
   btn.disabled = true;
   btn.textContent = 'Checking…';
   try {
     const res = await fetch('/api/domains/internal', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pem, label, group_id: groupId })
+      body: JSON.stringify({ pem, label, group_id: groupId, renewal_type: renewalType })
     });
     if (res.status === 401) {
       if (typeof showAuthModal === 'function') {
@@ -759,7 +765,7 @@ document.getElementById('saveInternalCertBtn').addEventListener('click', async (
 
 // ---------------- Row actions ----------------
 document.getElementById('domainList').addEventListener('click', async (e) => {
-  const btn = e.target.closest('button[data-action]');
+  const btn = e.target.closest('[data-action]');
   if (!btn) return;
   if (isGuest) {
     if (typeof showAuthModal === 'function') {
@@ -769,6 +775,28 @@ document.getElementById('domainList').addEventListener('click', async (e) => {
   }
   const row = btn.closest('.domain-row');
   const id = row.dataset.id;
+
+  if (btn.dataset.action === 'toggle-renewal') {
+    const domain = allDomains.find(d => String(d.id) === String(id));
+    if (!domain) return;
+    const nextType = (domain.renewal_type === 'manual') ? 'automatic' : 'manual';
+    btn.style.opacity = '0.5';
+    try {
+      const res = await fetch(`/api/domains/${id}/renewal`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ renewal_type: nextType })
+      });
+      if (!res.ok) throw new Error('Failed to update renewal setting');
+      domain.renewal_type = nextType;
+      toast(`Renewal set to ${nextType === 'manual' ? 'Manual Renewal' : 'Automatic Renewal'}`);
+      renderDomains();
+    } catch (err) {
+      toast(err.message, true);
+      btn.style.opacity = '1';
+    }
+    return;
+  }
 
   if (btn.dataset.action === 'delete') {
     if (!confirm('Stop monitoring this domain?')) return;

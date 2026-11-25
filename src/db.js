@@ -192,6 +192,7 @@ async function initSchema() {
       last_alert_sent_at DATETIME NULL,
       status_since DATETIME NULL,
       consecutive_alerts INT NOT NULL DEFAULT 0,
+      renewal_type VARCHAR(20) NOT NULL DEFAULT 'automatic',
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE KEY uq_user_domain_port (user_id, hostname, port),
       CONSTRAINT fk_domains_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -201,6 +202,10 @@ async function initSchema() {
 
   try {
     await pool.query('ALTER TABLE domains ADD COLUMN consecutive_alerts INT NOT NULL DEFAULT 0');
+  } catch (_) {}
+
+  try {
+    await pool.query("ALTER TABLE domains ADD COLUMN renewal_type VARCHAR(20) NOT NULL DEFAULT 'automatic'");
   } catch (_) {}
 
   await pool.query(`

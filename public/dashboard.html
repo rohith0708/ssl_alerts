@@ -162,6 +162,10 @@
       <form class="add-domain-form" id="addDomainForm">
         <input type="text" id="hostnameInput" placeholder="example.com" required>
         <select id="groupSelect"></select>
+        <select id="renewalTypeSelect" title="SSL Renewal Type">
+          <option value="automatic">Automatic Renewal</option>
+          <option value="manual">Manual Renewal</option>
+        </select>
         <button type="button" class="btn btn-ghost" id="newGroupToggle">+ Group</button>
         <button type="submit" class="btn btn-primary">Add domain</button>
       </form>
@@ -189,6 +193,11 @@
           <label for="internalPemInput">Certificate Content (PEM)</label>
           <textarea id="internalPemInput" rows="7" spellcheck="false"
             placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDJzCCAg+gAwIBAgIUStUbUXUazdfWj65LmF4VpGr...&#10;-----END CERTIFICATE-----"></textarea>
+          <label for="internalRenewalTypeSelect">Renewal of SSL</label>
+          <select id="internalRenewalTypeSelect" style="width:100%; margin-bottom:14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink); font-size:14px;">
+            <option value="automatic">Automatic Renewal</option>
+            <option value="manual">Manual Renewal</option>
+          </select>
           <div class="internal-cert-actions">
             <button type="button" class="btn btn-primary" id="saveInternalCertBtn">Save &amp; Monitor Certificate</button>
             <button type="button" class="btn btn-ghost" id="cancelInternalCertBtn">Cancel</button>

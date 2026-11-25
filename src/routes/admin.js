@@ -169,7 +169,7 @@ router.get('/users/:id/details', async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     const domains = await db.getAll(`
-      SELECT id, hostname, port, label, source, status, issuer, valid_to, days_left, last_checked_at, created_at
+      SELECT id, hostname, port, label, source, status, renewal_type, issuer, valid_to, days_left, last_checked_at, created_at
       FROM domains WHERE user_id = ?
       ORDER BY created_at DESC
     `, [userId]);
@@ -574,7 +574,7 @@ router.get('/certificates', async (req, res) => {
     const total = countRow ? countRow.total : 0;
 
     const certs = await db.getAll(`
-      SELECT d.id, d.hostname, d.port, d.label, d.status, d.issuer, d.valid_to, d.days_left, d.last_checked_at, d.created_at,
+      SELECT d.id, d.hostname, d.port, d.label, d.status, d.renewal_type, d.issuer, d.valid_to, d.days_left, d.last_checked_at, d.created_at,
              u.id AS user_id, u.name AS user_name, u.email AS user_email, u.plan AS user_plan
       FROM domains d
       JOIN users u ON u.id = d.user_id

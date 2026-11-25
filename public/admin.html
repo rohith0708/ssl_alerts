@@ -2043,7 +2043,10 @@ function renderStats(data) {
           <tr>
             <td>${escapeHtml(d.hostname)}</td>
             <td>${escapeHtml(d.user_name)} (${escapeHtml(d.user_email)})</td>
-            <td><span class="pill pill-${d.status}">${d.status}</span></td>
+            <td>
+              <span class="pill pill-${d.status}">${d.status}</span>
+              <span class="pill pill-renewal ${d.renewal_type === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" style="font-size:10px; padding:2px 7px; margin-left:4px;">${d.renewal_type === 'manual' ? 'Manual' : 'Auto'}</span>
+            </td>
             <td>${d.days_left ?? '—'}</td>
             <td>${daysSince(d.status_since)}</td>
           </tr>`).join('')
@@ -2242,7 +2245,10 @@ async function loadGlobalCertificates() {
             ${escapeHtml(c.user_name)} (${escapeHtml(c.user_email)})
           </a>
         </td>
-        <td><span class="pill pill-${c.status}">${c.status}</span></td>
+        <td>
+          <span class="pill pill-${c.status}">${c.status}</span>
+          <span class="pill pill-renewal ${c.renewal_type === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" style="font-size:10px; padding:2px 7px; margin-left:4px;">${c.renewal_type === 'manual' ? 'Manual' : 'Auto'}</span>
+        </td>
         <td>${escapeHtml(c.issuer || '—')}</td>
         <td>${c.valid_to ? new Date(c.valid_to).toLocaleDateString() : '—'}</td>
         <td><strong>${c.days_left !== null ? `${c.days_left}d` : '—'}</strong></td>
@@ -2625,7 +2631,10 @@ async function openUserModal(userId) {
       ? data.domains.map(d => `
           <tr>
             <td><strong>${escapeHtml(d.hostname)}</strong> ${d.port !== 443 ? `:${d.port}` : ''}</td>
-            <td><span class="pill pill-${d.status}">${d.status}</span></td>
+            <td>
+              <span class="pill pill-${d.status}">${d.status}</span>
+              <span class="pill pill-renewal ${d.renewal_type === 'manual' ? 'pill-renewal-manual' : 'pill-renewal-auto'}" style="font-size:10px; padding:2px 7px; margin-left:4px;">${d.renewal_type === 'manual' ? 'Manual' : 'Auto'}</span>
+            </td>
             <td>${escapeHtml(d.issuer || '—')}</td>
             <td>${d.valid_to ? new Date(d.valid_to).toLocaleDateString() : '—'}</td>
             <td>${d.days_left !== null ? `${d.days_left}d` : '—'}</td>

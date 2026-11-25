@@ -140,10 +140,12 @@ router.post('/', async (req, res) => {
     });
   }
 
+  const renewalType = (req.body?.renewal_type === 'manual') ? 'manual' : 'automatic';
+
   try {
     const info = await db.execute(`
-      INSERT INTO domains (user_id, hostname, port, label, group_id) VALUES (?, ?, ?, ?, ?)
-    `, [req.userId, hostname, port, label, groupId]);
+      INSERT INTO domains (user_id, hostname, port, label, group_id, renewal_type) VALUES (?, ?, ?, ?, ?, ?)
+    `, [req.userId, hostname, port, label, groupId, renewalType]);
 
     const domain = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [info.insertId, req.userId]);
     res.status(201).json({ domain });
@@ -201,12 +203,13 @@ router.post('/internal', async (req, res) => {
   }
 
   const displayName = label || parsed.subject || 'Internal certificate';
+  const renewalType = (req.body?.renewal_type === 'manual') ? 'manual' : 'automatic';
 
   try {
     const info = await db.execute(`
-      INSERT INTO domains (user_id, hostname, port, label, group_id, source, pem)
-      VALUES (?, ?, 0, ?, ?, 'internal', ?)
-    `, [req.userId, displayName, label, groupId, pem]);
+      INSERT INTO domains (user_id, hostname, port, label, group_id, source, pem, renewal_type)
+      VALUES (?, ?, 0, ?, ?, 'internal', ?, ?)
+    `, [req.userId, displayName, label, groupId, pem, renewalType]);
 
     const created = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [info.insertId, req.userId]);
     applyCheckResult(created, parsed).catch(() => {});
@@ -232,6 +235,14 @@ router.post('/:id/check-now', async (req, res) => {
 
 router.post('/:id/acknowledge', async (req, res) => {
   const info = await db.execute('UPDATE domains SET alert_acknowledged = 1, consecutive_alerts = 0 WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+  if (info.affectedRows === 0) return res.status(404).json({ error: 'Domain not found.' });
+  const domain = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
+  res.json({ domain });
+});
+
+router.patch('/:id/renewal', async (req, res) => {
+  const renewalType = (req.body?.renewal_type === 'manual') ? 'manual' : 'automatic';
+  const info = await db.execute('UPDATE domains SET renewal_type = ? WHERE id = ? AND user_id = ?', [renewalType, req.params.id, req.userId]);
   if (info.affectedRows === 0) return res.status(404).json({ error: 'Domain not found.' });
   const domain = await db.getOne('SELECT * FROM domains WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
   res.json({ domain });
