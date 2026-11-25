@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — SSL Alerts</title>
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
-<link rel="stylesheet" href="/css/style.css?v=20261126-ui-v2">
+<link rel="stylesheet" href="/css/style.css?v=20261126-filter-v1">
 </head>
 <body>
 <div class="app-shell">
@@ -208,11 +208,21 @@
       </div>
 
       <div id="domainListWrap">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; flex-wrap:wrap; gap:12px;">
           <h3 style="margin:0; font-size:15px; font-weight:600; color:var(--text);">Monitored Domains</h3>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <label for="groupFilterSelect" style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Filter by group:</label>
-            <select id="groupFilterSelect" style="padding:5px 10px; font-size:13px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text);"></select>
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label for="groupFilterSelect" style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Filter by group:</label>
+              <select id="groupFilterSelect" style="padding:5px 10px; font-size:13px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text);"></select>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <label for="renewalFilterSelect" style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Filter by renewal:</label>
+              <select id="renewalFilterSelect" style="padding:5px 10px; font-size:13px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--text);">
+                <option value="all">All renewal types</option>
+                <option value="automatic">Automatic Renewal</option>
+                <option value="manual">Manual Renewal</option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="domain-list-header">
@@ -1934,7 +1944,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="/js/app.js?v=20261126-ui-v2"></script>
+<script src="/js/app.js?v=20261126-filter-v1"></script>
 <script src="/js/dashboard-features.js?v=20261111-v1"></script>
 </body>
 </html>

@@ -123,12 +123,20 @@ function domainRowHTML(d) {
     </div>`;
 }
 
+let activeRenewalFilter = 'all';
+
 function matchesStatusFilter(d) {
   if (activeFilter === 'all') return true;
   if (activeFilter === 'valid') return d.status === 'valid';
   if (activeFilter === 'warning') return d.status === 'warning';
   if (activeFilter === 'critical') return d.status === 'critical' || d.status === 'expired';
   return true;
+}
+
+function matchesRenewalFilter(d) {
+  if (activeRenewalFilter === 'all') return true;
+  const renewalType = (d.renewal_type === 'manual') ? 'manual' : 'automatic';
+  return renewalType === activeRenewalFilter;
 }
 
 function matchesGroupFilter(d) {
@@ -147,7 +155,8 @@ const domainPageSize = 5;
 function renderDomains() {
   const listEl = document.getElementById('domainList');
   const inGroup = allDomains.filter(matchesGroupFilter);   // scoped by the selected group
-  const visible = inGroup.filter(matchesStatusFilter);      // then narrowed by status
+  const inRenewal = inGroup.filter(matchesRenewalFilter);    // scoped by renewal type
+  const visible = inRenewal.filter(matchesStatusFilter);      // then narrowed by status
 
   const hdrEl = document.querySelector('.domain-list-header');
   if (hdrEl) {
@@ -180,9 +189,8 @@ function renderDomains() {
     renderDomainsPagination(totalPages, visible.length);
   }
 
-  // Stat counts reflect the selected group — "how many warning/critical/ok
-  // certs *in this group*", not the whole account.
-  const counts = inGroup.reduce((acc, d) => {
+  // Stat counts reflect the selected group and renewal filter
+  const counts = inRenewal.reduce((acc, d) => {
     acc.total++;
     if (d.status === 'valid') acc.valid++;
     else if (d.status === 'warning') acc.warning++;
@@ -286,6 +294,15 @@ const groupFilterEl = document.getElementById('groupFilterSelect');
 if (groupFilterEl) {
   groupFilterEl.addEventListener('change', (e) => {
     activeGroupFilter = e.target.value === 'all' ? 'all' : Number(e.target.value);
+    domainCurrentPage = 1;
+    renderDomains();
+  });
+}
+
+const renewalFilterEl = document.getElementById('renewalFilterSelect');
+if (renewalFilterEl) {
+  renewalFilterEl.addEventListener('change', (e) => {
+    activeRenewalFilter = e.target.value || 'all';
     domainCurrentPage = 1;
     renderDomains();
   });
