@@ -15,8 +15,8 @@ const {
 
 const router = express.Router();
 
-const { requireAuth } = require('../auth');
-router.use(requireAuth);
+const { requireAuth, optionalAuth } = require('../auth');
+router.use(optionalAuth);
 
 // In-memory store for pending Let's Encrypt ACME orders
 const pendingOrders = new Map();
@@ -31,7 +31,7 @@ setInterval(() => {
 
 // ---------------- List & Download Certificates ----------------
 
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const certs = await db.getAll(`
       SELECT id, type, domain, status, expires_at, created_at
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/download/:id', async (req, res) => {
+router.get('/download/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id);
   const row = await db.getOne(`
     SELECT id, user_id, type, domain, status, files_json, expires_at, created_at
@@ -84,7 +84,32 @@ router.get('/download/:id', async (req, res) => {
   pack.finalize();
 });
 
-router.delete('/:id', async (req, res) => {
+// Ephemeral download for guest certificate generation (no database persistence)
+router.post('/download-bundle', (req, res) => {
+  const { files, filename } = req.body || {};
+  if (!files || typeof files !== 'object' || Object.keys(files).length === 0) {
+    return res.status(400).json({ error: 'No files provided for download.' });
+  }
+
+  const safeFilename = String(filename || 'certificate-bundle.tar.gz').replace(/[^a-zA-Z0-9._-]/g, '_');
+  res.setHeader('Content-Type', 'application/gzip');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+
+  const pack = tar.pack();
+  const gzip = zlib.createGzip();
+
+  pack.pipe(gzip).pipe(res);
+
+  for (const [name, content] of Object.entries(files)) {
+    const safeName = String(name).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const buf = Buffer.from(String(content || ''), 'utf8');
+    pack.entry({ name: safeName, size: buf.length, mode: 0o644 }, buf);
+  }
+
+  pack.finalize();
+});
+
+router.delete('/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const info = await db.execute(`
@@ -149,24 +174,30 @@ async function handleSelfSigned(req, res) {
       expiresAt = new Date(Date.now() + (Number(validityDays) || 365) * 86400000).toISOString().slice(0, 19).replace('T', ' ');
     }
 
-    const info = await db.execute(`
-      INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      req.userId,
-      'selfsigned',
-      targetDomain,
-      'completed',
-      JSON.stringify(files),
-      expiresAt
-    ]);
+    let insertId = null;
+    if (req.userId) {
+      const info = await db.execute(`
+        INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        req.userId,
+        'selfsigned',
+        targetDomain,
+        'completed',
+        JSON.stringify(files),
+        expiresAt
+      ]);
+      insertId = info.insertId;
+    }
 
     res.json({
-      id: info.insertId,
+      id: insertId,
       domain: targetDomain,
       caCert: bundle.caCrt,
       domainCert: bundle.serverCrt,
-      files: Object.keys(files)
+      files: Object.keys(files),
+      fileContents: files,
+      isGuest: !req.userId
     });
   } catch (err) {
     console.error('Error generating self-signed certificate:', err);
@@ -214,24 +245,30 @@ router.post('/csr', async (req, res) => {
 
     const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
-    const info = await db.execute(`
-      INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      req.userId,
-      'csr',
-      targetDomain,
-      'completed',
-      JSON.stringify(files),
-      expiresAt
-    ]);
+    let insertId = null;
+    if (req.userId) {
+      const info = await db.execute(`
+        INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        req.userId,
+        'csr',
+        targetDomain,
+        'completed',
+        JSON.stringify(files),
+        expiresAt
+      ]);
+      insertId = info.insertId;
+    }
 
     res.json({
-      id: info.insertId,
+      id: insertId,
       domain: targetDomain,
       csrText: bundle.csr,
       keyText: bundle.privateKey,
-      files: Object.keys(files)
+      files: Object.keys(files),
+      fileContents: files,
+      isGuest: !req.userId
     });
   } catch (err) {
     console.error('Error generating CSR:', err);
@@ -373,28 +410,34 @@ async function handleCompleteLetsEncrypt(req, res) {
       expiresAt = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
     }
 
-    const info = await db.execute(`
-      INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      req.userId,
-      'letsencrypt',
-      domain,
-      'completed',
-      JSON.stringify(files),
-      expiresAt
-    ]);
+    let insertId = null;
+    if (req.userId) {
+      const info = await db.execute(`
+        INSERT INTO generated_certificates (user_id, type, domain, status, files_json, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [
+        req.userId,
+        'letsencrypt',
+        domain,
+        'completed',
+        JSON.stringify(files),
+        expiresAt
+      ]);
+      insertId = info.insertId;
+    }
 
     pendingOrders.delete(orderId);
 
     res.json({
-      id: info.insertId,
+      id: insertId,
       domain,
       cert,
       chain,
       fullchain,
       privkey,
-      files: Object.keys(files)
+      files: Object.keys(files),
+      fileContents: files,
+      isGuest: !req.userId
     });
   } catch (err) {
     console.error("Error completing Let's Encrypt verification:", err);

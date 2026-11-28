@@ -51,6 +51,28 @@ function clearAuthCookie(res) {
   });
 }
 
+// Middleware: optional session, attaches req.userId if valid session present, else req.userId = null
+async function optionalAuth(req, res, next) {
+  const token = req.cookies?.[COOKIE_NAME];
+  if (!token) {
+    req.userId = null;
+    return next();
+  }
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    const { db } = require('./db');
+    const exists = await db.getOne('SELECT id FROM users WHERE id = ?', [payload.uid]);
+    if (exists) {
+      req.userId = payload.uid;
+    } else {
+      req.userId = null;
+    }
+  } catch (e) {
+    req.userId = null;
+  }
+  next();
+}
+
 // Middleware: requires a valid session, attaches req.userId
 async function requireAuth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
@@ -82,5 +104,5 @@ async function requireAdmin(req, res, next) {
 
 module.exports = {
   hashPassword, verifyPassword, issueToken,
-  setAuthCookie, clearAuthCookie, requireAuth, requireAdmin, COOKIE_NAME, JWT_SECRET
+  setAuthCookie, clearAuthCookie, requireAuth, optionalAuth, requireAdmin, COOKIE_NAME, JWT_SECRET
 };

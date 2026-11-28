@@ -157,8 +157,8 @@ async function initSchema() {
     await pool.query('UPDATE users SET is_verified = 1 WHERE is_verified = 0 AND created_at < NOW()');
   } catch (_) {}
   try {
-    // Ensure all trial users have current_period_end capped at 30 days from creation
-    await pool.query("UPDATE users SET current_period_end = DATE_ADD(created_at, INTERVAL 30 DAY) WHERE plan = 'trial' AND (current_period_end IS NULL OR current_period_end > DATE_ADD(created_at, INTERVAL 30 DAY))");
+    // Ensure all trial users have current_period_end cleared (no expiration limit for Free Tier)
+    await pool.query("UPDATE users SET current_period_end = NULL WHERE plan = 'trial'");
   } catch (_) {}
   await pool.query(`
     CREATE TABLE IF NOT EXISTS \`groups\` (
@@ -418,8 +418,8 @@ initSchema().catch(err => {
 
 const PLANS = {
   trial: {
-    label: 'Free Trial (30 Days)',
-    subtitle: 'Good for basic testing & evaluation',
+    label: 'Free Tier',
+    subtitle: 'Good for basic monitoring & personal websites',
     price: 0,
     originalPrice: 0,
     domainLimit: 5,
@@ -427,7 +427,6 @@ const PLANS = {
     criticalIntervalMinutes: 180,
     warningIntervalMinutes: 1440,
     support: 'Standard',
-    trialDays: 30,
     features: [
       '<strong>5</strong> domains monitored',
       'Daily SSL expiry checks',

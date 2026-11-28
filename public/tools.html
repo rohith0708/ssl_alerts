@@ -178,6 +178,25 @@ async function runLookup(domain, type) {
       }
     }
 
+    const bannerHtml = `
+      <div class="tools-advantage-banner" style="margin-top:24px; padding:20px 24px; background:linear-gradient(135deg, #0A192F 0%, #0F2B48 100%); border:1px solid #1E3A5F; border-radius:12px; color:#fff; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; box-shadow:0 8px 24px rgba(10,25,47,0.25);">
+        <div style="flex:1; min-width:260px;">
+          <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(13,148,136,0.25); border:1px solid rgba(20,184,166,0.4); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; color:#5EEAD4; margin-bottom:8px;">
+            <span>🛡️</span> SSL Alerts Platform Advantage
+          </div>
+          <h3 style="margin:0 0 6px; font-size:17px; font-weight:700; color:#FFFFFF;">Monitor ${escapeHtml(domain)} 24/7 — Free Forever</h3>
+          <p style="margin:0; font-size:13px; line-height:1.5; color:#CBD5E1;">
+            DNS resolution is only step one. Don't let an unexpected SSL expiration hurt your Google rankings and trigger browser security warnings. Get instant alerts via <strong>WhatsApp</strong>, <strong>Microsoft Teams</strong> &amp; <strong>Email</strong>.
+          </p>
+        </div>
+        <div>
+          <a href="/signup.html?domain=${encodeURIComponent(domain)}" class="btn btn-primary" style="background:#0D9488; border-color:#0D9488; padding:10px 20px; font-size:14px; font-weight:600; white-space:nowrap; text-decoration:none;">
+            Start Free Monitoring &rarr;
+          </a>
+        </div>
+      </div>
+    `;
+
     results.innerHTML = groups.map(group => `
       <div class="lookup-group">
         <div class="lookup-group-type">${group.type}</div>
@@ -192,7 +211,7 @@ async function runLookup(domain, type) {
               </tbody>
             </table>`
           : `<div class="lookup-empty">${escapeHtml(group.error || 'No records found.')}</div>`}
-      </div>`).join('');
+      </div>`).join('') + bannerHtml;
   } catch (err) {
     results.innerHTML = `<div class="lookup-status lookup-error">Something went wrong — try again.</div>`;
   }

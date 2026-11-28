@@ -50,42 +50,10 @@ function generateOtp() {
 function attachTrialInfo(user) {
   if (!user) return user;
   if (user.plan === 'trial') {
-    let trialEndMs = null;
-    const trialDays = (PLANS && PLANS.trial && PLANS.trial.trialDays) || 30;
-    const maxTrialDurationMs = trialDays * 24 * 60 * 60 * 1000;
-
-    if (user.created_at) {
-      const createdMs = new Date(user.created_at).getTime();
-      const calculatedEndMs = createdMs + maxTrialDurationMs;
-      if (user.current_period_end) {
-        const periodEndMs = new Date(user.current_period_end).getTime();
-        trialEndMs = Math.min(periodEndMs, calculatedEndMs);
-      } else {
-        trialEndMs = calculatedEndMs;
-      }
-    } else if (user.current_period_end) {
-      trialEndMs = new Date(user.current_period_end).getTime();
-    } else {
-      trialEndMs = Date.now() + maxTrialDurationMs;
-    }
-
-    const nowMs = Date.now();
-    const diffMs = trialEndMs - nowMs;
-    const daysLeft = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
-
-    user.trial_days_left = daysLeft;
-    user.trial_end_date = new Date(trialEndMs).toISOString();
-
-    if (diffMs <= 0 || daysLeft <= 0) {
-      user.trial_expires_text = 'Free trial expired';
-      user.is_trial_expired = true;
-    } else if (daysLeft === 1) {
-      user.trial_expires_text = 'Free trial expires in 1 day';
-      user.is_trial_expired = false;
-    } else {
-      user.trial_expires_text = `Free trial expires in ${daysLeft} days`;
-      user.is_trial_expired = false;
-    }
+    user.trial_days_left = null;
+    user.trial_end_date = null;
+    user.trial_expires_text = 'Free Plan (Forever)';
+    user.is_trial_expired = false;
   } else {
     user.trial_days_left = null;
     user.trial_expires_text = null;

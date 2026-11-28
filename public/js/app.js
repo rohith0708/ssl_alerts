@@ -317,9 +317,9 @@ function setupGuestUI(plans) {
   window.currentUser = null;
   currentPlans = plans || currentPlans || {
     trial: {
-      label: 'Free Trial (30 Days)',
-      subtitle: 'Good for basic testing & evaluation',
-      price: 0, originalPrice: 0, domainLimit: 5, recipientLimit: 1, criticalIntervalMinutes: 180, trialDays: 30,
+      label: 'Free Tier',
+      subtitle: 'Good for personal websites & basic monitoring',
+      price: 0, originalPrice: 0, domainLimit: 5, recipientLimit: 1, criticalIntervalMinutes: 180,
       features: [
         '<strong>5</strong> domains monitored',
         'Daily SSL expiry checks',
@@ -492,18 +492,18 @@ function setupAuthenticatedUI(data) {
   if (guestAuthWidget) guestAuthWidget.style.display = 'none';
 
   const rawPlan = data.user.plan || 'trial';
-  const planLabel = (data.plans && data.plans[rawPlan] && data.plans[rawPlan].label) || (rawPlan === 'trial' ? 'Free Trial' : rawPlan);
+  const planLabel = (data.plans && data.plans[rawPlan] && data.plans[rawPlan].label) || (rawPlan === 'trial' ? 'Free Tier' : rawPlan);
   const isTrial = rawPlan === 'trial';
-  const isTrialExpired = isTrial && (data.user.is_trial_expired || (data.user.trial_days_left !== null && data.user.trial_days_left <= 0));
+  const isTrialExpired = false;
 
   const sidebarPlanBadge = document.getElementById('sidebarPlanBadge');
   const sidebarPlanBadgeText = document.getElementById('sidebarPlanBadgeText');
   if (sidebarPlanBadge && sidebarPlanBadgeText) {
     if (isTrial) {
-      const trialText = data.user.trial_expires_text || (data.user.trial_days_left != null ? `Free trial expires in ${data.user.trial_days_left} days` : 'Free Trial');
+      const trialText = 'FREE TIER';
       sidebarPlanBadgeText.textContent = trialText;
-      sidebarPlanBadge.className = `sidebar-plan-pill plan-pill-free${isTrialExpired ? ' trial-expired' : ''}`;
-      sidebarPlanBadge.title = trialText;
+      sidebarPlanBadge.className = 'sidebar-plan-pill plan-pill-free';
+      sidebarPlanBadge.title = 'Free Tier (Forever)';
     } else {
       sidebarPlanBadgeText.textContent = planLabel;
       const planClass = `plan-pill-${rawPlan}`;
@@ -513,7 +513,7 @@ function setupAuthenticatedUI(data) {
     sidebarPlanBadge.style.display = 'inline-flex';
   }
 
-  document.getElementById('planName').textContent = isTrial ? 'Free Trial' : planLabel;
+  document.getElementById('planName').textContent = isTrial ? 'Free Tier' : planLabel;
 
   const planTrialExpiry = document.getElementById('planTrialExpiry');
   if (planTrialExpiry) {
@@ -559,6 +559,16 @@ function setupAuthenticatedUI(data) {
   const trialExpiredBanner = document.getElementById('trialExpiredBanner');
   if (trialExpiredBanner) {
     trialExpiredBanner.style.display = isTrialExpired ? 'flex' : 'none';
+  }
+  // Check for prefilled domain from public tools / marketing funnel
+  const prefillDom = sessionStorage.getItem('prefillDomain');
+  if (prefillDom) {
+    sessionStorage.removeItem('prefillDomain');
+    const hostInput = document.getElementById('hostnameInput');
+    if (hostInput) {
+      hostInput.value = prefillDom;
+      hostInput.focus();
+    }
   }
 }
 
@@ -1016,7 +1026,7 @@ function openUpgradeModal() {
       const badgeText = plan.badge || 'LIMITED TIME OFFER';
       badgeHtml = `<span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">${badgeText}</span>`;
     } else if (id === 'trial') {
-      badgeHtml = `<span class="tag" style="background:#0284C7; color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">30-DAY TRIAL</span>`;
+      badgeHtml = `<span class="tag" style="background:#0D9488; color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">FREE FOREVER</span>`;
     }
 
     let priceDisplay = '';
@@ -1024,7 +1034,7 @@ function openUpgradeModal() {
       priceDisplay = `
         <div class="mp-price">
           <div class="price-active-container">
-            <span class="price-current">$0</span><span class="mp-period">/30 days</span>
+            <span class="price-current">$0</span><span class="mp-period">/forever</span>
           </div>
         </div>`;
     } else if (id === 'micro' || plan.originalPrice) {

@@ -232,7 +232,7 @@ function toast(msg, isError = false) {
   setTimeout(() => toastEl.classList.remove('visible'), 3500);
 }
 
-const PLAN_LABELS = { trial: 'Free Trial (30 Days)', micro: 'Micro', starter: 'Starter', growth: 'Growth', pro: 'Pro', agency: 'Agency', enterprise: 'Enterprise', unlimited: 'Enterprise' };
+const PLAN_LABELS = { trial: 'Free Tier', micro: 'Micro', starter: 'Starter', growth: 'Growth', pro: 'Pro', agency: 'Agency', enterprise: 'Enterprise', unlimited: 'Enterprise' };
 let currentUser = null;
 let currentPlans = null;
 
@@ -508,7 +508,7 @@ function openUpgradeModal() {
       const badgeText = plan.badge || 'LIMITED TIME OFFER';
       badgeHtml = `<span class="tag" style="background:#F59E0B; color:#0A2740; font-weight:800; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">${badgeText}</span>`;
     } else if (id === 'trial') {
-      badgeHtml = `<span class="tag" style="background:#0284C7; color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">30-DAY TRIAL</span>`;
+      badgeHtml = `<span class="tag" style="background:#0D9488; color:#fff; font-weight:700; font-size:11px; padding:3px 8px; border-radius:6px; display:inline-block; margin-bottom:8px;">FREE FOREVER</span>`;
     }
 
     let priceDisplay = '';
@@ -516,7 +516,7 @@ function openUpgradeModal() {
       priceDisplay = `
         <div class="mp-price">
           <div class="price-active-container">
-            <span class="price-current">$0</span><span class="mp-period">/30 days</span>
+            <span class="price-current">$0</span><span class="mp-period">/forever</span>
           </div>
         </div>`;
     } else if (id === 'micro' || plan.originalPrice) {

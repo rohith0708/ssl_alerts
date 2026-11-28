@@ -91,13 +91,6 @@ function showWhatsAppAlerts(e) {
 
 function showCertificates(e, tab = 'cert-generator-letsencrypt') {
   if (e && e.preventDefault) e.preventDefault();
-  if (tab === 'cert-generated-certificates' && window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'certificates';
-      showAuthModal('login', 'Sign in or register to access and download your generated certificates');
-    }
-    return;
-  }
   showSection('certificates');
 
   // Activate only the selected generator tab (default: Let's Encrypt)
@@ -182,14 +175,6 @@ function initializeCertificateTabs() {
   document.querySelectorAll('.cert-mode-link').forEach(link => {
     link.addEventListener('click', (e) => {
       const target = link.dataset.target;
-      if (target === 'cert-generated-certificates' && window.isGuest) {
-        if (typeof showAuthModal === 'function') {
-          window.pendingAuthDestination = 'certificates';
-          showAuthModal('login', 'Sign in or register to access and download your generated certificates');
-        }
-        return;
-      }
-
       document.querySelectorAll('.cert-mode-link').forEach(item => item.classList.toggle('active', item === link));
       document.querySelectorAll('.certificate-panel').forEach(panel => panel.classList.toggle('active', panel.id === target));
 
@@ -245,14 +230,6 @@ function handleHashRoute() {
 }
 
 async function startLetsEncryptQuick() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'certificates';
-      showAuthModal('login', 'Sign in or register to generate SSL certificates');
-    }
-    return;
-  }
-
   const domain = document.getElementById('leDomainQuick')?.value?.trim();
   if (!domain) {
     toast('Please enter a domain name first.', true);
@@ -317,14 +294,6 @@ async function startLetsEncryptQuick() {
 
 // SSL Tools Functions
 async function decodeCertificate() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to decode SSL certificates');
-    }
-    return;
-  }
-
   const certText = document.getElementById('certDecoderInput').value.trim();
   const resultEl = document.getElementById('certDecoderResult');
 
@@ -383,14 +352,6 @@ async function decodeCertificate() {
 }
 
 async function decodeCSR() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to decode Certificate Signing Requests (CSR)');
-    }
-    return;
-  }
-
   const csrText = document.getElementById('csrDecoderInput').value.trim();
   const resultEl = document.getElementById('csrDecoderResult');
 
@@ -445,14 +406,6 @@ async function decodeCSR() {
 }
 
 async function matchCertKey() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to test certificate and key matching');
-    }
-    return;
-  }
-
   const certText = document.getElementById('matchCertInput').value.trim();
   const keyText = document.getElementById('matchKeyInput').value.trim();
   const resultEl = document.getElementById('matchResult');
@@ -511,14 +464,6 @@ async function matchCertKey() {
 }
 
 async function checkSSLInstallation() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to check SSL installation');
-    }
-    return;
-  }
-
   const hostname = document.getElementById('checkHostname').value.trim();
   const port = document.getElementById('checkPort').value || 443;
   const resultEl = document.getElementById('checkResult');
@@ -574,14 +519,6 @@ async function checkSSLInstallation() {
 }
 
 function testSSLLabs() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to run SSL Labs diagnostic tests');
-    }
-    return;
-  }
-
   const hostname = document.getElementById('labsHostname').value.trim();
   const resultEl = document.getElementById('labsResult');
 
@@ -604,14 +541,6 @@ function testSSLLabs() {
 }
 
 async function validateChain() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'sslTools';
-      showAuthModal('login', 'Sign in or register to validate certificate chains');
-    }
-    return;
-  }
-
   const chainText = document.getElementById('chainValidatorInput')?.value?.trim();
   const resultEl = document.getElementById('chainResult');
   if (!resultEl) return;
@@ -675,8 +604,45 @@ async function validateChain() {
   }
 }
 
+function getGuestSignupBannerHtml(title = 'Protect Your Domains with 24/7 Monitoring', domain = '') {
+  const domainQuery = domain ? `?domain=${encodeURIComponent(domain)}` : '';
+  const safeTitle = typeof escapeHtml === 'function' ? escapeHtml(title) : title;
+  return `
+    <div class="guest-tool-signup-banner" style="margin-top:20px; padding:18px 20px; background:linear-gradient(135deg, #0A192F 0%, #0F2B48 100%); border:1px solid #1E3A5F; border-radius:10px; color:#fff; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:14px; box-shadow:0 6px 20px rgba(10,25,47,0.2);">
+      <div style="flex:1; min-width:240px;">
+        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(13,148,136,0.25); border:1px solid rgba(20,184,166,0.4); padding:3px 8px; border-radius:20px; font-size:11px; font-weight:700; color:#5EEAD4; margin-bottom:6px;">
+          <span>⚡</span> Free Tier Platform Advantage
+        </div>
+        <h4 style="margin:0 0 4px; font-size:15px; font-weight:700; color:#FFFFFF;">${safeTitle}</h4>
+        <p style="margin:0; font-size:12px; line-height:1.45; color:#CBD5E1;">
+          Monitor up to 5 domains free forever. Get instant alerts on <strong>WhatsApp</strong>, <strong>Microsoft Teams</strong> &amp; <strong>Email</strong> before certificate expiry breaks your traffic.
+        </p>
+      </div>
+      <div>
+        <a href="/signup.html${domainQuery}" class="btn btn-primary btn-sm" style="background:#0D9488; border-color:#0D9488; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap; text-decoration:none;">
+          Start Free Monitoring &rarr;
+        </a>
+      </div>
+    </div>
+  `;
+}
+window.getGuestSignupBannerHtml = getGuestSignupBannerHtml;
+
+function getGuestCertEphemeralNoticeHtml() {
+  return `
+    <div class="guest-cert-notice" style="margin-top:14px; padding:12px 16px; background:#F8FAFC; border:1px solid #CBD5E1; border-left:4px solid #0D9488; border-radius:6px; font-size:13px; color:#334155;">
+      <strong>ℹ️ Guest Privacy Notice:</strong> Because you are using the certificate generator as a guest, your certificates and private keys were generated securely in your browser session and <strong>are not stored on our server</strong>. Please copy or download your files now.
+    </div>
+  `;
+}
+window.getGuestCertEphemeralNoticeHtml = getGuestCertEphemeralNoticeHtml;
+
 function showResult(element, content, type = 'info') {
-  element.innerHTML = content;
+  let finalContent = content;
+  if (window.isGuest && (type === 'success' || type === 'info')) {
+    finalContent += getGuestSignupBannerHtml('Get 24/7 Multi-Channel SSL Expiry Alerts');
+  }
+  element.innerHTML = finalContent;
   element.className = 'result-box visible ' + type;
 }
 
@@ -1112,7 +1078,22 @@ async function deleteAlertEmail(id) {
 let currentCertificateId = null;
 
 async function loadCertificates() {
-  if (window.isGuest) return;
+  if (window.isGuest) {
+    const list = document.getElementById('certificatesList');
+    if (list) {
+      list.innerHTML = `
+        <div class="empty-state" style="margin-top:16px; padding:32px 20px; text-align:center; background:#FAFAFA; border:1px dashed #CBD5E1; border-radius:10px;">
+          <div style="font-size:32px; margin-bottom:8px;">🔒</div>
+          <h4 style="margin:0 0 8px; font-size:16px; color:#1E293B;">Cloud Certificate Vault</h4>
+          <p style="margin:0 auto 16px; max-width:480px; font-size:13px; color:#64748B; line-height:1.5;">
+            Guest-generated certificates are ephemeral and never stored on our server for your security and privacy. Sign in or create a free account to automatically store, re-download, and monitor your certificates 24/7.
+          </p>
+          <a href="/signup.html" class="btn btn-primary btn-sm" style="display:inline-block; text-decoration:none;">Create Free Account</a>
+        </div>
+      `;
+    }
+    return;
+  }
   try {
     const res = await fetch('/api/certificates');
     const certificates = await res.json();
@@ -1287,6 +1268,39 @@ function goToCertPage(p) {
   renderCertificates(window.currentCertificates);
 }
 window.goToCertPage = goToCertPage;
+
+async function downloadEphemeralBundle(files, filename = 'certificate-bundle.tar.gz') {
+  if (!files || typeof files !== 'object' || Object.keys(files).length === 0) {
+    toast('No certificate files available to download', true);
+    return;
+  }
+  try {
+    const res = await fetch('/api/certificates/download-bundle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files, filename })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to download certificate bundle');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, 2000);
+    toast('Certificate file downloaded');
+  } catch (err) {
+    toast('Failed to download certificate: ' + err.message, true);
+  }
+}
+window.downloadEphemeralBundle = downloadEphemeralBundle;
 
 async function downloadCertificate(id) {
   if (window.isGuest) {
@@ -1478,14 +1492,6 @@ if (document.readyState === 'loading') {
 window.addEventListener('hashchange', handleHashRoute);
 
 async function startLetsEncrypt() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'certificates';
-      showAuthModal('login', 'Sign in or register to generate Let\'s Encrypt certificates');
-    }
-    return;
-  }
-
   const domainInput = document.getElementById('leDomain');
   const domain = domainInput ? domainInput.value.trim() : '';
 
@@ -1590,6 +1596,10 @@ async function completeLetsEncrypt() {
     const certFilesEl = document.getElementById('certificateFiles');
     if (certFilesEl) {
       const escapeFn = typeof escapeHtml === 'function' ? escapeHtml : (s => String(s || ''));
+      let guestNoticeHtml = '';
+      if (window.isGuest || data.isGuest || !data.id) {
+        guestNoticeHtml = getGuestCertEphemeralNoticeHtml() + getGuestSignupBannerHtml('Save and Monitor ' + (data.domain || 'Your Domain') + ' 24/7', data.domain);
+      }
       certFilesEl.innerHTML = `
         <div class="generator-hero">
           <h4>✅ Certificate Generated</h4>
@@ -1609,15 +1619,20 @@ async function completeLetsEncrypt() {
             </div>
           </div>
         </div>
+        ${guestNoticeHtml}
       `;
 
       const dlBtn = document.getElementById('downloadLeFilesBtn');
       if (dlBtn) {
-        dlBtn.onclick = () => downloadCertificate(data.id);
+        if (data.id) {
+          dlBtn.onclick = () => downloadCertificate(data.id);
+        } else {
+          dlBtn.onclick = () => downloadEphemeralBundle(data.fileContents, `letsencrypt-${data.domain || 'cert'}.tar.gz`);
+        }
       }
     }
 
-    loadCertificates();
+    if (!window.isGuest) loadCertificates();
 
   } catch (err) {
     toast('Failed to complete certificate generation: ' + err.message, true);
@@ -1718,14 +1733,6 @@ function resetSelfSigned() {
 }
 
 async function generateSelfSigned() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'certificates';
-      showAuthModal('login', 'Sign in or register to generate Self-Signed certificates');
-    }
-    return;
-  }
-
   const domainEl = document.getElementById('ssDomain');
   if (!domainEl || !domainEl.value.trim()) {
     toast('Please enter a Domain / Hostname', true);
@@ -1766,12 +1773,30 @@ async function generateSelfSigned() {
     document.getElementById('selfsignedDomainCertDisplay').value = data.domainCert || '';
 
     const dlBtn = document.getElementById('downloadSelfSignedBtn');
-    if (dlBtn) dlBtn.onclick = () => downloadCertificate(data.id);
+    if (dlBtn) {
+      if (data.id) {
+        dlBtn.onclick = () => downloadCertificate(data.id);
+      } else {
+        dlBtn.onclick = () => downloadEphemeralBundle(data.fileContents, `selfsigned-${formData.domain}.tar.gz`);
+      }
+    }
+
+    let extraWrap = document.getElementById('selfsignedGuestBanner');
+    if (!extraWrap) {
+      extraWrap = document.createElement('div');
+      extraWrap.id = 'selfsignedGuestBanner';
+      document.getElementById('selfsignedResultWrap')?.appendChild(extraWrap);
+    }
+    if (window.isGuest || data.isGuest || !data.id) {
+      extraWrap.innerHTML = getGuestCertEphemeralNoticeHtml() + getGuestSignupBannerHtml('Automate & Monitor ' + formData.domain + ' 24/7', formData.domain);
+    } else {
+      extraWrap.innerHTML = '';
+    }
 
     document.getElementById('selfsignedFormWrap').style.display = 'none';
     document.getElementById('selfsignedResultWrap').style.display = 'block';
 
-    loadCertificates();
+    if (!window.isGuest) loadCertificates();
   } catch (err) {
     toast('Failed to generate certificate: ' + err.message, true);
   } finally {
@@ -1801,14 +1826,6 @@ function resetCSR() {
 }
 
 async function generateCSR() {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'certificates';
-      showAuthModal('login', 'Sign in or register to generate Certificate Signing Requests (CSR)');
-    }
-    return;
-  }
-
   const domainEl = document.getElementById('csrDomain');
   if (!domainEl || !domainEl.value.trim()) {
     toast('Please enter a Domain Name', true);
@@ -1849,12 +1866,30 @@ async function generateCSR() {
     document.getElementById('csrKeyDisplay').value = data.keyText || '';
 
     const dlBtn = document.getElementById('downloadCsrBtn');
-    if (dlBtn) dlBtn.onclick = () => downloadCertificate(data.id);
+    if (dlBtn) {
+      if (data.id) {
+        dlBtn.onclick = () => downloadCertificate(data.id);
+      } else {
+        dlBtn.onclick = () => downloadEphemeralBundle(data.fileContents, `csr-${formData.domain}.tar.gz`);
+      }
+    }
+
+    let csrExtraWrap = document.getElementById('csrGuestBanner');
+    if (!csrExtraWrap) {
+      csrExtraWrap = document.createElement('div');
+      csrExtraWrap.id = 'csrGuestBanner';
+      document.getElementById('csrResultWrap')?.appendChild(csrExtraWrap);
+    }
+    if (window.isGuest || data.isGuest || !data.id) {
+      csrExtraWrap.innerHTML = getGuestCertEphemeralNoticeHtml() + getGuestSignupBannerHtml('Keep ' + formData.domain + ' Secure with SSL Alerts', formData.domain);
+    } else {
+      csrExtraWrap.innerHTML = '';
+    }
 
     document.getElementById('csrFormWrap').style.display = 'none';
     document.getElementById('csrResultWrap').style.display = 'block';
 
-    loadCertificates();
+    if (!window.isGuest) loadCertificates();
   } catch (err) {
     toast('Failed to generate CSR: ' + err.message, true);
   } finally {
@@ -1895,14 +1930,6 @@ function initDashDnsLookup() {
 }
 
 async function runDashDnsLookup(domain, type) {
-  if (window.isGuest) {
-    if (typeof showAuthModal === 'function') {
-      window.pendingAuthDestination = 'dnsLookup';
-      showAuthModal('login', 'Sign in or register to use the DNS Lookup tool');
-    }
-    return;
-  }
-
   const results = document.getElementById('dashLookupResults');
   if (!results) return;
   const safeEsc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -1939,6 +1966,7 @@ async function runDashDnsLookup(domain, type) {
       }
     }
 
+    const bannerHtml = window.isGuest ? getGuestSignupBannerHtml(`Monitor ${cleanDomain} 24/7 with SSL Alerts`, cleanDomain) : '';
     results.innerHTML = groups.map(group => `
       <div class="lookup-group">
         <div class="lookup-group-type">${safeEsc(group.type)}</div>
@@ -1953,7 +1981,7 @@ async function runDashDnsLookup(domain, type) {
               </tbody>
             </table>`
           : `<div class="lookup-empty">${safeEsc(group.error || 'No records found.')}</div>`}
-      </div>`).join('');
+      </div>`).join('') + bannerHtml;
   } catch (err) {
     results.innerHTML = `<div class="lookup-status lookup-error">Something went wrong — try again.</div>`;
   }

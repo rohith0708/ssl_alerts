@@ -505,7 +505,7 @@ router.post('/users/:id/cancel-subscription', async (req, res) => {
     `, [PLANS.trial.domainLimit, userId]);
 
     const updated = await db.getOne('SELECT id, name, email, plan, domain_limit, billing_status FROM users WHERE id = ?', [userId]);
-    res.json({ success: true, message: `Subscription cancelled. User reverted to Free Trial (30 Days) (${PLANS.trial.domainLimit} domains).`, user: updated });
+    res.json({ success: true, message: `Subscription cancelled. User reverted to Free Tier (${PLANS.trial.domainLimit} domains).`, user: updated });
   } catch (err) {
     console.error('Error cancelling subscription:', err);
     res.status(500).json({ error: err.message || 'Failed to cancel subscription.' });
